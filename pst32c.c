@@ -38,7 +38,6 @@
 * ./runpst32
 * 
 */
-//ciao come va
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -278,6 +277,37 @@ void gen_rnd_mat(VECTOR v, int N){
 
 // PROCEDURE ASSEMBLY
 extern void prova(params* input);
+
+type rama_energy(VECTOR phi, VECTOR psi) {
+    // Costanti di Ramachandran
+    const int n = 256;
+    const type alpha_phi = -57.8;
+    const type alpha_psi = -47.0;
+    const type beta_phi = -119.0;
+    const type beta_psi = 113.0;
+
+    type energy = 0.0;
+
+    // Itera su tutti gli elementi
+    for (int i = 0; i < n; i++) {
+        // Calcola la distanza alpha
+        type alpha_dist = sqrt(pow(phi[i] - alpha_phi, 2) + pow(psi[i] - alpha_psi, 2));
+
+        // Calcola la distanza beta
+        type beta_dist = sqrt(pow(phi[i] - beta_phi, 2) + pow(psi[i] - beta_psi, 2));
+
+        // Somma il contributo minimo all'energia con confronto esplicito
+        if (alpha_dist < beta_dist) {
+            energy += 0.5 * alpha_dist;
+        } else {
+            energy += 0.5 * beta_dist;
+        }
+    }
+
+    return energy;
+}
+
+
 
 void pst(params* input){
 	// --------------------------------------------------------------
