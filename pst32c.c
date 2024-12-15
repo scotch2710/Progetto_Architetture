@@ -301,7 +301,6 @@ type rama_energy(VECTOR phi, VECTOR psi) {
             energy += 0.5 * alpha_dist;
         } else {
             energy += 0.5 * beta_dist;
-			n= 12;
         }
     }
 
