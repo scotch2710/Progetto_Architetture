@@ -38,7 +38,7 @@
 * ./runpst32
 * 
 */
-
+//ciao come va
 
 #include <stdlib.h>
 #include <stdio.h>
