@@ -281,9 +281,9 @@ extern void prova(params* input);
 
 
 
-type rama_energy(VECTOR phi, VECTOR psi) {
+type rama_energy(VECTOR phi, VECTOR psi, params* p) {
     // Costanti di Ramachandran
-    const int n = 256;
+    //const int n = 256;
     const type alpha_phi = -57.8;
     const type alpha_psi = -47.0;
     const type beta_phi = -119.0;
@@ -292,7 +292,7 @@ type rama_energy(VECTOR phi, VECTOR psi) {
     type energy = 0.0;
 
     // Itera su tutti gli elementi
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < p->N; i++) {
         // Calcola la distanza alpha
         type alpha_dist = sqrt(pow(phi[i] - alpha_phi, 2) + pow(psi[i] - alpha_psi, 2));
 
@@ -310,7 +310,43 @@ type rama_energy(VECTOR phi, VECTOR psi) {
     return energy;
 }
 
+double distanza (int* coordinate, int i, int j){
+		int x_df = coordinate[3*i] - coordinate[3*j];
+		int y_df = coordinate[3*i+1] - coordinate[3*j+1];
+		int z_df = coordinate[3*i+2] - coordinate[3*j+2];
+		return sqrt(x_df*y_df*z_df);
+}
+double hydrofobic_energy (char sequenza[], int coordinate[]){
+	double energy = 0;
+	type soglia = 10.0;	
+	
+	for(int i=0; sequenza[i] = '\0'; i++){
+		for(int j= i+1; j<256; j++){
+			double dist = distanza(coordinate, i, j);
+			if(dist < soglia){
+				energy += hydrophobicity[(int)sequenza[i]] * hydrophobicity[(int)sequenza[j]] / dist;
+			}
+		}
+	}
+	return energy;
+}
+
 //DA QUI
+extern void packing_energy(char*s,MATRIX coords, params* p) {
+    const int n = 256; //assicurarsene
+    MATRIX cacoords = coordsca(coords,p);
+    type energy = 0.0;
+    for (int i = 0; i < p->N; i++) {
+        type  density = 0.0;
+        for (int j = 0; j < p->N; j++) {
+			type dist = distanza(cacoords, i, j);
+			if (dist < 10.0) {
+				density = density + volume[(int)s[j]] / (pow(dist, 3)); 
+			}
+        }
+        energy = energy + pow((volume[(int)s[i]] - density), 2);
+    }
+}
 
 extern MATRIX coordsca(MATRIX coords, params* p) {
     MATRIX Cacoords = alloc_matrix(p->N, 3);
@@ -321,28 +357,6 @@ extern MATRIX coordsca(MATRIX coords, params* p) {
     }
     return Cacoords; 
 }
-
-extern void packing_energy(char*s, MATRIX coords, params* p) {
-    const int n = 256; //assicurarsene
-    MATRIX cacoords = coordsca(coords,p);
-    type energy = 0.0;
-    for (int i = 0; i < p->N; i++) {
-        type  density = 0.0;
-        for (int j = 0; j < p->N; j++) {
-            if (i != j) {
-                type dx = cacoords[i * 3] - cacoords[j * 3];
-                type dy = cacoords[i * 3 + 1] - cacoords[j * 3 + 1];
-                type dz = cacoords[i * 3 + 2] - cacoords[j * 3 + 2];
-                type dist = sqrt(pow(dx, 2) + pow(dy, 2) + pow(dz, 2));
-				if (dist < 10.0) {
-					density = density + volume[s[j]] / (pow(dist, 3)); 
-				}
-			}
-        }
-        energy = energy + pow((volume[s[i]] - density), 2);
-    }
-}
-
 
 //FINO A QUI
 
