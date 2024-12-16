@@ -76,7 +76,7 @@ typedef struct {
 
 } params;
 
-
+params* p;
 /*
 * 
 *	Le funzioni sono state scritte assumento che le matrici siano memorizzate 
@@ -281,9 +281,9 @@ extern void prova(params* input);
 
 
 
-type rama_energy(VECTOR phi, VECTOR psi, params* p) {
+type rama_energy(VECTOR phi, VECTOR psi) {
     // Costanti di Ramachandran
-    //const int n = 256;
+    
     const type alpha_phi = -57.8;
     const type alpha_psi = -47.0;
     const type beta_phi = -119.0;
@@ -310,7 +310,7 @@ type rama_energy(VECTOR phi, VECTOR psi, params* p) {
     return energy;
 }
 
-extern MATRIX coordsca(MATRIX coords, params* p) {
+extern MATRIX coordsca(MATRIX coords) {
     MATRIX Cacoords = alloc_matrix(p->N, 3);
     for (int i = 0; i < p->N; i++) {
         Cacoords[i * 3] = coords[i * 3]; //X
@@ -327,9 +327,10 @@ type distanza (MATRIX coordinateCa, int i, int j){
 		int z_df = coordinateCa[3*i+2] - coordinateCa[3*j+2];
 		return sqrt(pow(x_df,2) + pow(y_df,2 ) +pow(z_df,2));
 }
-type hydrofobic_energy (char* sequenza, MATRIX coordinate, params* p){
+
+type hydrofobic_energy (char* sequenza, MATRIX coordinate){
 	type energy = 0;
-	MATRIX coordinateCa = coordsca(coordinate, p);
+	MATRIX coordinateCa = coordsca(coordinate);
 	
 	for(int i=0; i< p->N; i++){
 		for(int j= i+1; j<p->N; j++){
@@ -343,9 +344,9 @@ type hydrofobic_energy (char* sequenza, MATRIX coordinate, params* p){
 }
 
 
-extern type packing_energy(char*s,MATRIX coords, params* p) {
+extern type packing_energy(char*s,MATRIX coords) {
    // const int n = 256; //assicurarsene
-    MATRIX cacoords = coordsca(coords,p);
+    MATRIX cacoords = coordsca(coords);
     type energy = 0.0;
     for (int i = 0; i < p->N; i++) {
         type  density = 0.0;
@@ -361,6 +362,23 @@ extern type packing_energy(char*s,MATRIX coords, params* p) {
 }
 
 
+
+extern type energy(char* seq, VECTOR phi, VECTOR psi){
+	MATRIX coords= backbone(seq, psi, phi);
+	type rama= rama_energy(phi, psi);
+	type hydro = hydrofobic_energy(seq, coords);
+	type elec = electrostatic_energy(seq, coords);
+	type pack = packing_energy(seq, coords);
+
+	type w_rama= 1.0;
+	type w_hydro= 0.5;
+	type w_elec= 0.2;
+	type w_pack= 0.3;
+
+	type tot= (w_rama*rama) + (w_elec*elec)+(w_hydro*hydro)+(w_pack*pack);
+
+	return tot;
+}
 
 
 
