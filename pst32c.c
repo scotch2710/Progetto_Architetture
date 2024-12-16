@@ -279,6 +279,49 @@ void gen_rnd_mat(VECTOR v, int N){
 // PROCEDURE ASSEMBLY
 extern void prova(params* input);
 
+type approx_cos(type theta) {
+    type x2 = theta * theta;
+    return 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0);
+}
+
+type approx_sin(type theta) {
+    type x2 = theta * theta;
+    return theta - (x2 * theta / 6.0) + (x2 * x2 * theta / 120.0) - (x2 * x2 * x2 / 5040.0);
+
+}
+
+extern MATRIX rotation(VECTOR axis, type theta){
+	type prod_scal= ((axis[0]*axis[0])+(axis[1]*axis[1])+(axis[2]*axis[2]));
+
+	axis[0] = axis[0] / prod_scal;
+	axis[1] = axis[1] / prod_scal;
+	axis[2] = axis[2] / prod_scal;
+
+	type a= approx_cos(theta/2.0);
+	type s = -1.0 * approx_sin(theta / 2.0);
+    type b = s * axis[0];
+    type c = s * axis[1];
+    type d = s * axis[2];
+    
+	MATRIX result = alloc_matrix(3, 3);
+
+    
+    result[0] = a * a + b * b - c * c - d * d;
+    result[1] = 2 * (b * c + a * d);
+    result[2] = 2 * (b * d - a * c);
+
+    result[3] = 2 * (b * c - a * d);
+    result[4] = a * a + c * c - b * b - d * d;
+    result[5] = 2 * (c * d + a * b);
+
+    result[6] = 2 * (b * d + a * c);
+    result[7] = 2 * (c * d - a * b);
+    result[8] = a * a + d * d - b * b - c * c;
+
+    return result;
+	}
+
+
 
 
 type rama_energy(VECTOR phi, VECTOR psi) {
