@@ -321,30 +321,30 @@ extern MATRIX coordsca(MATRIX coords, params* p) {
 }
 
 
-double distanza (int* coordinate, int i, int j){
-		int x_df = coordinate[3*i] - coordinate[3*j];
-		int y_df = coordinate[3*i+1] - coordinate[3*j+1];
-		int z_df = coordinate[3*i+2] - coordinate[3*j+2];
-		return sqrt(x_df*y_df*z_df);
+type distanza (MATRIX coordinateCa, int i, int j){
+		int x_df = coordinateCa[3*i] - coordinateCa[3*j];
+		int y_df = coordinateCa[3*i+1] - coordinateCa[3*j+1];
+		int z_df = coordinateCa[3*i+2] - coordinateCa[3*j+2];
+		return sqrt(pow(x_df,2) + pow(y_df,2 ) +pow(z_df,2));
 }
-double hydrofobic_energy (char sequenza[], int coordinate[]){
-	double energy = 0;
-	type soglia = 10.0;	
+type hydrofobic_energy (char* sequenza, MATRIX coordinate, params* p){
+	type energy = 0;
+	MATRIX coordinateCa = coordsca(coordinate, p);
 	
-	for(int i=0; sequenza[i] = '\0'; i++){
-		for(int j= i+1; j<256; j++){
-			double dist = distanza(coordinate, i, j);
-			if(dist < soglia){
-				energy += hydrophobicity[(int)sequenza[i]] * hydrophobicity[(int)sequenza[j]] / dist;
+	for(int i=0; i< p->N; i++){
+		for(int j= i+1; j<p->N; j++){
+			type dist = distanza(coordinate, i, j);
+			if(dist < 10.0){
+				energy += (hydrophobicity[(int)sequenza[i]] * hydrophobicity[(int)sequenza[j]] )/ dist;
 			}
 		}
 	}
 	return energy;
 }
 
-//DA QUI
-extern void packing_energy(char*s,MATRIX coords, params* p) {
-    const int n = 256; //assicurarsene
+
+extern type packing_energy(char*s,MATRIX coords, params* p) {
+   // const int n = 256; //assicurarsene
     MATRIX cacoords = coordsca(coords,p);
     type energy = 0.0;
     for (int i = 0; i < p->N; i++) {
@@ -357,11 +357,11 @@ extern void packing_energy(char*s,MATRIX coords, params* p) {
         }
         energy = energy + pow((volume[(int)s[i]] - density), 2);
     }
+	return energy;
 }
 
 
 
-//FINO A QUI
 
 
 void pst(params* input){
