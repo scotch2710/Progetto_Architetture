@@ -52,8 +52,6 @@
 #define	MATRIX		type*
 #define	VECTOR		type*
 
-#define M_PI 3.14159265358979323846
-
 #define random() (((type) rand())/RAND_MAX)
 
 type hydrophobicity[] = {1.8, -1, 2.5, -3.5, -3.5, 2.8, -0.4, -3.2, 4.5, -1, -3.9, 3.8, 1.9, -3.5, -1, -1.6, -3.5, -4.5, -0.8, -0.7, -1, 4.2, -0.9, -1, -1.3, -1};		// hydrophobicity
@@ -281,6 +279,8 @@ void gen_rnd_mat(VECTOR v, int N){
 // PROCEDURE ASSEMBLY
 extern void prova(params* input);
 
+
+
 type rama_energy(VECTOR phi, VECTOR psi) {
     // Costanti di Ramachandran
     const int n = 256;
@@ -310,29 +310,19 @@ type rama_energy(VECTOR phi, VECTOR psi) {
     return energy;
 }
 
-double distanza (int* coordinate, int i, int j){
-		int x_df = coordinate[3*i] - coordinate[3*j];
-		int y_df = coordinate[3*i+1] - coordinate[3*j+1];
-		int z_df = coordinate[3*i+2] - coordinate[3*j+2];
-		return sqrt(x_df*y_df*z_df);
-}
-double hydrofobic_energy (char sequenza[], int coordinate[]){
-	double energy = 0;
-	type soglia = 10.0;	
-	
-	for(int i=0; sequenza[i] = '\0'; i++){
-		for(int j= i+1; j<256; j++){
-			double dist = distanza(coordinate, i, j);
-			if(dist < soglia){
-				energy += hydrophobicity[(int)sequenza[i]] * hydrophobicity[(int)sequenza[j]] / dist;
-			}
-		}
-	}
-	return energy;
+//DA QUI
+
+extern MATRIX coordsca(MATRIX coords, params* p) {
+    MATRIX Cacoords = alloc_matrix(p->N, 3);
+    for (int i = 0; i < p->N; i++) {
+        Cacoords[i * 3] = coords[i * 3]; //X
+        Cacoords[i* 3 +1] = coords[i * 3 +1]; //Y
+        Cacoords[i * 3 + 2] = coords[i * 3 + 2]; //Z
+    }
+    return Cacoords; 
 }
 
-//DA QUI
-extern void packing_energy(char*s,MATRIX coords, params* p) {
+extern void packing_energy(char*s, MATRIX coords, params* p) {
     const int n = 256; //assicurarsene
     MATRIX cacoords = coordsca(coords,p);
     type energy = 0.0;
@@ -353,15 +343,6 @@ extern void packing_energy(char*s,MATRIX coords, params* p) {
     }
 }
 
-extern MATRIX coordsca(MATRIX coords, params* p) {
-    MATRIX Cacoords = alloc_matrix(p->N, 3);
-    for (int i = 0; i < p->N; i++) {
-        Cacoords[i * 3] = coords[i * 3]; //X
-        Cacoords[i* 3 +1] = coords[i * 3 +1]; //Y
-        Cacoords[i * 3 + 2] = coords[i * 3 + 2]; //Z
-    }
-    return Cacoords; 
-}
 
 //FINO A QUI
 
