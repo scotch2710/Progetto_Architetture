@@ -310,6 +310,17 @@ type rama_energy(VECTOR phi, VECTOR psi, params* p) {
     return energy;
 }
 
+extern MATRIX coordsca(MATRIX coords, params* p) {
+    MATRIX Cacoords = alloc_matrix(p->N, 3);
+    for (int i = 0; i < p->N; i++) {
+        Cacoords[i * 3] = coords[i * 3]; //X
+        Cacoords[i* 3 +1] = coords[i * 3 +1]; //Y
+        Cacoords[i * 3 + 2] = coords[i * 3 + 2]; //Z
+    }
+    return Cacoords; 
+}
+
+
 double distanza (int* coordinate, int i, int j){
 		int x_df = coordinate[3*i] - coordinate[3*j];
 		int y_df = coordinate[3*i+1] - coordinate[3*j+1];
@@ -348,15 +359,7 @@ extern void packing_energy(char*s,MATRIX coords, params* p) {
     }
 }
 
-extern MATRIX coordsca(MATRIX coords, params* p) {
-    MATRIX Cacoords = alloc_matrix(p->N, 3);
-    for (int i = 0; i < p->N; i++) {
-        Cacoords[i * 3] = coords[i * 3]; //X
-        Cacoords[i* 3 +1] = coords[i * 3 +1]; //Y
-        Cacoords[i * 3 + 2] = coords[i * 3 + 2]; //Z
-    }
-    return Cacoords; 
-}
+
 
 //FINO A QUI
 
