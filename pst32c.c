@@ -39,6 +39,7 @@
 * 
 */
 
+#define _USE_MATH_DEFINES
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -307,6 +308,39 @@ type rama_energy(VECTOR phi, VECTOR psi) {
     return energy;
 }
 
+//DA QUI
+extern void packing_energy(char*s,MATRIX coords, params* p) {
+    const int n = 256; //assicurarsene
+    MATRIX cacoords = coordsca(coords,p);
+    type energy = 0.0;
+    for (int i = 0; i < p->N; i++) {
+        type  density = 0.0;
+        for (int j = 0; j < p->N; j++) {
+            if (i != j) {
+                type dx = cacoords[i * 3] - cacoords[j * 3];
+                type dy = cacoords[i * 3 + 1] - cacoords[j * 3 + 1];
+                type dz = cacoords[i * 3 + 2] - cacoords[j * 3 + 2];
+                type dist = sqrt(pow(dx, 2) + pow(dy, 2) + pow(dz, 2));
+				if (dist < 10.0) {
+					density = density + volume[s[j]] / (pow(dist, 3)); 
+				}
+			}
+        }
+        energy = energy + pow((volume[s[i]] - density), 2);
+    }
+}
+
+extern MATRIX coordsca(MATRIX coords, params* p) {
+    MATRIX Cacoords = alloc_matrix(p->N, 3);
+    for (int i = 0; i < p->N; i++) {
+        Cacoords[i * 3] = coords[i * 3]; //X
+        Cacoords[i* 3 +1] = coords[i * 3 +1]; //Y
+        Cacoords[i * 3 + 2] = coords[i * 3 + 2]; //Z
+    }
+    return Cacoords; 
+}
+
+//FINO A QUI
 
 
 void pst(params* input){
