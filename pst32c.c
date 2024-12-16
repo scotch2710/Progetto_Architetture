@@ -356,9 +356,9 @@ type rama_energy(VECTOR phi, VECTOR psi) {
 extern MATRIX coordsca(MATRIX coords) {
     MATRIX Cacoords = alloc_matrix(p->N, 3);
     for (int i = 0; i < p->N; i++) {
-        Cacoords[i * 3] = coords[i * 3]; //X
-        Cacoords[i* 3 +1] = coords[i * 3 +1]; //Y
-        Cacoords[i * 3 + 2] = coords[i * 3 + 2]; //Z
+        Cacoords[i * 3] = coords[i * 9 + 3]; //X
+        Cacoords[i* 3 +1] = coords[i * 9 + 4]; //Y
+        Cacoords[i * 3 + 2] = coords[i * 9 + 5]; //Z
     }
     return Cacoords; 
 }
