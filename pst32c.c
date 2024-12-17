@@ -272,7 +272,7 @@ void gen_rnd_mat(VECTOR v, int N){
 
 	for(i=0; i<N; i++){
 		// Campionamento del valore + scalatura
-		v[i] = (random()*2 * M_PI) - M_PI;
+		v[i] = (random() * 2 * M_PI) - M_PI;
 	}
 }
 
@@ -407,9 +407,9 @@ extern type packing_energy(char*s,MATRIX coords) {
     MATRIX cacoords = coordsca(coords);
     type energy = 0.0;
     for (int i = 0; i < p->N; i++) {
-		if(i != j){
-			type  density = 0.0;
-			for (int j = 0; j < p->N; j++) {
+		type  density = 0.0;
+		for (int j = 0; j < p->N; j++) {
+			if(i != j){
 				type dist = distanza(cacoords, i, j);
 				if (dist < 10.0) {
 					density = density + volume[(int)s[j]] / (pow(dist, 3)); 
