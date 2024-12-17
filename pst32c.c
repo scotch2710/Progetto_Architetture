@@ -386,20 +386,37 @@ type hydrofobic_energy (char* sequenza, MATRIX coordinate){
 	return energy;
 }
 
+extern type electrostatic_energy(char* s, MATRIX coords){
+	MATRIX coordinateCa= coordsca(coords);
+	type energy= 0.0;
+	for(int i=0; i < p->N; i++){
+		for(int j= i+1; i < p->N; j++){
+			if(i!= j){
+				type dist= distanza(coordinateCa, i, j);
+				if(dist < 10.0 && charge[(int)s[i]] !=0 && charge[(int)s[j] != 0] ){
+					energy += (charge[(int)s[i]]*charge[(int)s[j]])/(dist*4.0);
+				}
+			}
+		}
+	}
+
+}
 
 extern type packing_energy(char*s,MATRIX coords) {
    // const int n = 256; //assicurarsene
     MATRIX cacoords = coordsca(coords);
     type energy = 0.0;
     for (int i = 0; i < p->N; i++) {
-        type  density = 0.0;
-        for (int j = 0; j < p->N; j++) {
-			type dist = distanza(cacoords, i, j);
-			if (dist < 10.0) {
-				density = density + volume[(int)s[j]] / (pow(dist, 3)); 
+		if(i != j){
+			type  density = 0.0;
+			for (int j = 0; j < p->N; j++) {
+				type dist = distanza(cacoords, i, j);
+				if (dist < 10.0) {
+					density = density + volume[(int)s[j]] / (pow(dist, 3)); 
+				}
 			}
-        }
-        energy = energy + pow((volume[(int)s[i]] - density), 2);
+			energy = energy + pow((volume[(int)s[i]] - density), 2);
+		}
     }
 	return energy;
 }
