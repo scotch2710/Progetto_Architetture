@@ -334,7 +334,7 @@ extern MATRIX rotation(VECTOR axis, type theta){
     return result;
 	}
 
-MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
+MATRIX backbone(char* seq, VECTOR phi, VECTOR psi, params* p){
 	int n = p->N;
 	type r_CaN = 1.46;
 	type r_CaC = 1.52;
@@ -343,6 +343,7 @@ MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 	type theta_CaCN = 2.028;
 	type theta_CNCa = 2.124;
 	type theta_NCaC = 1.940;
+	printf("dentro");
 	MATRIX coords= alloc_matrix(n*3,3);
 	coords[0]=0;
 	coords[1]=0;
@@ -350,7 +351,7 @@ MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 	coords[3]=r_CaN;
 	coords[4]=0;
 	coords[5]=0;
-
+	printf("dentro");
 	for(int i=0; i<n; i++){
 		int idx = i*9;
 		if(i>0){
@@ -517,8 +518,10 @@ extern type packing_energy(char*s,MATRIX coords) {
 
 
 
-extern type energy(char* seq, VECTOR phi, VECTOR psi){
-	MATRIX coords= backbone(seq, phi, psi);
+extern type energy(char* seq, VECTOR phi, VECTOR psi, params* p){
+	printf("energy");
+	MATRIX coords= backbone(seq, phi, psi, p);
+	printf("backbone");
 	type rama= rama_energy(phi, psi);
 	type hydro = hydrofobic_energy(seq, coords);
 	type elec = electrostatic_energy(seq, coords);
@@ -537,15 +540,19 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 
 
 void pst(params* input){
+	
 	int n = input->N;
+	
 	type T = input->to;
-
+	
 	VECTOR phi= input->phi;
+	
 	VECTOR psi= input->psi;
-
-	type E= energy(input->seq, phi, psi);
+	
+	type E= energy(input->seq, phi, psi, input);
+	
 	type t=0.0;
-
+	
 	while(T>0){
 		srand((int)time(NULL));
 
@@ -555,17 +562,17 @@ void pst(params* input){
 		phi[i] = phi[i] + theta_phi;
 		type theta_psi = 1.4;
 		psi[i] = psi[i] + theta_psi;
-		type deltaE= energy(input->seq, phi, psi) - E;
+		type deltaE= energy(input->seq, phi, psi, input) - E;
 
 		if(deltaE<=0){
-			E= energy(input->seq, phi, psi);
+			E= energy(input->seq, phi, psi, input);
 		}
 		else{
 			type P = pow(M_E, (-deltaE/(input->k*T)));
 			type r = random();
 
 			if (r<=P)
-				E= energy(input->seq, phi, psi);
+				E= energy(input->seq, phi, psi, input);
 			else{
 				phi[i] = phi[i] - theta_phi;
 				psi[i] = psi[i] + theta_psi;
@@ -728,16 +735,21 @@ int main(int argc, char** argv) {
 	}
 
 	// COMMENTARE QUESTA RIGA!
-	prova(input);
+	//prova(input);
 	//
 
 	//
 	// Predizione struttura terziaria
 	//
+	
 	t = clock();
+	printf("Ciao Angiulli");
 	pst(input);
 	t = clock() - t;
 	time = ((float)t)/CLOCKS_PER_SEC;
+	printf("Ciao Fassetti");
+
+
 
 	if(!input->silent)
 		printf("PST time = %.3f secs\n", time);
