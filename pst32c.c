@@ -428,7 +428,7 @@ extern type packing_energy(char*s,MATRIX coords) {
 
 
 extern type energy(char* seq, VECTOR phi, VECTOR psi){
-	MATRIX coords= backbone(seq, psi, phi);
+	MATRIX coords= backbone(seq, phi, psi);
 	type rama= rama_energy(phi, psi);
 	type hydro = hydrofobic_energy(seq, coords);
 	type elec = electrostatic_energy(seq, coords);
@@ -447,9 +447,43 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 
 
 void pst(params* input){
-	// --------------------------------------------------------------
-	// Codificare qui l'algoritmo di Predizione struttura terziaria
-	// --------------------------------------------------------------
+	int n = input->N;
+	type T = input->to;
+
+	VECTOR phi= input->phi;
+	VECTOR psi= input->psi;
+
+	type E= energy(input->seq, phi, psi);
+	type t=0.0;
+
+	while(T>0){
+		srand((int)time(NULL));
+
+    	// Genera un numero casuale tra 0 e n
+    	int i = rand() % (n + 1);
+		type theta_phi = 2.2;
+		phi[i] = phi[i] + theta_phi;
+		type theta_psi = 1.4;
+		psi[i] = psi[i] + theta_psi;
+		type deltaE= energy(input->seq, phi, psi) - E;
+
+		if(deltaE<=0){
+			E= energy(input->seq, phi, psi);
+		}
+		else{
+			type P = pow(M_E, (-deltaE/(input->k*T)));
+			type r = random();
+
+			if (r<=P)
+				E= energy(input->seq, phi, psi);
+			else{
+				phi[i] = phi[i] - theta_phi;
+				psi[i] = psi[i] + theta_psi;
+			}
+		}
+		t=t+1;
+		T= input->to - sqrt(input->alpha*t);
+	}
 }
 
 int main(int argc, char** argv) {
