@@ -325,7 +325,40 @@ extern MATRIX rotation(VECTOR axis, type theta){
     return result;
 	}
 
+MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
+	int n = p->N;
+	type r_CaN = 1.46;
+	type r_CaC = 1.52;
+	type r_CN = 1.33;
 
+	type theta_CaCN = 2.028;
+	type theta_CNCa = 2.124;
+	type theta_NCaC = 1.940;
+	MATRIX coords= alloc_matrix(n*3,3);
+	coords[0]=0;
+	coords[1]=0;
+	coords[2]=0;
+	coords[3]=r_CaN;
+	coords[4]=0;
+	coords[5]=0;
+
+	for(int i=0; i<n; i++){
+		int idx = i*3;
+		if(i>0){
+			
+
+
+
+
+		}
+
+
+
+
+	}
+
+
+}
 
 
 type rama_energy(VECTOR phi, VECTOR psi) {
