@@ -283,6 +283,15 @@ void gen_rnd_mat(VECTOR v, int N){
 // PROCEDURE ASSEMBLY
 extern void prova(params* input);
 
+void vector_matrix_product(VECTOR v, MATRIX R, VECTOR result) {
+    // Calcola il prodotto v * R
+    for (int i = 0; i < 3; i++) {
+        result[i] = v[0] * R[i] +
+                    v[1] * R[i + 3] +
+                    v[2] * R[i + 6];
+    }
+}
+
 type approx_cos(type theta) {
     type x2 = theta * theta;
     return 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0);
@@ -343,12 +352,38 @@ MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 	coords[5]=0;
 
 	for(int i=0; i<n; i++){
-		int idx = i*3;
+		int idx = i*9;
 		if(i>0){
-			
 
+        	// Posizionamento di N
+        	VECTOR v1 = alloc_matrix(1, 3);  //forse si potrebbe allocare un solo vettore fuori dal for e riutilizzarlo
+        	v1[0] = coords[idx - 3] - coords[idx - 6]; // C(i-1) - Cα(i-1)
+        	v1[1] = coords[idx - 2] - coords[idx - 5];
+        	v1[2] = coords[idx - 1] - coords[idx - 4];
+        	type norm_v1 = sqrt(v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]);
+			v1[0]/=norm_v1;
+			v1[1]/=norm_v1;
+			v1[2]/=norm_v1;
+			MATRIX rot= rotation(v1, theta_CNCa);
+			VECTOR new_v = alloc_matrix(1, 3);
+        	new_v[0] = 0;
+       		new_v[1] = r_CN;
+        	new_v[2] = 0;
+			VECTOR res = alloc_matrix(1, 3);
+			vector_matrix_product(new_v, rot, res);
+			coords[idx] = coords[idx-3] + res[0];
+			coords[idx+1] = coords[idx-2] + res[1];
+			coords[idx+2] = coords[idx-1] + res[2];
 
-
+			//Posizionamento Ca
+			VECTOR v2 = alloc_matrix(1, 3);
+			v2[0] = coords[idx] - coords[idx - 3]; // N-C
+        	v2[1] = coords[idx + 1] - coords[idx - 2];
+        	v2[2] = coords[idx + 2] - coords[idx - 1];
+			type norm_v2 = sqrt(v2[0] * v2[0] + v2[1] * v2[1] + v2[2] * v2[2]);
+			v2[0]/=norm_v2;
+			v2[1]/=norm_v2;
+			v2[2]/=norm_v2;
 
 		}
 
