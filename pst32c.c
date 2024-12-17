@@ -356,15 +356,15 @@ MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 		if(i>0){
 
         	// Posizionamento di N
-        	VECTOR v1 = alloc_matrix(1, 3);  //forse si potrebbe allocare un solo vettore fuori dal for e riutilizzarlo
-        	v1[0] = coords[idx - 3] - coords[idx - 6]; // C(i-1) - Cα(i-1)
-        	v1[1] = coords[idx - 2] - coords[idx - 5];
-        	v1[2] = coords[idx - 1] - coords[idx - 4];
-        	type norm_v1 = sqrt(v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]);
-			v1[0]/=norm_v1;
-			v1[1]/=norm_v1;
-			v1[2]/=norm_v1;
-			MATRIX rot= rotation(v1, theta_CNCa);
+        	VECTOR v3 = alloc_matrix(1, 3);  //forse si potrebbe allocare un solo vettore fuori dal for e riutilizzarlo
+        	v3[0] = coords[idx - 3] - coords[idx - 6]; // C(i-1) - Cα(i-1)
+        	v3[1] = coords[idx - 2] - coords[idx - 5];
+        	v3[2] = coords[idx - 1] - coords[idx - 4];
+        	type norm_v1 = sqrt(v3[0] * v3[0] + v3[1] * v3[1] + v3[2] * v3[2]);
+			v3[0]/=norm_v1;
+			v3[1]/=norm_v1;
+			v3[2]/=norm_v1;
+			MATRIX rot= rotation(v3, theta_CNCa);
 			VECTOR new_v = alloc_matrix(1, 3);
         	new_v[0] = 0;
        		new_v[1] = r_CN;
@@ -384,15 +384,37 @@ MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 			v2[0]/=norm_v2;
 			v2[1]/=norm_v2;
 			v2[2]/=norm_v2;
-
+			rot= rotation(v2, phi[i]);
+			new_v[1] = r_CaN;
+			vector_matrix_product(new_v, rot, res);
+			coords[idx+3] = coords[idx] + res[0];
+			coords[idx+4] = coords[idx+1] + res[1];
+			coords[idx+5] = coords[idx+2] + res[2];
 		}
 
-
+		VECTOR v3 = alloc_matrix(1, 3);  //forse si potrebbe allocare un solo vettore fuori dal for e riutilizzarlo
+        v3[0] = coords[idx + 3] - coords[idx]; // C(i-1) - Cα(i-1)
+    	v3[1] = coords[idx + 4] - coords[idx + 1];
+    	v3[2] = coords[idx + 5] - coords[idx + 2];
+		type norm_v3 = sqrt(v3[0] * v3[0] + v3[1] * v3[1] + v3[2] * v3[2]);
+		v3[0]/=norm_v3;
+		v3[1]/=norm_v3;
+		v3[2]/=norm_v3;
+		MATRIX rot= rotation(v3, psi[i]);
+		VECTOR new_v = alloc_matrix(1, 3);
+        new_v[0] = 0;
+		new_v[1] = r_CaC;
+		new_v[2] = 0;
+		VECTOR res = alloc_matrix(1, 3);
+		vector_matrix_product(new_v, rot, res);
+		coords[idx + 6] = coords[idx + 3] + res[0];
+		coords[idx + 7] = coords[idx + 4] + res[1];
+		coords[idx + 8] = coords[idx + 5] + res[2];
 
 
 	}
 
-
+	return coords;
 }
 
 
