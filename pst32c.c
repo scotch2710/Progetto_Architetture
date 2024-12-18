@@ -80,6 +80,7 @@ typedef struct {
 
 } params;
 
+params par;
 params* p;
 /*
 * 
@@ -334,8 +335,9 @@ extern MATRIX rotation(VECTOR axis, type theta){
     return result;
 	}
 
-MATRIX backbone(char* seq, VECTOR phi, VECTOR psi, params* p){
-	int n = p->N;
+MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
+	const int n = 256;
+	printf("%d", n);
 	type r_CaN = 1.46;
 	type r_CaC = 1.52;
 	type r_CN = 1.33;
@@ -426,11 +428,13 @@ type rama_energy(VECTOR phi, VECTOR psi) {
     const type alpha_psi = -47.0;
     const type beta_phi = -119.0;
     const type beta_psi = 113.0;
-
-    type energy = 0.0;
+	const int n = 256;
+    
+	
+	type energy = 0.0;
 
     // Itera su tutti gli elementi
-    for (int i = 0; i < p->N; i++) {
+    for (int i = 0; i < n; i++) {
         // Calcola la distanza alpha
         type alpha_dist = sqrt(pow(phi[i] - alpha_phi, 2) + pow(psi[i] - alpha_psi, 2));
 
@@ -449,8 +453,10 @@ type rama_energy(VECTOR phi, VECTOR psi) {
 }
 
 extern MATRIX coordsca(MATRIX coords) {
-    MATRIX Cacoords = alloc_matrix(p->N, 3);
-    for (int i = 0; i < p->N; i++) {
+    const int n = 256;
+	MATRIX Cacoords = alloc_matrix(n, 3);
+    
+	for (int i = 0; i < n; i++) {
         Cacoords[i * 3] = coords[i * 9 + 3]; //X
         Cacoords[i* 3 +1] = coords[i * 9 + 4]; //Y
         Cacoords[i * 3 + 2] = coords[i * 9 + 5]; //Z
@@ -469,9 +475,11 @@ type distanza (MATRIX coordinateCa, int i, int j){
 type hydrofobic_energy (char* sequenza, MATRIX coordinate){
 	type energy = 0;
 	MATRIX coordinateCa = coordsca(coordinate);
-	
-	for(int i=0; i< p->N; i++){
-		for(int j= i+1; j<p->N; j++){
+	printf("coordinateCA");
+	const int n = 256;
+
+	for(int i=0; i< n; i++){
+		for(int j= i+1; j<n; j++){
 			type dist = distanza(coordinate, i, j);
 			if(dist < 10.0){
 				energy += (hydrophobicity[(int)sequenza[i]] * hydrophobicity[(int)sequenza[j]] )/ dist;
@@ -483,9 +491,11 @@ type hydrofobic_energy (char* sequenza, MATRIX coordinate){
 
 extern type electrostatic_energy(char* s, MATRIX coords){
 	MATRIX coordinateCa= coordsca(coords);
+	printf("elecCoor");
 	type energy= 0.0;
-	for(int i=0; i < p->N; i++){
-		for(int j= i+1; i < p->N; j++){
+	const int n = 256;
+	for(int i=0; i < n; i++){
+		for(int j= i+1; j < n; j++){
 			if(i!= j){
 				type dist= distanza(coordinateCa, i, j);
 				if(dist < 10.0 && charge[(int)s[i]] !=0 && charge[(int)s[j] != 0] ){
@@ -494,16 +504,16 @@ extern type electrostatic_energy(char* s, MATRIX coords){
 			}
 		}
 	}
-
+	return energy; 
 }
 
 extern type packing_energy(char*s,MATRIX coords) {
-   // const int n = 256; //assicurarsene
+    const int n = 256; 
     MATRIX cacoords = coordsca(coords);
     type energy = 0.0;
-    for (int i = 0; i < p->N; i++) {
+    for (int i = 0; i < n; i++) {
 		type  density = 0.0;
-		for (int j = 0; j < p->N; j++) {
+		for (int j = 0; j < n; j++) {
 			if(i != j){
 				type dist = distanza(cacoords, i, j);
 				if (dist < 10.0) {
@@ -518,15 +528,19 @@ extern type packing_energy(char*s,MATRIX coords) {
 
 
 
-extern type energy(char* seq, VECTOR phi, VECTOR psi, params* p){
+extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	printf("energy");
-	MATRIX coords= backbone(seq, phi, psi, p);
+	MATRIX coords= backbone(seq, phi, psi);
+	
 	printf("backbone");
 	type rama= rama_energy(phi, psi);
+	printf("rama");
 	type hydro = hydrofobic_energy(seq, coords);
+	printf("hydro");
 	type elec = electrostatic_energy(seq, coords);
+	printf("elec");
 	type pack = packing_energy(seq, coords);
-
+	printf("pack");
 	type w_rama= 1.0;
 	type w_hydro= 0.5;
 	type w_elec= 0.2;
@@ -544,12 +558,12 @@ void pst(params* input){
 	int n = input->N;
 	
 	type T = input->to;
-	
+	printf("%d %f",n, T );
 	VECTOR phi= input->phi;
 	
 	VECTOR psi= input->psi;
 	
-	type E= energy(input->seq, phi, psi, input);
+	type E= energy(input->seq, phi, psi);
 	
 	type t=0.0;
 	
@@ -562,17 +576,17 @@ void pst(params* input){
 		phi[i] = phi[i] + theta_phi;
 		type theta_psi = 1.4;
 		psi[i] = psi[i] + theta_psi;
-		type deltaE= energy(input->seq, phi, psi, input) - E;
+		type deltaE= energy(input->seq, phi, psi) - E;
 
 		if(deltaE<=0){
-			E= energy(input->seq, phi, psi, input);
+			E= energy(input->seq, phi, psi);
 		}
 		else{
 			type P = pow(M_E, (-deltaE/(input->k*T)));
 			type r = random();
 
 			if (r<=P)
-				E= energy(input->seq, phi, psi, input);
+				E= energy(input->seq, phi, psi);
 			else{
 				phi[i] = phi[i] - theta_phi;
 				psi[i] = psi[i] + theta_psi;
