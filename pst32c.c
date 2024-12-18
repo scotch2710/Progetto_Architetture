@@ -80,8 +80,7 @@ typedef struct {
 
 } params;
 
-params par;
-params* p;
+
 /*
 * 
 *	Le funzioni sono state scritte assumento che le matrici siano memorizzate 
