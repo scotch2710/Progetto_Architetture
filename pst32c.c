@@ -473,9 +473,9 @@ extern MATRIX coordsca(MATRIX coords) {
 
 
 type distanza (MATRIX coordinateCa, int i, int j){
-		int x_df = coordinateCa[3*i] - coordinateCa[3*j];
-		int y_df = coordinateCa[3*i+1] - coordinateCa[3*j+1];
-		int z_df = coordinateCa[3*i+2] - coordinateCa[3*j+2];
+		type x_df = coordinateCa[3*i] - coordinateCa[3*j];
+		type y_df = coordinateCa[3*i+1] - coordinateCa[3*j+1];
+		type z_df = coordinateCa[3*i+2] - coordinateCa[3*j+2];
 		return sqrt(pow(x_df,2) + pow(y_df,2 ) +pow(z_df,2));
 }
 
@@ -505,7 +505,7 @@ extern type electrostatic_energy(char* s, MATRIX coords){
 		for(int j= i+1; j < n; j++){
 			if(i!= j){
 				type dist= distanza(coordinateCa, i, j);
-				if(dist < 10.0 && charge[(int)s[i]] !=0 && charge[(int)s[j] != 0] ){
+				if(dist < 10.0 && charge[(int)s[i]] !=0 && charge[(int)s[j]] != 0 ){
 					energy += (charge[(int)s[i]]*charge[(int)s[j]])/(dist*4.0);
 				}
 			}
@@ -575,7 +575,7 @@ void pst(params* input){
 	type t=0.0;
 	
 	while(T>0){
-		srand((int)time(NULL));
+		srand(input->sd);
 
     	// Genera un numero casuale tra 0 e n
     	int i = rand() % (n + 1);
