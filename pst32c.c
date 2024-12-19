@@ -318,7 +318,7 @@ extern MATRIX rotation(VECTOR axis, type theta){
 	axis[1] = axis[1] / prod_scal;
 	axis[2] = axis[2] / prod_scal;
 
-	type a= approx_cos(theta/2.0);
+	type a = approx_cos(theta/2.0);
 	type s = -1.0 * approx_sin(theta / 2.0);
     type b = s * axis[0];
     type c = s * axis[1];
@@ -481,7 +481,11 @@ extern MATRIX coordsca(MATRIX coords) {
 }
 
 
+<<<<<<< HEAD
 extern type distanza (MATRIX coordinateCa, int i, int j){
+=======
+type distanza (MATRIX coordinateCa, int i, int j){
+>>>>>>> origin/main
 		type x_df = coordinateCa[3*i] - coordinateCa[3*j];
 		type y_df = coordinateCa[3*i+1] - coordinateCa[3*j+1];
 		type z_df = coordinateCa[3*i+2] - coordinateCa[3*j+2];
@@ -498,7 +502,7 @@ extern type hydrofobic_energy (char* sequenza, MATRIX coordinate){
 		for(int j= i+1; j<n; j++){
 			type dist = distanza(coordinate, i, j);
 			if(dist < 10.0){
-				energy += (hydrophobicity[(int)sequenza[i]] * hydrophobicity[(int)sequenza[j]] )/ dist;
+				energy += (hydrophobicity[(int)sequenza[i]-65] * hydrophobicity[(int)sequenza[j]-65] )/ dist;
 			}
 		}
 	}
@@ -514,8 +518,13 @@ extern type electrostatic_energy(char* s, MATRIX coords){
 		for(int j= i+1; j < n; j++){
 			if(i!= j){
 				type dist= distanza(coordinateCa, i, j);
+<<<<<<< HEAD
 				if(dist < 10.0 && charge[(int)s[i]] !=0 && charge[(int)s[j]] != 0 ){
 					energy += (charge[(int)s[i]]*charge[(int)s[j]])/(dist*4.0);
+=======
+				if(dist < 10.0 && charge[(int)s[i]-65] !=0 && charge[(int)s[j]-65] != 0 ){
+					energy += (charge[(int)s[i]-65]*charge[(int)s[j]-65])/(dist*4.0);
+>>>>>>> origin/main
 				}
 			}
 		}
@@ -533,10 +542,10 @@ extern type packing_energy(char*s,MATRIX coords) {
 			if(i != j){
 				type dist = distanza(cacoords, i, j);
 				if (dist < 10.0) {
-					density = density + volume[(int)s[j]] / (pow(dist, 3)); 
+					density = density + volume[(int)s[j]-65] / (pow(dist, 3)); 
 				}
 			}
-			energy = energy + pow((volume[(int)s[i]] - density), 2);
+			energy = energy + pow((volume[(int)s[i]-65] - density), 2);
 		}
     }
 	return energy;

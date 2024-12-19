@@ -2,4 +2,10 @@ out32_256_3_phi.ds2
 out32_256_3_psi.ds2
 .vscode/
 pst32c
+<<<<<<< HEAD
 sseutils32.o
+=======
+pst32.o
+confronto
+confronto.exe
+>>>>>>> origin/main
