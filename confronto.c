@@ -1,0 +1,108 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define VECTOR_SIZE 256
+
+typedef struct {
+    int header1;
+    int header2;
+    float data[VECTOR_SIZE];
+} BinaryFileContent1;
+
+typedef struct {
+    int header1;
+    int header2;
+    double data[VECTOR_SIZE];
+} BinaryFileContent2;
+
+void printFileContent1(const BinaryFileContent1* content) {
+    printf("Header1: %d\n", content->header1);
+    printf("Header2: %d\n", content->header2);
+    printf("Data (float):\n");
+    for (int i = 0; i < VECTOR_SIZE; i++) {
+        printf(" %.2f", content->data[i]);
+        if ((i + 1) % 8 == 0) printf("\n");  // Stampa 8 numeri per riga
+    }
+    printf("\n");
+}
+
+void printFileContent2(const BinaryFileContent2* content) {
+    printf("Header1: %d\n", content->header1);
+    printf("Header2: %d\n", content->header2);
+    printf("Data (double):\n");
+    for (int i = 0; i < VECTOR_SIZE; i++) {
+        printf(" %.2f", content->data[i]);
+        if ((i + 1) % 8 == 0) printf("\n");  // Stampa 8 numeri per riga
+    }
+    printf("\n");
+}
+
+void compareFiles(const BinaryFileContent1* file1, const BinaryFileContent2* file2, int* identicalCount, int* differentCount) {
+    *identicalCount = 0;
+    *differentCount = 0;
+
+    for (int i = 0; i < VECTOR_SIZE; i++) {
+        if ((double)file1->data[i] == file2->data[i]) {
+            (*identicalCount)++;
+        } else {
+            (*differentCount)++;
+        }
+    }
+}
+
+int main(int argc, char* argv[]) {
+    if (argc != 3) {
+        fprintf(stderr, "Uso: %s <file1> <file2>\n", argv[0]);
+        return EXIT_FAILURE;
+    }
+
+    const char* file1Name = argv[1];
+    const char* file2Name = argv[2];
+
+    FILE* file1 = fopen(file1Name, "rb");
+    FILE* file2 = fopen(file2Name, "rb");
+    if (!file1 || !file2) {
+        perror("Errore nell'apertura dei file");
+        return EXIT_FAILURE;
+    }
+
+    BinaryFileContent1 content1;
+    BinaryFileContent2 content2;
+
+    // Leggi il contenuto del primo file
+    if (fread(&content1, sizeof(BinaryFileContent1), 1, file1) != 1) {
+        fprintf(stderr, "Errore nella lettura del primo file.\n");
+        fclose(file1);
+        fclose(file2);
+        return EXIT_FAILURE;
+    }
+
+    // Leggi il contenuto del secondo file
+    if (fread(&content2, sizeof(BinaryFileContent2), 1, file2) != 1) {
+        fprintf(stderr, "Errore nella lettura del secondo file.\n");
+        fclose(file1);
+        fclose(file2);
+        return EXIT_FAILURE;
+    }
+
+    fclose(file1);
+    fclose(file2);
+
+    // Stampa i contenuti dei file
+    printf("Contenuto del primo file:\n");
+    printFileContent1(&content1);
+
+    printf("\nContenuto del secondo file:\n");
+    printFileContent2(&content2);
+
+    // Confronta i file
+    int identicalCount = 0, differentCount = 0;
+    compareFiles(&content1, &content2, &identicalCount, &differentCount);
+
+    // Risultati
+    printf("\nRisultati del confronto:\n");
+    printf("Numeri identici: %d\n", identicalCount);
+    printf("Numeri diversi: %d\n", differentCount);
+
+    return EXIT_SUCCESS;
+}
