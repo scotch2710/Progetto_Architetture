@@ -291,7 +291,7 @@ void gen_rnd_mat(VECTOR v, int N){
 // PROCEDURE ASSEMBLY
 extern void prova(params* input);
 
-void vector_matrix_product(VECTOR v, MATRIX R, VECTOR result) {
+extern void vector_matrix_product(VECTOR v, MATRIX R, VECTOR result) {
     // Calcola il prodotto v * R
     for (int i = 0; i < 3; i++) {
         result[i] = v[0] * R[i] +
@@ -342,7 +342,7 @@ extern MATRIX rotation(VECTOR axis, type theta){
     return result;
 	}
 
-MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
+extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 	const int n = 256;
 	printf("%d", n);
 	type r_CaN = 1.46;
@@ -363,27 +363,29 @@ MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 	printf("dentro");
 	for(int i=0; i<n; i++){
 		int idx = i*9;
+		VECTOR new_v = alloc_matrix(1, 3);
+		VECTOR res = alloc_matrix(1, 3);
 		if(i>0){
-
         	// Posizionamento di N
-        	VECTOR v3 = alloc_matrix(1, 3);  //forse si potrebbe allocare un solo vettore fuori dal for e riutilizzarlo
-        	v3[0] = coords[idx - 3] - coords[idx - 6]; // C(i-1) - Cα(i-1)
-        	v3[1] = coords[idx - 2] - coords[idx - 5];
-        	v3[2] = coords[idx - 1] - coords[idx - 4];
-        	type norm_v1 = sqrt(v3[0] * v3[0] + v3[1] * v3[1] + v3[2] * v3[2]);
-			v3[0]/=norm_v1;
-			v3[1]/=norm_v1;
-			v3[2]/=norm_v1;
-			MATRIX rot= rotation(v3, theta_CNCa);
-			VECTOR new_v = alloc_matrix(1, 3);
+        	VECTOR v1 = alloc_matrix(1, 3);  //forse si potrebbe allocare un solo vettore fuori dal for e riutilizzarlo
+        	v1[0] = coords[idx - 3] - coords[idx - 6]; // C(i-1) - Ca(i-1)
+        	v1[1] = coords[idx - 2] - coords[idx - 5];
+        	v1[2] = coords[idx - 1] - coords[idx - 4];
+        	type norm_v1 = sqrt(v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]);
+			v1[0]/=norm_v1;
+			v1[1]/=norm_v1;
+			v1[2]/=norm_v1;
+			MATRIX rot= rotation(v1, theta_CNCa);
         	new_v[0] = 0;
        		new_v[1] = r_CN;
         	new_v[2] = 0;
-			VECTOR res = alloc_matrix(1, 3);
+			
 			vector_matrix_product(new_v, rot, res);
 			coords[idx] = coords[idx-3] + res[0];
 			coords[idx+1] = coords[idx-2] + res[1];
 			coords[idx+2] = coords[idx-1] + res[2];
+			dealloc_matrix(v1);
+			
 
 			//Posizionamento Ca
 			VECTOR v2 = alloc_matrix(1, 3);
@@ -400,10 +402,12 @@ MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 			coords[idx+3] = coords[idx] + res[0];
 			coords[idx+4] = coords[idx+1] + res[1];
 			coords[idx+5] = coords[idx+2] + res[2];
+			dealloc_matrix(v2);
+		
 		}
 
 		VECTOR v3 = alloc_matrix(1, 3);  //forse si potrebbe allocare un solo vettore fuori dal for e riutilizzarlo
-        v3[0] = coords[idx + 3] - coords[idx]; // C(i-1) - Cα(i-1)
+        v3[0] = coords[idx + 3] - coords[idx]; 
     	v3[1] = coords[idx + 4] - coords[idx + 1];
     	v3[2] = coords[idx + 5] - coords[idx + 2];
 		type norm_v3 = sqrt(v3[0] * v3[0] + v3[1] * v3[1] + v3[2] * v3[2]);
@@ -411,24 +415,29 @@ MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 		v3[1]/=norm_v3;
 		v3[2]/=norm_v3;
 		MATRIX rot= rotation(v3, psi[i]);
-		VECTOR new_v = alloc_matrix(1, 3);
+		//VECTOR new_v = alloc_matrix(1, 3);
         new_v[0] = 0;
 		new_v[1] = r_CaC;
 		new_v[2] = 0;
-		VECTOR res = alloc_matrix(1, 3);
+		//VECTOR res = alloc_matrix(1, 3);
 		vector_matrix_product(new_v, rot, res);
 		coords[idx + 6] = coords[idx + 3] + res[0];
 		coords[idx + 7] = coords[idx + 4] + res[1];
 		coords[idx + 8] = coords[idx + 5] + res[2];
 
+		dealloc_matrix(rot);
+		dealloc_matrix(res);
+		dealloc_matrix(new_v);
+		dealloc_matrix(v3);
 
+	
 	}
-
+	
 	return coords;
 }
 
 
-type rama_energy(VECTOR phi, VECTOR psi) {
+extern type rama_energy(VECTOR phi, VECTOR psi) {
     // Costanti di Ramachandran
     
     const type alpha_phi = -57.8;
@@ -465,21 +474,21 @@ extern MATRIX coordsca(MATRIX coords) {
     
 	for (int i = 0; i < n; i++) {
         Cacoords[i * 3] = coords[i * 9 + 3]; //X
-        Cacoords[i* 3 +1] = coords[i * 9 + 4]; //Y
+        Cacoords[i* 3 + 1] = coords[i * 9 + 4]; //Y
         Cacoords[i * 3 + 2] = coords[i * 9 + 5]; //Z
     }
     return Cacoords; 
 }
 
 
-type distanza (MATRIX coordinateCa, int i, int j){
-		int x_df = coordinateCa[3*i] - coordinateCa[3*j];
-		int y_df = coordinateCa[3*i+1] - coordinateCa[3*j+1];
-		int z_df = coordinateCa[3*i+2] - coordinateCa[3*j+2];
+extern type distanza (MATRIX coordinateCa, int i, int j){
+		type x_df = coordinateCa[3*i] - coordinateCa[3*j];
+		type y_df = coordinateCa[3*i+1] - coordinateCa[3*j+1];
+		type z_df = coordinateCa[3*i+2] - coordinateCa[3*j+2];
 		return sqrt(pow(x_df,2) + pow(y_df,2 ) +pow(z_df,2));
 }
 
-type hydrofobic_energy (char* sequenza, MATRIX coordinate){
+extern type hydrofobic_energy (char* sequenza, MATRIX coordinate){
 	type energy = 0;
 	MATRIX coordinateCa = coordsca(coordinate);
 	printf("coordinateCA");
@@ -505,7 +514,7 @@ extern type electrostatic_energy(char* s, MATRIX coords){
 		for(int j= i+1; j < n; j++){
 			if(i!= j){
 				type dist= distanza(coordinateCa, i, j);
-				if(dist < 10.0 && charge[(int)s[i]] !=0 && charge[(int)s[j] != 0] ){
+				if(dist < 10.0 && charge[(int)s[i]] !=0 && charge[(int)s[j]] != 0 ){
 					energy += (charge[(int)s[i]]*charge[(int)s[j]])/(dist*4.0);
 				}
 			}
@@ -575,13 +584,13 @@ void pst(params* input){
 	type t=0.0;
 	
 	while(T>0){
-		srand((int)time(NULL));
+		srand(input->sd);
 
     	// Genera un numero casuale tra 0 e n
     	int i = rand() % (n + 1);
-		type theta_phi = 2.2;
+		type theta_phi = ((type)rand() / RAND_MAX) * (2 * M_PI) - M_PI;
 		phi[i] = phi[i] + theta_phi;
-		type theta_psi = 1.4;
+		type theta_psi =((type)rand() / RAND_MAX) * (2 * M_PI) - M_PI;
 		psi[i] = psi[i] + theta_psi;
 		type deltaE= energy(input->seq, phi, psi) - E;
 
