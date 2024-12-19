@@ -481,11 +481,7 @@ extern MATRIX coordsca(MATRIX coords) {
 }
 
 
-<<<<<<< HEAD
-extern type distanza (MATRIX coordinateCa, int i, int j){
-=======
 type distanza (MATRIX coordinateCa, int i, int j){
->>>>>>> origin/main
 		type x_df = coordinateCa[3*i] - coordinateCa[3*j];
 		type y_df = coordinateCa[3*i+1] - coordinateCa[3*j+1];
 		type z_df = coordinateCa[3*i+2] - coordinateCa[3*j+2];
@@ -518,13 +514,8 @@ extern type electrostatic_energy(char* s, MATRIX coords){
 		for(int j= i+1; j < n; j++){
 			if(i!= j){
 				type dist= distanza(coordinateCa, i, j);
-<<<<<<< HEAD
 				if(dist < 10.0 && charge[(int)s[i]] !=0 && charge[(int)s[j]] != 0 ){
 					energy += (charge[(int)s[i]]*charge[(int)s[j]])/(dist*4.0);
-=======
-				if(dist < 10.0 && charge[(int)s[i]-65] !=0 && charge[(int)s[j]-65] != 0 ){
-					energy += (charge[(int)s[i]-65]*charge[(int)s[j]-65])/(dist*4.0);
->>>>>>> origin/main
 				}
 			}
 		}
