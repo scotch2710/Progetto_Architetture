@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h> // Per fabs()
 
 #define VECTOR_SIZE 256
+#define EPSILON 0.001 // Soglia per confronto fino alla terza cifra decimale
 
 typedef struct {
     int header1;
@@ -20,8 +22,8 @@ void printFileContent1(const BinaryFileContent1* content) {
     printf("Header2: %d\n", content->header2);
     printf("Data (float):\n");
     for (int i = 0; i < VECTOR_SIZE; i++) {
-        printf(" %.2f", content->data[i]);
-        if ((i + 1) % 8 == 0) printf("\n");  // Stampa 8 numeri per riga
+        printf(" %.3f", content->data[i]);
+        if ((i + 1) % 8 == 0) printf("\n");
     }
     printf("\n");
 }
@@ -31,8 +33,8 @@ void printFileContent2(const BinaryFileContent2* content) {
     printf("Header2: %d\n", content->header2);
     printf("Data (double):\n");
     for (int i = 0; i < VECTOR_SIZE; i++) {
-        printf(" %.2f", content->data[i]);
-        if ((i + 1) % 8 == 0) printf("\n");  // Stampa 8 numeri per riga
+        printf(" %.3f", content->data[i]);
+        if ((i + 1) % 8 == 0) printf("\n");
     }
     printf("\n");
 }
@@ -42,7 +44,7 @@ void compareFiles(const BinaryFileContent1* file1, const BinaryFileContent2* fil
     *differentCount = 0;
 
     for (int i = 0; i < VECTOR_SIZE; i++) {
-        if ((double)file1->data[i] == file2->data[i]) {
+        if (fabs((double)file1->data[i] - file2->data[i]) <= EPSILON) {
             (*identicalCount)++;
         } else {
             (*differentCount)++;
