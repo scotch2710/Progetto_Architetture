@@ -313,7 +313,7 @@ type approx_sin(type theta) {
 
 extern MATRIX rotation(VECTOR axis, type theta){
 	type prod_scal= (axis[0]*axis[0])+(axis[1]*axis[1])+(axis[2]*axis[2]);
-
+	
 	axis[0] = axis[0] / prod_scal;
 	axis[1] = axis[1] / prod_scal;
 	axis[2] = axis[2] / prod_scal;
@@ -344,7 +344,7 @@ extern MATRIX rotation(VECTOR axis, type theta){
 
 extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 	const int n = 256;
-	printf("%d", n);
+	
 	type r_CaN = 1.46;
 	type r_CaC = 1.52;
 	type r_CN = 1.33;
@@ -352,7 +352,6 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 	type theta_CaCN = 2.028;
 	type theta_CNCa = 2.124;
 	type theta_NCaC = 1.940;
-	printf("dentro");
 	MATRIX coords= alloc_matrix(n*3,3);
 	coords[0]=0;
 	coords[1]=0;
@@ -360,7 +359,6 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 	coords[3]=r_CaN;
 	coords[4]=0;
 	coords[5]=0;
-	printf("dentro");
 	for(int i=0; i<n; i++){
 		int idx = i*9;
 		VECTOR new_v = alloc_matrix(1, 3);
@@ -372,11 +370,8 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
         	v1[1] = coords[idx - 2] - coords[idx - 5];
         	v1[2] = coords[idx - 1] - coords[idx - 4];
         	type norm_v1 = sqrt(v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]);
-			printf("norma %f", norm_v1);
-			if (norm_v1 == 0) {
-    			printf("Errore: norma vettore pari a zero al passo %f.\n", i);
-				printf("%f %f %f\n", v1[0], v1[1], v1[2]);
-			}
+			
+			
 			v1[0]/=norm_v1;
 			v1[1]/=norm_v1;
 			v1[2]/=norm_v1;
@@ -399,12 +394,15 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
         	v2[1] = coords[idx + 1] - coords[idx - 2];
         	v2[2] = coords[idx + 2] - coords[idx - 1];
 			type norm_v2 = sqrt(v2[0] * v2[0] + v2[1] * v2[1] + v2[2] * v2[2]);
-			if (norm_v2 == 0) {
-    			printf("Errore: norma vettore v2 pari a zero.\n");
-			}
+			
+			printf("norma v2: %f  %d \n", norm_v2, i);
 			v2[0]/=norm_v2;
 			v2[1]/=norm_v2;
 			v2[2]/=norm_v2;
+			
+			//printf("vettore v2 %d: %f %f %f\n",i, v2[0],v2[1],v2[2]);
+			
+			
 			rot= rotation(v2, phi[i]);
 			new_v[1] = r_CaN;
 			vector_matrix_product(new_v, rot, res);
@@ -420,14 +418,12 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
     	v3[1] = coords[idx + 4] - coords[idx + 1];
     	v3[2] = coords[idx + 5] - coords[idx + 2];
 		type norm_v3 = sqrt(v3[0] * v3[0] + v3[1] * v3[1] + v3[2] * v3[2]);
-		if (norm_v3 == 0) {
-    		printf("Errore: norma vettore v3 pari a zero.\n");
-		}
+		
 		v3[0]/=norm_v3;
 		v3[1]/=norm_v3;
 		v3[2]/=norm_v3;
 		MATRIX rot= rotation(v3, psi[i]);
-		//VECTOR new_v = alloc_matrix(1, 3);
+		
         new_v[0] = 0;
 		new_v[1] = r_CaC;
 		new_v[2] = 0;
@@ -441,15 +437,15 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 		dealloc_matrix(res);
 		//dealloc_matrix(new_v);
 		dealloc_matrix(v3);
-
+		
 	
 	}
 
 	// Stampa della matrice coords
-    printf("Coordinate calcolate:\n");
+    /*printf("Coordinate calcolate:\n");
     for (int i = 0; i < n * 3; i++) {
         printf("%f %f %f\n", coords[i * 3], coords[i * 3 + 1], coords[i * 3 + 2]);
-    }
+    }*/
 	
 	return coords;
 }
@@ -503,18 +499,19 @@ type distanza (MATRIX coordinateCa, int i, int j){
 		type x_df = coordinateCa[3*i] - coordinateCa[3*j];
 		type y_df = coordinateCa[3*i+1] - coordinateCa[3*j+1];
 		type z_df = coordinateCa[3*i+2] - coordinateCa[3*j+2];
-		return sqrt(pow(x_df,2) + pow(y_df,2 ) +pow(z_df,2));
+		return sqrt(pow(x_df,2) + pow(y_df,2 ) + pow(z_df,2));
 }
 
 extern type hydrofobic_energy (char* sequenza, MATRIX coordinate){
 	type energy = 0;
 	MATRIX coordinateCa = coordsca(coordinate);
-	printf("coordinateCA");
+	
 	const int n = 256;
 
 	for(int i=0; i< n; i++){
 		for(int j= i+1; j<n; j++){
 			type dist = distanza(coordinate, i, j);
+			
 			if(dist < 10.0){
 				energy += (hydrophobicity[(int)sequenza[i]-65] * hydrophobicity[(int)sequenza[j]-65] )/ dist;
 			}
@@ -525,19 +522,21 @@ extern type hydrofobic_energy (char* sequenza, MATRIX coordinate){
 
 extern type electrostatic_energy(char* s, MATRIX coords){
 	MATRIX coordinateCa= coordsca(coords);
-	printf("elecCoor");
+	
 	type energy= 0.0;
 	const int n = 256;
 	for(int i=0; i < n; i++){
 		for(int j= i+1; j < n; j++){
 			if(i!= j){
 				type dist= distanza(coordinateCa, i, j);
-				if(dist < 10.0 && charge[(int)s[i]] !=0 && charge[(int)s[j]] != 0 ){
-					energy += (charge[(int)s[i]]*charge[(int)s[j]])/(dist*4.0);
+				
+				if(dist < 10.0 && charge[(int)s[i]-65] !=0 && charge[(int)s[j]-65] != 0 ){
+					energy += (charge[(int)s[i]-65]*charge[(int)s[j]-65])/(dist*4.0);
 				}
 			}
 		}
 	}
+	//printf("elec: %f \n", energy);
 	return energy; 
 }
 
@@ -550,38 +549,42 @@ extern type packing_energy(char*s,MATRIX coords) {
 		for (int j = 0; j < n; j++) {
 			if(i != j){
 				type dist = distanza(cacoords, i, j);
+				
 				if (dist < 10.0) {
 					density = density + volume[(int)s[j]-65] / (pow(dist, 3)); 
 				}
 			}
-			energy = energy + pow((volume[(int)s[i]-65] - density), 2);
+			
 		}
-    }
+		energy = energy + pow((volume[(int)s[i]-65] - density), 2);
+	}
+	//printf("pack: %f \n", energy);
 	return energy;
 }
 
 
 
 extern type energy(char* seq, VECTOR phi, VECTOR psi){
-	printf("energy");
+	
 	MATRIX coords= backbone(seq, phi, psi);
 	
-	printf("backbone");
+	
 	type rama= rama_energy(phi, psi);
-	printf("rama");
+	//printf("rama %f",rama);
 	type hydro = hydrofobic_energy(seq, coords);
-	printf("hydro");
+	//printf("hydro %f",hydro);
 	type elec = electrostatic_energy(seq, coords);
-	printf("elec");
+	//printf("elec %f",elec);
 	type pack = packing_energy(seq, coords);
-	printf("pack");
+	//printf("pack %f",pack);
 	type w_rama= 1.0;
 	type w_hydro= 0.5;
 	type w_elec= 0.2;
 	type w_pack= 0.3;
 
 	type tot= (w_rama*rama) + (w_elec*elec)+(w_hydro*hydro)+(w_pack*pack);
-
+	dealloc_matrix(coords);
+	
 	return tot;
 }
 
@@ -592,7 +595,7 @@ void pst(params* input){
 	int n = input->N;
 	
 	type T = input->to;
-	printf("%d %f",n, T );
+	
 	VECTOR phi= input->phi;
 	
 	VECTOR psi= input->psi;
@@ -791,11 +794,11 @@ int main(int argc, char** argv) {
 	//
 	
 	t = clock();
-	printf("Ciao Angiulli");
+	
 	pst(input);
 	t = clock() - t;
 	time = ((float)t)/CLOCKS_PER_SEC;
-	printf("Ciao Fassetti");
+	
 
 
 
