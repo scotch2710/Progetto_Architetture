@@ -339,12 +339,17 @@ extern MATRIX rotation(VECTOR axis, type theta){
     result[7] = 2 * (c * d - a * b);
     result[8] = a * a + d * d - b * b - c * c;
 
+	
+
     return result;
 	}
 
 extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 	const int n = 256;
+<<<<<<< HEAD
 	
+=======
+>>>>>>> 79816c81872872774855ff3799a6e933493e67b1
 	type r_CaN = 1.46;
 	type r_CaC = 1.52;
 	type r_CN = 1.33;
@@ -362,7 +367,6 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 	for(int i=0; i<n; i++){
 		int idx = i*9;
 		VECTOR new_v = alloc_matrix(1, 3);
-		VECTOR res = alloc_matrix(1, 3);
 		if(i>0){
         	// Posizionamento di N
         	VECTOR v1 = alloc_matrix(1, 3);  //forse si potrebbe allocare un solo vettore fuori dal for e riutilizzarlo
@@ -371,19 +375,25 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
         	v1[2] = coords[idx - 1] - coords[idx - 4];
         	type norm_v1 = sqrt(v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]);
 			
+<<<<<<< HEAD
 			
+=======
+>>>>>>> 79816c81872872774855ff3799a6e933493e67b1
 			v1[0]/=norm_v1;
 			v1[1]/=norm_v1;
 			v1[2]/=norm_v1;
 			MATRIX rot= rotation(v1, theta_CNCa);
+			// Stampa della matrice coords
+			
         	new_v[0] = 0;
        		new_v[1] = r_CN;
         	new_v[2] = 0;
 			
-			vector_matrix_product(new_v, rot, res);
-			coords[idx] = coords[idx-3] + res[0];
-			coords[idx+1] = coords[idx-2] + res[1];
-			coords[idx+2] = coords[idx-1] + res[2];
+			vector_matrix_product(new_v, rot, new_v);
+			
+			coords[idx] = coords[idx-3] + new_v[0];
+			coords[idx+1] = coords[idx-2] + new_v[1];
+			coords[idx+2] = coords[idx-1] + new_v[2];
 			dealloc_matrix(v1);
 			dealloc_matrix(rot);
 			
@@ -395,7 +405,10 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
         	v2[2] = coords[idx + 2] - coords[idx - 1];
 			type norm_v2 = sqrt(v2[0] * v2[0] + v2[1] * v2[1] + v2[2] * v2[2]);
 			
+<<<<<<< HEAD
 			printf("norma v2: %f  %d \n", norm_v2, i);
+=======
+>>>>>>> 79816c81872872774855ff3799a6e933493e67b1
 			v2[0]/=norm_v2;
 			v2[1]/=norm_v2;
 			v2[2]/=norm_v2;
@@ -405,10 +418,10 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 			
 			rot= rotation(v2, phi[i]);
 			new_v[1] = r_CaN;
-			vector_matrix_product(new_v, rot, res);
-			coords[idx+3] = coords[idx] + res[0];
-			coords[idx+4] = coords[idx+1] + res[1];
-			coords[idx+5] = coords[idx+2] + res[2];
+			vector_matrix_product(new_v, rot, new_v);
+			coords[idx+3] = coords[idx] + new_v[0];
+			coords[idx+4] = coords[idx+1] + new_v[1];
+			coords[idx+5] = coords[idx+2] + new_v[2];
 			dealloc_matrix(v2);
 			dealloc_matrix(rot);
 		}
@@ -423,19 +436,20 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 		v3[1]/=norm_v3;
 		v3[2]/=norm_v3;
 		MATRIX rot= rotation(v3, psi[i]);
+<<<<<<< HEAD
 		
+=======
+>>>>>>> 79816c81872872774855ff3799a6e933493e67b1
         new_v[0] = 0;
 		new_v[1] = r_CaC;
 		new_v[2] = 0;
-		//VECTOR res = alloc_matrix(1, 3);
-		vector_matrix_product(new_v, rot, res);
-		coords[idx + 6] = coords[idx + 3] + res[0];
-		coords[idx + 7] = coords[idx + 4] + res[1];
-		coords[idx + 8] = coords[idx + 5] + res[2];
+		vector_matrix_product(new_v, rot, new_v);
+		coords[idx + 6] = coords[idx + 3] + new_v[0];
+		coords[idx + 7] = coords[idx + 4] + new_v[1];
+		coords[idx + 8] = coords[idx + 5] + new_v[2];
 
 		dealloc_matrix(rot);
-		dealloc_matrix(res);
-		//dealloc_matrix(new_v);
+		dealloc_matrix(new_v);
 		dealloc_matrix(v3);
 		
 	
@@ -503,68 +517,109 @@ type distanza (MATRIX coordinateCa, int i, int j){
 }
 
 extern type hydrofobic_energy (char* sequenza, MATRIX coordinate){
-	type energy = 0;
+	type energy = 0.0;
 	MATRIX coordinateCa = coordsca(coordinate);
+<<<<<<< HEAD
 	
+=======
+>>>>>>> 79816c81872872774855ff3799a6e933493e67b1
 	const int n = 256;
 
 	for(int i=0; i< n; i++){
 		for(int j= i+1; j<n; j++){
 			type dist = distanza(coordinate, i, j);
+<<<<<<< HEAD
 			
+=======
+			//printf("distanza: %f\n", dist);
+>>>>>>> 79816c81872872774855ff3799a6e933493e67b1
 			if(dist < 10.0){
 				energy += (hydrophobicity[(int)sequenza[i]-65] * hydrophobicity[(int)sequenza[j]-65] )/ dist;
 			}
 		}
 	}
+	dealloc_matrix(coordinateCa);
+	//printf("energy hhydro: %f\n", energy);
 	return energy;
 }
 
 extern type electrostatic_energy(char* s, MATRIX coords){
 	MATRIX coordinateCa= coordsca(coords);
+<<<<<<< HEAD
 	
+=======
+>>>>>>> 79816c81872872774855ff3799a6e933493e67b1
 	type energy= 0.0;
 	const int n = 256;
 	for(int i=0; i < n; i++){
 		for(int j= i+1; j < n; j++){
 			if(i!= j){
 				type dist= distanza(coordinateCa, i, j);
+<<<<<<< HEAD
 				
 				if(dist < 10.0 && charge[(int)s[i]-65] !=0 && charge[(int)s[j]-65] != 0 ){
 					energy += (charge[(int)s[i]-65]*charge[(int)s[j]-65])/(dist*4.0);
+=======
+				//printf("dist %f\n", dist);
+				if(dist < 10.0 && charge[(int)s[i]-65] !=0 && charge[(int)s[j]-65] != 0 ){
+					energy += (charge[(int)s[i]-65]*charge[(int)s[j]-65])/(dist*4.0);
+					//printf("energy: %f\n", energy);
+>>>>>>> 79816c81872872774855ff3799a6e933493e67b1
 				}
 			}
 		}
 	}
+<<<<<<< HEAD
 	//printf("elec: %f \n", energy);
+=======
+	dealloc_matrix(coordinateCa);
+	//printf("energy elec %f\n", energy);
+>>>>>>> 79816c81872872774855ff3799a6e933493e67b1
 	return energy; 
 }
 
 extern type packing_energy(char*s,MATRIX coords) {
     const int n = 256; 
-    MATRIX cacoords = coordsca(coords);
+    MATRIX coordinateCa = coordsca(coords);
+	/*printf("Coordinate di CA:\n");
+	for(int i = 0; i<n; i++){
+		printf("%f %f %f\n", cacoords[i*3], cacoords[i*3+1], cacoords[i*3+2]);
+	}*/
     type energy = 0.0;
     for (int i = 0; i < n; i++) {
 		type  density = 0.0;
 		for (int j = 0; j < n; j++) {
 			if(i != j){
+<<<<<<< HEAD
 				type dist = distanza(cacoords, i, j);
 				
+=======
+				type dist = distanza(coordinateCa, i, j);
+>>>>>>> 79816c81872872774855ff3799a6e933493e67b1
 				if (dist < 10.0) {
 					density = density + volume[(int)s[j]-65] / (pow(dist, 3)); 
 				}
 			}
+<<<<<<< HEAD
 			
 		}
 		energy = energy + pow((volume[(int)s[i]-65] - density), 2);
 	}
 	//printf("pack: %f \n", energy);
+=======
+		}
+		energy = energy + pow((volume[(int)s[i]-65] - density), 2);
+    }
+	dealloc_matrix(coordinateCa);
+	//printf("energy pack %f\n", energy);
+>>>>>>> 79816c81872872774855ff3799a6e933493e67b1
 	return energy;
 }
 
 
 
 extern type energy(char* seq, VECTOR phi, VECTOR psi){
+<<<<<<< HEAD
 	
 	MATRIX coords= backbone(seq, phi, psi);
 	
@@ -577,14 +632,27 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	//printf("elec %f",elec);
 	type pack = packing_energy(seq, coords);
 	//printf("pack %f",pack);
+=======
+	MATRIX coords= backbone(seq, phi, psi);
+	type rama= rama_energy(phi, psi);
+	type hydro = hydrofobic_energy(seq, coords);
+	type elec = electrostatic_energy(seq, coords);
+	type pack = packing_energy(seq, coords);
+>>>>>>> 79816c81872872774855ff3799a6e933493e67b1
 	type w_rama= 1.0;
 	type w_hydro= 0.5;
 	type w_elec= 0.2;
 	type w_pack= 0.3;
 
 	type tot= (w_rama*rama) + (w_elec*elec)+(w_hydro*hydro)+(w_pack*pack);
+<<<<<<< HEAD
 	dealloc_matrix(coords);
 	
+=======
+
+	dealloc_matrix(coords);
+
+>>>>>>> 79816c81872872774855ff3799a6e933493e67b1
 	return tot;
 }
 
@@ -595,7 +663,10 @@ void pst(params* input){
 	int n = input->N;
 	
 	type T = input->to;
+<<<<<<< HEAD
 	
+=======
+>>>>>>> 79816c81872872774855ff3799a6e933493e67b1
 	VECTOR phi= input->phi;
 	
 	VECTOR psi= input->psi;
@@ -794,11 +865,17 @@ int main(int argc, char** argv) {
 	//
 	
 	t = clock();
+<<<<<<< HEAD
 	
 	pst(input);
 	t = clock() - t;
 	time = ((float)t)/CLOCKS_PER_SEC;
 	
+=======
+	pst(input);
+	t = clock() - t;
+	time = ((float)t)/CLOCKS_PER_SEC;
+>>>>>>> 79816c81872872774855ff3799a6e933493e67b1
 
 
 
