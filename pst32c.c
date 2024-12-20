@@ -312,7 +312,7 @@ type approx_sin(type theta) {
 }
 
 extern MATRIX rotation(VECTOR axis, type theta){
-	type prod_scal= ((axis[0]*axis[0])+(axis[1]*axis[1])+(axis[2]*axis[2]));
+	type prod_scal= (axis[0]*axis[0])+(axis[1]*axis[1])+(axis[2]*axis[2]);
 
 	axis[0] = axis[0] / prod_scal;
 	axis[1] = axis[1] / prod_scal;
@@ -372,6 +372,11 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
         	v1[1] = coords[idx - 2] - coords[idx - 5];
         	v1[2] = coords[idx - 1] - coords[idx - 4];
         	type norm_v1 = sqrt(v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]);
+			printf("norma %f", norm_v1);
+			if (norm_v1 == 0) {
+    			printf("Errore: norma vettore pari a zero al passo %f.\n", i);
+				printf("%f %f %f\n", v1[0], v1[1], v1[2]);
+			}
 			v1[0]/=norm_v1;
 			v1[1]/=norm_v1;
 			v1[2]/=norm_v1;
@@ -385,6 +390,7 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 			coords[idx+1] = coords[idx-2] + res[1];
 			coords[idx+2] = coords[idx-1] + res[2];
 			dealloc_matrix(v1);
+			dealloc_matrix(rot);
 			
 
 			//Posizionamento Ca
@@ -393,6 +399,9 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
         	v2[1] = coords[idx + 1] - coords[idx - 2];
         	v2[2] = coords[idx + 2] - coords[idx - 1];
 			type norm_v2 = sqrt(v2[0] * v2[0] + v2[1] * v2[1] + v2[2] * v2[2]);
+			if (norm_v2 == 0) {
+    			printf("Errore: norma vettore v2 pari a zero.\n");
+			}
 			v2[0]/=norm_v2;
 			v2[1]/=norm_v2;
 			v2[2]/=norm_v2;
@@ -403,7 +412,7 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 			coords[idx+4] = coords[idx+1] + res[1];
 			coords[idx+5] = coords[idx+2] + res[2];
 			dealloc_matrix(v2);
-		
+			dealloc_matrix(rot);
 		}
 
 		VECTOR v3 = alloc_matrix(1, 3);  //forse si potrebbe allocare un solo vettore fuori dal for e riutilizzarlo
@@ -411,6 +420,9 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
     	v3[1] = coords[idx + 4] - coords[idx + 1];
     	v3[2] = coords[idx + 5] - coords[idx + 2];
 		type norm_v3 = sqrt(v3[0] * v3[0] + v3[1] * v3[1] + v3[2] * v3[2]);
+		if (norm_v3 == 0) {
+    		printf("Errore: norma vettore v3 pari a zero.\n");
+		}
 		v3[0]/=norm_v3;
 		v3[1]/=norm_v3;
 		v3[2]/=norm_v3;
@@ -427,11 +439,17 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 
 		dealloc_matrix(rot);
 		dealloc_matrix(res);
-		dealloc_matrix(new_v);
+		//dealloc_matrix(new_v);
 		dealloc_matrix(v3);
 
 	
 	}
+
+	// Stampa della matrice coords
+    printf("Coordinate calcolate:\n");
+    for (int i = 0; i < n * 3; i++) {
+        printf("%f %f %f\n", coords[i * 3], coords[i * 3 + 1], coords[i * 3 + 2]);
+    }
 	
 	return coords;
 }
