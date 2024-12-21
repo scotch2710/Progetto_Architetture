@@ -48,7 +48,7 @@
 #include <libgen.h>
 #include <xmmintrin.h>
 
-#define	type		float
+#define	type		double
 #define	MATRIX		type*
 #define	VECTOR		type*
 
@@ -580,7 +580,7 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 
 	type tot= (w_rama*rama) + (w_elec*elec)+(w_hydro*hydro)+(w_pack*pack);
 
-	dealloc_matrix(coords);
+	//dealloc_matrix(coords);
 
 	return tot;
 }
@@ -600,11 +600,12 @@ void pst(params* input){
 	
 	type t=0.0;
 	
+
 	while(T>0){
-		srand(input->sd);
+		
 
     	// Genera un numero casuale tra 0 e n
-    	int i = rand() % (n + 1);
+    	int i = (int)(random()*n);
 		type theta_phi = ((type)rand() / RAND_MAX) * (2 * M_PI) - M_PI;
 		phi[i] = phi[i] + theta_phi;
 		type theta_psi =((type)rand() / RAND_MAX) * (2 * M_PI) - M_PI;
