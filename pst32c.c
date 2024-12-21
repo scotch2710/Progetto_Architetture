@@ -580,6 +580,7 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 
 	type tot= (w_rama*rama) + (w_elec*elec)+(w_hydro*hydro)+(w_pack*pack);
 
+	printf("elec: %f, hydro: %f, pack: %f, rama: %f, tot: %f\n", elec, hydro, pack, rama, tot);
 	//dealloc_matrix(coords);
 
 	return tot;
@@ -606,9 +607,10 @@ void pst(params* input){
 
     	// Genera un numero casuale tra 0 e n
     	int i = (int)(random()*n);
-		type theta_phi = ((type)rand() / RAND_MAX) * (2 * M_PI) - M_PI;
+		//printf("%d\n",i);
+		type theta_phi = (type) random() * (2 * M_PI) - M_PI;
 		phi[i] = phi[i] + theta_phi;
-		type theta_psi =((type)rand() / RAND_MAX) * (2 * M_PI) - M_PI;
+		type theta_psi = (type) random() * (2 * M_PI) - M_PI;
 		psi[i] = psi[i] + theta_psi;
 		type deltaE= energy(input->seq, phi, psi) - E;
 
