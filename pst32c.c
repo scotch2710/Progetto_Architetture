@@ -436,7 +436,7 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 		dealloc_matrix(rot);
 		dealloc_matrix(new_v);
 		dealloc_matrix(v3);
-		
+		dealloc_matrix(res);
 	
 	}
 
