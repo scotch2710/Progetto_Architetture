@@ -294,9 +294,9 @@ extern void prova(params* input);
 extern void vector_matrix_product(VECTOR v, MATRIX R, VECTOR result) {
     // Calcola il prodotto v * R
     for (int i = 0; i < 3; i++) {
-        result[i] = v[0] * R[i] +
-                    v[1] * R[i + 3] +
-                    v[2] * R[i + 6];
+        result[i] = (v[0] * R[i]) +
+                    (v[1] * R[i + 3]) +
+                    (v[2] * R[i + 6]);
     }
 }
 
@@ -327,17 +327,17 @@ extern MATRIX rotation(VECTOR axis, type theta){
 	MATRIX result = alloc_matrix(3, 3);
 
     
-    result[0] = a * a + b * b - c * c - d * d;
-    result[1] = 2 * (b * c + a * d);
-    result[2] = 2 * (b * d - a * c);
+    result[0] = (a * a) + (b * b) - (c * c) - (d * d);
+    result[1] = 2 * (b * c) + (a * d);
+    result[2] = 2 * (b * d) - (a * c);
 
-    result[3] = 2 * (b * c - a * d);
-    result[4] = a * a + c * c - b * b - d * d;
-    result[5] = 2 * (c * d + a * b);
+    result[3] = 2 * (b * c) - (a * d);
+    result[4] = (a * a) + (c * c) - (b * b) - (d * d);
+    result[5] = 2 * (c * d) + (a * b);
 
-    result[6] = 2 * (b * d + a * c);
-    result[7] = 2 * (c * d - a * b);
-    result[8] = a * a + d * d - b * b - c * c;
+    result[6] = 2 * (b * d) + (a * c);
+    result[7] = 2 * (c * d) - (a * b);
+    result[8] = (a * a) + (d * d) - (b * b) - (c * c);
 
 	
 
@@ -486,9 +486,9 @@ extern MATRIX coordsca(MATRIX coords) {
 	MATRIX Cacoords = alloc_matrix(n, 3);
     
 	for (int i = 0; i < n; i++) {
-        Cacoords[i * 3] = coords[i * 9 + 3]; //X
-        Cacoords[i* 3 + 1] = coords[i * 9 + 4]; //Y
-        Cacoords[i * 3 + 2] = coords[i * 9 + 5]; //Z
+        Cacoords[i * 3] = coords[(i * 9) + 3]; //X
+        Cacoords[(i* 3) + 1] = coords[(i * 9) + 4]; //Y
+        Cacoords[(i * 3) + 2] = coords[(i * 9) + 5]; //Z
     }
     return Cacoords; 
 }
@@ -496,8 +496,8 @@ extern MATRIX coordsca(MATRIX coords) {
 
 type distanza (MATRIX coordinateCa, int i, int j){
 		type x_df = coordinateCa[3*i] - coordinateCa[3*j];
-		type y_df = coordinateCa[3*i+1] - coordinateCa[3*j+1];
-		type z_df = coordinateCa[3*i+2] - coordinateCa[3*j+2];
+		type y_df = coordinateCa[(3*i)+1] - coordinateCa[(3*j)+1];
+		type z_df = coordinateCa[(3*i)+2] - coordinateCa[(3*j)+2];
 		return sqrt(pow(x_df,2) + pow(y_df,2 ) + pow(z_df,2));
 }
 
@@ -511,7 +511,7 @@ extern type hydrofobic_energy (char* sequenza, MATRIX coordinate){
 			type dist = distanza(coordinateCa, i, j);
 			//printf("distanza: %f\n", dist);
 			if(dist < 10.0){
-				energy += (hydrophobicity[(int)sequenza[i]-65] * hydrophobicity[(int)sequenza[j]-65] )/ dist;
+				energy += ((hydrophobicity[(int)sequenza[i]-65] * hydrophobicity[(int)sequenza[j]-65] )/ dist);
 			}
 		}
 	}
@@ -530,7 +530,7 @@ extern type electrostatic_energy(char* s, MATRIX coords){
 				type dist= distanza(coordinateCa, i, j);
 				//printf("dist %f\n", dist);
 				if(dist < 10.0 && charge[(int)s[i]-65] !=0 && charge[(int)s[j]-65] != 0 ){
-					energy += (charge[(int)s[i]-65]*charge[(int)s[j]-65])/(dist*4.0);
+					energy += ((charge[(int)s[i]-65]*charge[(int)s[j]-65])/(dist*4.0));
 					//printf("energy: %f\n", energy);
 				}
 			}
@@ -555,7 +555,7 @@ extern type packing_energy(char*s,MATRIX coords) {
 			if(i != j){
 				type dist = distanza(coordinateCa, i, j);
 				if (dist < 10.0) {
-					density = density + volume[(int)s[j]-65] / (pow(dist, 3)); 
+					density = density + (volume[(int)s[j]-65] / (pow(dist, 3))); 
 				}
 			}
 		}
