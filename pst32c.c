@@ -573,6 +573,8 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	for(int i=0; i<25; i++) printf("coords[%d]: %f\n", i, coords[i]);
 	
 	MATRIX coordsCA= coordsca(coords);
+	for(int i=0; i<12; i++) printf("CA[%d]: %f\n", i, coordsCA[i]);
+	
 	type rama= rama_energy(phi, psi);
 	type hydro = hydrofobic_energy(seq, coordsCA);
 	type elec = electrostatic_energy(seq, coordsCA);
