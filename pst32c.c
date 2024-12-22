@@ -625,7 +625,7 @@ void pst(params* input){
 				E= energy(input->seq, phi, psi);
 			else{
 				phi[i] = phi[i] - theta_phi;
-				psi[i] = psi[i] + theta_psi;
+				psi[i] = psi[i] - theta_psi;
 			}
 		}
 		t=t+1;
