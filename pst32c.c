@@ -569,6 +569,8 @@ extern type packing_energy(char*s,MATRIX coords) {
 
 extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	MATRIX coords= backbone(seq, phi, psi);
+	for(int i=0; i<25; i++) printf("coords[%d]: %f\n", i, coords[i]);
+	
 	type rama= rama_energy(phi, psi);
 	type hydro = hydrofobic_energy(seq, coords);
 	type elec = electrostatic_energy(seq, coords);
@@ -580,7 +582,7 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 
 	type tot= (w_rama*rama) + (w_elec*elec)+(w_hydro*hydro)+(w_pack*pack);
 
-	printf("elec: %f, hydro: %f, pack: %f, rama: %f, tot: %f\n", elec, hydro, pack, rama, tot);
+	//printf("elec: %f, hydro: %f, pack: %f, rama: %f, tot: %f\n", elec, hydro, pack, rama, tot);
 	//dealloc_matrix(coords);
 
 	return tot;
@@ -602,7 +604,7 @@ void pst(params* input){
 	type t=0.0;
 	
 
-	while(T>0){
+	/*while(T>0){
 		
 
     	// Genera un numero casuale tra 0 e n
@@ -630,7 +632,7 @@ void pst(params* input){
 		}
 		t=t+1;
 		T= input->to - sqrt(input->alpha*t);
-	}
+	}*/
 }
 
 int main(int argc, char** argv) {
