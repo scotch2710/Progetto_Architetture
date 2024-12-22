@@ -328,15 +328,15 @@ extern MATRIX rotation(VECTOR axis, type theta){
 
     
     result[0] = (a * a) + (b * b) - (c * c) - (d * d);
-    result[1] = 2 * (b * c) + (a * d);
-    result[2] = 2 * (b * d) - (a * c);
+    result[1] = 2 * ((b * c) + (a * d));
+    result[2] = 2 * ((b * d) - (a * c));
 
-    result[3] = 2 * (b * c) - (a * d);
+    result[3] = 2 * ((b * c) - (a * d));
     result[4] = (a * a) + (c * c) - (b * b) - (d * d);
-    result[5] = 2 * (c * d) + (a * b);
+    result[5] = 2 * ((c * d) + (a * b));
 
-    result[6] = 2 * (b * d) + (a * c);
-    result[7] = 2 * (c * d) - (a * b);
+    result[6] = 2 * ((b * d) + (a * c));
+    result[7] = 2 * ((c * d) - (a * b));
     result[8] = (a * a) + (d * d) - (b * b) - (c * c);
 
 	
