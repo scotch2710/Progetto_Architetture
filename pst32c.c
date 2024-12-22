@@ -363,6 +363,7 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 	for(int i=0; i<n; i++){
 		int idx = i*9;
 		VECTOR new_v = alloc_matrix(1, 3);
+		VECTOR res = alloc_matrix(1, 3);
 		if(i>0){
         	// Posizionamento di N
         	VECTOR v1 = alloc_matrix(1, 3);  //forse si potrebbe allocare un solo vettore fuori dal for e riutilizzarlo
@@ -381,11 +382,11 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
        		new_v[1] = r_CN;
         	new_v[2] = 0;
 			
-			vector_matrix_product(new_v, rot, new_v);
+			vector_matrix_product(new_v, rot, res);
 			
-			coords[idx] = coords[idx-3] + new_v[0];
-			coords[idx+1] = coords[idx-2] + new_v[1];
-			coords[idx+2] = coords[idx-1] + new_v[2];
+			coords[idx] = coords[idx-3] + res[0];
+			coords[idx+1] = coords[idx-2] + res[1];
+			coords[idx+2] = coords[idx-1] + res[2];
 			dealloc_matrix(v1);
 			dealloc_matrix(rot);
 			
@@ -406,10 +407,10 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 			
 			rot= rotation(v2, phi[i]);
 			new_v[1] = r_CaN;
-			vector_matrix_product(new_v, rot, new_v);
-			coords[idx+3] = coords[idx] + new_v[0];
-			coords[idx+4] = coords[idx+1] + new_v[1];
-			coords[idx+5] = coords[idx+2] + new_v[2];
+			vector_matrix_product(new_v, rot, res);
+			coords[idx+3] = coords[idx] + res[0];
+			coords[idx+4] = coords[idx+1] + res[1];
+			coords[idx+5] = coords[idx+2] + res[2];
 			dealloc_matrix(v2);
 			dealloc_matrix(rot);
 		}
@@ -427,10 +428,10 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
         new_v[0] = 0;
 		new_v[1] = r_CaC;
 		new_v[2] = 0;
-		vector_matrix_product(new_v, rot, new_v);
-		coords[idx + 6] = coords[idx + 3] + new_v[0];
-		coords[idx + 7] = coords[idx + 4] + new_v[1];
-		coords[idx + 8] = coords[idx + 5] + new_v[2];
+		vector_matrix_product(new_v, rot, res);
+		coords[idx + 6] = coords[idx + 3] + res[0];
+		coords[idx + 7] = coords[idx + 4] + res[1];
+		coords[idx + 8] = coords[idx + 5] + res[2];
 
 		dealloc_matrix(rot);
 		dealloc_matrix(new_v);
@@ -507,7 +508,7 @@ extern type hydrofobic_energy (char* sequenza, MATRIX coordinate){
 
 	for(int i=0; i< n; i++){
 		for(int j= i+1; j<n; j++){
-			type dist = distanza(coordinate, i, j);
+			type dist = distanza(coordinateCa, i, j);
 			//printf("distanza: %f\n", dist);
 			if(dist < 10.0){
 				energy += (hydrophobicity[(int)sequenza[i]-65] * hydrophobicity[(int)sequenza[j]-65] )/ dist;
@@ -582,7 +583,7 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 
 	type tot= (w_rama*rama) + (w_elec*elec)+(w_hydro*hydro)+(w_pack*pack);
 
-	//printf("elec: %f, hydro: %f, pack: %f, rama: %f, tot: %f\n", elec, hydro, pack, rama, tot);
+	printf("elec: %f, hydro: %f, pack: %f, rama: %f, tot: %f\n", elec, hydro, pack, rama, tot);
 	//dealloc_matrix(coords);
 
 	return tot;
