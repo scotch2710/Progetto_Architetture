@@ -78,7 +78,7 @@ extern free_block
 ; Funzioni
 ; ------------------------------------------------------------
 
-global prova
+global distanza1
 
 input		equ		8
 
@@ -86,50 +86,55 @@ msg	db	'e:',32,0
 nl	db	10,0
 
 
-
-prova:
-		; ------------------------------------------------------------
-		; Sequenza di ingresso nella funzione
-		; ------------------------------------------------------------
-		push		ebp		; salva il Base Pointer
-		mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
-		push		ebx		; salva i registri da preservare
-		push		esi
-		push		edi
-		; ------------------------------------------------------------
-		; legge i parametri dal Record di Attivazione corrente
-		; ------------------------------------------------------------
-
-		; elaborazione
-		
-		; esempio: stampa input->e
-		mov EAX, [EBP+input]	; indirizzo della struttura contenente i parametri
-        ; [EAX]      input->seq; 			// sequenza
-		; [EAX + 4]  input->N; 			    // numero elementi sequenza
-		; [EAX + 8]  input->sd;			    // seed
-		; [EAX + 12] input->to;			    // temperatura
-		; [EAX + 16] input->alpha;		    // tasso raffredamento
-		; [EAX + 20] input->k; 		        // costante
-		; [EAX + 24] input->hydrophobicity;	// hydrophobicity
-		; [EAX + 28] input->volume;		    // volume
-		; [EAX + 32] input->charge;		    // charge
-		; [EAX + 36] input->phi;		    // vettore angoli phi
-		; [EAX + 40] input->psi;		    // vettore angoli psi
-		; [EAX + 44] input->e;			    // energy
-		; [EAX + 48] input->dispaly;
-		; [EAX + 52] input->silent;
-		MOVSS XMM0, [EAX+44]
-		MOVSS [e], XMM0 
-		prints msg            
-		printss e   
-		prints nl
-		; ------------------------------------------------------------
-		; Sequenza di uscita dalla funzione
-		; ------------------------------------------------------------
-
-		pop	edi		; ripristina i registri da preservare
-		pop	esi
-		pop	ebx
-		mov	esp, ebp	; ripristina lo Stack Pointer
-		pop	ebp		; ripristina il Base Pointer
-		ret			; torna alla funzione C chiamante
+distanza1:    
+	push	ebp			; salva il Base Pointer
+	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+	push	ebx			; salva i registri da preservare
+	push	esi
+	push	edi                 
+	
+	; Carica i parametri    
+	mov     esi, [ebp+8]               ; coordinateCa    
+	mov     eax, [ebp+12]              ; i    
+	mov     ebx, [ebp+16]              ; j    
+	
+	; Calcola 3*i e 3*j    
+	lea     eax, [eax + eax * 2]       ; eax = 3*i    
+	lea     ebx, [ebx + ebx * 2]       ; ebx = 3*j    
+	
+	; X_df    
+	movss   xmm0, dword [esi + eax * 4] ; xmm0 = coordinateCa[3*i]    
+	movss   xmm1, dword [esi + ebx * 4] ; xmm1 = coordinateCa[3*j]    
+	subss   xmm0, xmm1                  ; xmm0 = x_df    
+	
+	; Y_df    
+	add     eax, 1    
+	add     ebx, 1    
+	movss   xmm2, dword [esi + eax * 4]    
+	movss   xmm3, dword [esi + ebx * 4]    
+	subss   xmm2, xmm3                  ; xmm2 = y_df    
+	
+	; Z_df    
+	add     eax, 1    
+	add     ebx, 1    
+	movss   xmm4, dword [esi + eax * 4]    
+	movss   xmm5, dword [esi + ebx * 4]    
+	subss   xmm4, xmm5                  ; xmm4 = z_df    
+	
+	; Calcola x_df^2, y_df^2, z_df^2 e somma    
+	mulss   xmm0, xmm0                  ; xmm0 = x_df^2    
+	mulss   xmm2, xmm2                  ; xmm2 = y_df^2    
+	mulss   xmm4, xmm4                  ; xmm4 = z_df^2    
+	addss   xmm0, xmm2                  ; xmm0 += y_df^2    
+	addss   xmm0, xmm4                  ; xmm0 += z_df^2    
+	; Radice quadrata    
+	sqrtss  xmm0, xmm0                  ; xmm0 = sqrt(x_df^2 + y_df^2 + z_df^2)    
+	movss   dword [ebp-4], xmm0         ; Salva risultato    
+	mov     eax, [ebp-4]   
+	
+	pop edi
+	pop	esi
+	pop	ebx
+	mov	esp, ebp	; ripristina lo Stack Pointer 
+	pop ebp    
+	ret
