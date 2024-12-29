@@ -31,6 +31,8 @@
 
 section .data			; Sezione contenente dati inizializzati
 	unroll equ 4
+	n 	   equ 256
+	dim    equ 4
 
 section .bss			; Sezione contenente dati non inizializzati
 	alignb 16
@@ -140,9 +142,9 @@ distanza1:
 	; Y_df    
 	add     eax, 1    
 	add     ebx, 1    
-	movss   xmm2, dword [esi + eax * 4]    
+	movss   edx, dword [esi + eax * 4]    
 	movss   xmm3, dword [esi + ebx * 4]    
-	subss   xmm2, xmm3                  ; xmm2 = y_df    
+	subss   edx, xmm3                  ; edx = y_df    
 	
 	; Z_df    
 	add     eax, 1    
@@ -153,9 +155,9 @@ distanza1:
 	
 	; Calcola x_df^2, y_df^2, z_df^2 e somma    
 	mulss   xmm0, xmm0                  ; xmm0 = x_df^2    
-	mulss   xmm2, xmm2                  ; xmm2 = y_df^2    
+	mulss   edx, edx                  ; edx = y_df^2    
 	mulss   xmm4, xmm4                  ; xmm4 = z_df^2    
-	addss   xmm0, xmm2                  ; xmm0 += y_df^2    
+	addss   xmm0, edx                  ; xmm0 += y_df^2    
 	addss   xmm0, xmm4                  ; xmm0 += z_df^2    
 	; Radice quadrata    
 	sqrtss  xmm0, xmm0                  ; xmm0 = sqrt(x_df^2 + y_df^2 + z_df^2)    
@@ -173,14 +175,14 @@ distanza1:
 ; ------------------------------------------------------------
 ; Funzione coordsca
 ; ------------------------------------------------------------
-/*void coordsca(MATRIX coords, MATRIX cacoords) {
-    const int n = 256;
-	for (int i = 0; i < n; i++) {
-        cacoords[i * 3] = coords[i * 9 + 3]; //X
-        cacoords[i* 3 + 1] = coords[i * 9 + 4]; //Y
-        cacoords[i * 3 + 2] = coords[i * 9 + 5]; //Z
-    }
-}*/
+; void coordsca(MATRIX coords, MATRIX cacoords) {
+;     const int n = 256;
+; 	for (int i = 0; i < n; i++) {
+;         cacoords[i * 3] = coords[i * 9 + 3]; //X
+;         cacoords[i* 3 + 1] = coords[i * 9 + 4]; //Y
+;         cacoords[i * 3 + 2] = coords[i * 9 + 5]; //Z
+;     }
+; }
 coordsca:
 	push	ebp			; salva il Base Pointer
 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
@@ -188,12 +190,38 @@ coordsca:
 	push	esi
 	push	edi  
 
-	mov ebx, [ebp+8]	;coords
-	mov eax, [ebp+12]	;cacoords
+	mov ebx, [ebp+8]    ;coords
+	mov eax, [ebp+12]		;cacoords
 
 	xor esi, esi 		;ESI: i=0
 	
+    forCacoords:
+		cmp esi, 256
+		je fineCacoords
+		mov ecx, esi ;ecx contatore di coords
+		imul ecx, 9
+		
 
+		mov edx, esi ; edx contatore di cacords
+		shl edx, 1
+		add edx, esi 
+		
+		movss xmm0, [ebx + ecx + 3*dim] ; mette in xmm0 coords[i*9+3] salvando x
+		movss [eax + edx*dim], xmm0
+
+        inc edx
+		movss xmm0, [ebx + ecx + 4*dim] ; mette in xmm0 coords[i*9+4] salvando y
+		movss [eax + edx*dim], xmm0
+
+		inc edx
+		movss xmm0, [ebx + ecx + 5*dim] ; mette in xmm0 coords[i*9+5] salvando z
+		movss [eax + edx*dim], xmm0
+		inc esi
+		jmp forCacoords
+		;--------fine ciclo for--------
+
+	fineCacoords:
+	;--- fine logica ---
 	pop edi
 	pop	esi
 	pop	ebx
