@@ -451,7 +451,7 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 }
 
 
-extern type rama_energy(VECTOR phi, VECTOR psi) {
+extern void rama_energy(VECTOR phi, VECTOR psi, type energy){ {
     // Costanti di Ramachandran
     
     const type alpha_phi = -57.8;
@@ -461,8 +461,6 @@ extern type rama_energy(VECTOR phi, VECTOR psi) {
 	const int n = 256;
     
 	
-	type energy = 0.0;
-
     // Itera su tutti gli elementi
     for (int i = 0; i < n; i++) {
         // Calcola la distanza alpha
@@ -478,8 +476,7 @@ extern type rama_energy(VECTOR phi, VECTOR psi) {
             energy += 0.5 * beta_dist;
         }
     }
-
-    return energy;
+    return ;
 }
 
 extern void coordsca(MATRIX coords, MATRIX cacoords);
@@ -574,7 +571,8 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	//for(int i=0; i<25; i++) printf("coords[%d]: %f\n", i, coords[i]);
 	MATRIX cacoords = alloc_matrix(n, 3);
 	coordsca(coords, cacoords);
-	type rama= rama_energy(phi, psi);
+	type rama= 0.0;
+	rama_energy(phi, psi, rama);
 	type hydro = hydrofobic_energy(seq, coords, cacoords);
 	type elec = electrostatic_energy(seq, coords, cacoords);
 	type pack = packing_energy(seq, coords, cacoords);

@@ -33,6 +33,11 @@ section .data			; Sezione contenente dati inizializzati
 	unroll equ 4
 	n 	   equ 256
 	dim    equ 4
+	; Costanti di Ramachandran
+	alpha_phi	dd -57.8
+	alpha_psi	dd -47.0
+	beta_phi	dd -119.0
+	beta_psi	dd 113.0
 
 section .bss			; Sezione contenente dati non inizializzati
 	alignb 16
@@ -83,6 +88,7 @@ extern free_block
 
 global distanza1
 global coordsca
+global rama_energy
 
 N 		equ 	8
 seq		equ		12
@@ -94,6 +100,8 @@ hydro	equ		32
 volume	equ		36
 charge 	equ		40
 energy 	equ		44
+
+
 
 ;char* seq;		// sequenza di amminoacidi
 ;	int N;			// lunghezza sequenza
@@ -228,3 +236,112 @@ coordsca:
 	mov	esp, ebp	; ripristina lo Stack Pointer 
 	pop ebp    
 	ret
+
+
+	;-----------implematation of the rama_energy method------------------------
+	; 	extern type rama_energy(VECTOR phi, VECTOR psi) {
+	; 	// Costanti di Ramachandran
+		
+	; 	const type alpha_phi = -57.8;
+	; 	const type alpha_psi = -47.0;
+	; 	const type beta_phi = -119.0;
+	; 	const type beta_psi = 113.0;
+	; 	const int n = 256;
+		
+		
+	; 	type energy = 0.0;
+
+	; 	// Itera su tutti gli elementi
+	; 	for (int i = 0; i < n; i++) {
+	; 		// Calcola la distanza alpha
+	; 		type alpha_dist = sqrt((phi[i] - alpha_phi) * (phi[i] - alpha_phi) + (psi[i] - alpha_psi) * (psi[i] - alpha_psi));
+
+	; 		// Calcola la distanza beta
+	; 		type beta_dist = sqrt((phi[i] - beta_phi) * (phi[i] - beta_phi) + (psi[i] - beta_psi) * (psi[i] - beta_psi));
+
+	; 		// Somma il contributo minimo all'energia con confronto esplicito
+	; 		if (alpha_dist < beta_dist) {
+	; 			energy += 0.5 * alpha_dist;
+	; 		} else {
+	; 			energy += 0.5 * beta_dist;
+	; 		}
+	; 	}
+
+	; 	return energy;
+	; }
+	;----------------------------------------------------------------------------
+rama_energy: 
+	push	ebp			; salva il Base Pointer
+	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+	push	ebx			; salva i registri da preservare
+	push	esi
+	push	edi  
+
+    mov ebx, [ebp+8]    	;phi
+	mov ecx, [ebp+12]		;psi
+	mov eax, [ebp+16]		;energy
+
+	; movss xmm0, -57.8 		;alpha_phi
+	; movss xmm1, -47.0 		;alpha_psi
+	; movss xmm2, -119.0 		;beta_phi
+	; movss xmm3, 113.0	 	;beta_psi
+	
+	xor esi, esi 			;esi: i=0
+	xorps xmm7, xmm7        ;init energy = 0.0
+	
+    forRamaEnergy:
+		cmp esi, 256
+		jge fineRamaEnergy
+		; uso xmm4 per salvare phi[i]
+		; uso xmm5 per salvare psi[i]
+
+		;--------calcolo alpha_dist--------
+		movss xmm4, [ebx +esi*dim] ; recupero phi[i]
+		movss xmm6, xmm4 			; salvo phi[i] in xmm6
+		subss xmm6, alpha_phi 		; phi[i] - alpha_phi
+		mullss xmm6, xmm6			; (phi[i] - alpha_phi)^2
+
+		movss xmm5, [ecx +esi*dim]] ; recupero psi[i]
+		movss xmm7, xmm5 			; salvo phi[i] in xmm6
+		subss xmm7, alpha_psi       ; psi[i] - alpha_psi
+		mullss xmm7, xmm7  	        ; (psi[i] - alpha_psi)^2
+
+		addss xmm6, xmm7 			; (phi[i] - alpha_phi)^2 + (psi[i] - alpha_psi)^2
+		sqrtss xmm6, xmm6 			; sqrt((phi[i] - alpha_phi)^2 + (psi[i] - alpha_psi)^2)
+		; in xmm6 ho alpha_dist
+
+    
+		;--------calcolo beta_dist--------
+		subss xmm4, beta_phi 		; phi[i] - beta_phi
+		mullss xmm4, xmm4			; (phi[i] - beta_phi)^2
+
+		subss xmm5, beta_psi 		; psi[i] - beta_psi
+		mullss xmm5, xmm5			; (psi[i] - beta_psi)^2
+		addss xmm4, xmm5 			; (phi[i] - beta_phi)^2 + (psi[i] - beta_psi)^2
+		sqrtss xmm4, xmm4 			; sqrt((phi[i] - beta_phi)^2 + (psi[i] - beta_psi)^2)
+		; in xmm4 ho beta_dist
+
+		;--------confronto esplicito--------
+		comiss xmm6, xmm4 			; xmm6 < xmm4
+		jge alpha_dist_minore
+		; se distanza alpha maggiore
+		mulss xmm6, 0.5 				; 0.5 * alpha_dist
+		addss xmm7, xmm6 			; energy += 0.5 * alpha_dist
+
+		;--------alpha_dist < beta_dist--------
+		alpha_dist_minore:
+		mulss xmm4, 0.5 				; 0.5 * beta_dist
+		addss xmm7, xmm4 			; energy += 0.5 * beta_dist
+
+    fineRamaEnergy:
+	movss [eax], xmm7
+	;--- fine logica ---
+
+	pop edi
+	pop	esi
+	pop	ebx
+	mov	esp, ebp	; ripristina lo Stack Pointer 
+	pop ebp    
+	ret
+
+
