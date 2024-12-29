@@ -206,15 +206,15 @@ coordsca:
 		shl edx, 1
 		add edx, esi 
 		
-		movss xmm0, [ebx + ecx + 3*dim] ; mette in xmm0 coords[i*9+3] salvando x
+		movss xmm0, [ebx + ecx*dim + 3*dim] ; mette in xmm0 coords[i*9+3] salvando x
 		movss [eax + edx*dim], xmm0
 
         inc edx
-		movss xmm0, [ebx + ecx + 4*dim] ; mette in xmm0 coords[i*9+4] salvando y
+		movss xmm0, [ebx + ecx*dim + 4*dim] ; mette in xmm0 coords[i*9+4] salvando y
 		movss [eax + edx*dim], xmm0
 
 		inc edx
-		movss xmm0, [ebx + ecx + 5*dim] ; mette in xmm0 coords[i*9+5] salvando z
+		movss xmm0, [ebx + ecx*dim + 5*dim] ; mette in xmm0 coords[i*9+5] salvando z
 		movss [eax + edx*dim], xmm0
 		inc esi
 		jmp forCacoords
