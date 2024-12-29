@@ -238,7 +238,9 @@ coordsca:
 	pop ebp    
 	ret
 
-
+; ------------------------------------------------------------
+; Funzione rama_energy
+; ------------------------------------------------------------
 	;-----------implematation of the rama_energy method------------------------
 	; 	extern type rama_energy(VECTOR phi, VECTOR psi) {
 	; 	// Costanti di Ramachandran
@@ -280,15 +282,10 @@ rama_energy:
 
     mov ebx, [ebp+8]    	;phi
 	mov ecx, [ebp+12]		;psi
-	mov eax, [ebp+16]		;energy
 
-	; movss xmm0, -57.8 		;alpha_phi
-	; movss xmm1, -47.0 		;alpha_psi
-	; movss xmm2, -119.0 		;beta_phi
-	; movss xmm3, 113.0	 	;beta_psi
 	
 	xor esi, esi 			;esi: i=0
-	xorps xmm7, xmm7        ;init energy = 0.0
+	xorps xmm0, xmm0        ;init energy = 0.0
 	
     forRamaEnergy:
 		cmp esi, 256
@@ -297,52 +294,54 @@ rama_energy:
 		; uso xmm5 per salvare psi[i]
 
 		;--------calcolo alpha_dist--------
-		movss xmm4, [ebx +esi*dim]    ; recupero phi[i]
+		movss xmm4, [ebx+esi*dim]   ; recupero phi[i]
 		movss xmm6, xmm4 			; salvo phi[i] in xmm6
-		subss xmm6, alpha_phi		; phi[i] - alpha_phi
-		mulss xmm6, xmm6			; (phi[i] - alpha_phi)^2
+		subss xmm6, [alpha_phi] 			; phi[i] - alpha_phi
+		mulss xmm6, xmm6			;(phi[i] - alpha_phi)^2
 
-		movss xmm5, [ecx +esi*dim]    ; recupero psi[i]
-		movss xmm7, xmm5 			; salvo phi[i] in xmm6
-		subss xmm7, alpha_psi		; psi[i] - alpha_psi
+		movss xmm5, [ecx+esi*dim]   ; recupero psi[i]
+		movss xmm7, xmm5 			; salvo psi[i] in xmm7
+		subss xmm7, [alpha_psi]		; psi[i] - alpha_psi
 		mulss xmm7, xmm7  	        ; (psi[i] - alpha_psi)^2
 
 		addss xmm6, xmm7 			; (phi[i] - alpha_phi)^2 + (psi[i] - alpha_psi)^2
-		sqrtss xmm6, xmm6 			; sqrt((phi[i] - alpha_phi)^2 + (psi[i] - alpha_psi)^2)
+		
 		; in xmm6 ho alpha_dist
-
-    
+   
 		;--------calcolo beta_dist--------
-		subss xmm4, beta_phi		; phi[i] - beta_phi
+		subss xmm4, [beta_phi]		; phi[i] - beta_phi
 		mulss xmm4, xmm4			; (phi[i] - beta_phi)^2
 
-		subss xmm5, beta_psi		; psi[i] - beta_psi
+		subss xmm5, [beta_psi]		; psi[i] - beta_psi
 		mulss xmm5, xmm5			; (psi[i] - beta_psi)^2
 		addss xmm4, xmm5 			; (phi[i] - beta_phi)^2 + (psi[i] - beta_psi)^2
-		sqrtss xmm4, xmm4 			; sqrt((phi[i] - beta_phi)^2 + (psi[i] - beta_psi)^2)
+		
 		; in xmm4 ho beta_dist
 
 		;--------confronto esplicito--------
 		comiss xmm6, xmm4 			; xmm6 < xmm4
-		jge alpha_dist_minore
+		jl alpha_dist_minore
 		; se distanza alpha maggiore
-		mulss xmm6, un_mezzo	    ; 0.5 * alpha_dist
-		addss xmm7, xmm6 			; energy += 0.5 * alpha_dist
+		sqrtss xmm6, xmm6 			; sqrt((phi[i] - alpha_phi)^2 + (psi[i] - alpha_psi)^2)
+		movss xmm5, [un_mezzo]
+		mulss xmm6, xmm5	    	; 0.5 * alpha_dist
+		addss xmm0, xmm6 			; energy += 0.5 * alpha_dist
 		jmp fine_if
 		
 
 		;--------alpha_dist < beta_dist--------
 		alpha_dist_minore:
-		mulss xmm4, un_mezzo		; 0.5 * beta_dist
-		addss xmm7, xmm4 			; energy += 0.5 * beta_dist
+		sqrtss xmm4, xmm4 			; sqrt((phi[i] - beta_phi)^2 + (psi[i] - beta_psi)^2)
+		mulss xmm4, xmm5			; 0.5 * beta_dist
+		addss xmm0, xmm4 			; energy += 0.5 * beta_dist
 	
 	fine_if:
 		inc esi
 		jmp forRamaEnergy
 
-
     fineRamaEnergy:
-	movss [eax], xmm7
+		mov eax, [ebp+16]
+		movss [eax], xmm0
 	;--- fine logica ---
 
 	pop edi

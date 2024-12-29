@@ -450,7 +450,7 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 	return coords;
 }
 
-extern void rama_energy(VECTOR phi, VECTOR psi, type energy);
+extern void rama_energy(VECTOR phi, VECTOR psi, type *energy);
 /*void rama_energy(VECTOR phi, VECTOR psi, type energy){ {
     // Costanti di Ramachandran
     
@@ -572,7 +572,7 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	MATRIX cacoords = alloc_matrix(n, 3);
 	coordsca(coords, cacoords);
 	type rama= 0.0;
-	rama_energy(phi, psi, rama);
+	rama_energy(phi, psi, &rama);
 	type hydro = hydrofobic_energy(seq, coords, cacoords);
 	type elec = electrostatic_energy(seq, coords, cacoords);
 	type pack = packing_energy(seq, coords, cacoords);
