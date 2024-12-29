@@ -44,11 +44,11 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include <time.h>
+#include <time.h> 
 #include <libgen.h>
 #include <xmmintrin.h>
 
-#define	type		double
+#define	type		float
 #define	MATRIX		type*
 #define	VECTOR		type*
 
@@ -466,10 +466,10 @@ extern type rama_energy(VECTOR phi, VECTOR psi) {
     // Itera su tutti gli elementi
     for (int i = 0; i < n; i++) {
         // Calcola la distanza alpha
-        type alpha_dist = sqrt(pow(phi[i] - alpha_phi, 2) + pow(psi[i] - alpha_psi, 2));
+        type alpha_dist = sqrt((phi[i] - alpha_phi) * (phi[i] - alpha_phi) + (psi[i] - alpha_psi) * (psi[i] - alpha_psi));
 
         // Calcola la distanza beta
-        type beta_dist = sqrt(pow(phi[i] - beta_phi, 2) + pow(psi[i] - beta_psi, 2));
+        type beta_dist = sqrt((phi[i] - beta_phi) * (phi[i] - beta_phi) + (psi[i] - beta_psi) * (psi[i] - beta_psi));
 
         // Somma il contributo minimo all'energia con confronto esplicito
         if (alpha_dist < beta_dist) {
@@ -495,13 +495,13 @@ extern MATRIX coordsca(MATRIX coords) {
 }
 
 
-//extern void distanza1 (MATRIX coordinateCa, int i, int j, type* dist);
-type distanza (MATRIX coordinateCa, int i, int j){
+extern void distanza1 (MATRIX coordinateCa, int i, int j, type* dist);
+/*type distanza (MATRIX coordinateCa, int i, int j){
 		type x_df = coordinateCa[3*i] - coordinateCa[3*j];
 		type y_df = coordinateCa[3*i+1] - coordinateCa[3*j+1];
 		type z_df = coordinateCa[3*i+2] - coordinateCa[3*j+2];
-		return sqrt(pow(x_df,2) + pow(y_df,2 ) + pow(z_df,2));
-}
+		return sqrt(x_df * x_df + y_df * y_df + z_df * z_df);
+}*/
 
 extern type hydrofobic_energy (char* sequenza, MATRIX coordinate){
 	type energy = 0.0;
@@ -510,7 +510,8 @@ extern type hydrofobic_energy (char* sequenza, MATRIX coordinate){
 	
 	for(int i=0; i< n; i++){
 		for(int j= i+1; j<n; j++){
-			type dist = distanza(coordinateCa, i, j);
+			type dist = 0.0;
+			distanza1(coordinateCa, i, j, &dist);
 			//printf("distanza: %f\n", dist);
 			if(dist < 10.0){
 				energy += (hydrophobicity[(int)sequenza[i]-65] * hydrophobicity[(int)sequenza[j]-65] )/ dist;
@@ -529,7 +530,8 @@ extern type electrostatic_energy(char* s, MATRIX coords){
 	for(int i=0; i < n; i++){
 		for(int j= i+1; j < n; j++){
 			if(i!= j){
-				type dist= distanza(coordinateCa, i, j);
+				type dist = 0.0;
+				distanza1(coordinateCa, i, j, &dist);
 				//printf("dist %f\n", dist);
 				if(dist < 10.0 && charge[(int)s[i]-65] !=0 && charge[(int)s[j]-65] != 0 ){
 					energy += (charge[(int)s[i]-65]*charge[(int)s[j]-65])/(dist*4.0);
@@ -555,13 +557,14 @@ extern type packing_energy(char*s,MATRIX coords) {
 		type  density = 0.0;
 		for (int j = 0; j < n; j++) {
 			if(i != j){
-				type dist = distanza(coordinateCa, i, j);
+				type dist = 0.0;
+				distanza1(coordinateCa, i, j, &dist);
 				if (dist < 10.0) {
-					density = density + volume[(int)s[j]-65] / (pow(dist, 3)); 
+					density = density + volume[(int)s[j]-65] / (dist * dist * dist); 
 				}
 			}
 		}
-		energy = energy + pow((volume[(int)s[i]-65] - density), 2);
+		energy = energy + ((volume[(int)s[i]-65] - density) * (volume[(int)s[i]-65] - density));
     }
 	dealloc_matrix(coordinateCa);
 	//printf("energy pack %f\n", energy);
