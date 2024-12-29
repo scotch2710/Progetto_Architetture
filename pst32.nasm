@@ -142,9 +142,9 @@ distanza1:
 	; Y_df    
 	add     eax, 1    
 	add     ebx, 1    
-	movss   edx, dword [esi + eax * 4]    
+	movss   xmm2, dword [esi + eax * 4]    
 	movss   xmm3, dword [esi + ebx * 4]    
-	subss   edx, xmm3                  ; edx = y_df    
+	subss   xmm2, xmm3                  ; edx = y_df    
 	
 	; Z_df    
 	add     eax, 1    
@@ -155,9 +155,9 @@ distanza1:
 	
 	; Calcola x_df^2, y_df^2, z_df^2 e somma    
 	mulss   xmm0, xmm0                  ; xmm0 = x_df^2    
-	mulss   edx, edx                  ; edx = y_df^2    
+	mulss   xmm2, xmm2                  ; edx = y_df^2    
 	mulss   xmm4, xmm4                  ; xmm4 = z_df^2    
-	addss   xmm0, edx                  ; xmm0 += y_df^2    
+	addss   xmm0, xmm2                  ; xmm0 += y_df^2    
 	addss   xmm0, xmm4                  ; xmm0 += z_df^2    
 	; Radice quadrata    
 	sqrtss  xmm0, xmm0                  ; xmm0 = sqrt(x_df^2 + y_df^2 + z_df^2)    
