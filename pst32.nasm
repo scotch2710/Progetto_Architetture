@@ -197,7 +197,7 @@ coordsca:
 	
     forCacoords:
 		cmp esi, 256
-		je fineCacoords
+		jge fineCacoords
 		mov ecx, esi ;ecx contatore di coords
 		imul ecx, 9
 		

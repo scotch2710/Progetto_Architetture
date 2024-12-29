@@ -507,6 +507,7 @@ extern type hydrofobic_energy (char* sequenza, MATRIX coordinate, MATRIX cacoord
 	
 	for(int i=0; i< n; i++){
 		for(int j= i+1; j<n; j++){
+			//type dist = distanza(cacoords, i, j);
 			type dist = 0.0;
 			distanza1(cacoords, i, j, &dist);
 			//printf("distanza: %f\n", dist);
@@ -525,6 +526,7 @@ extern type electrostatic_energy(char* s, MATRIX coords, MATRIX cacoords){
 	for(int i=0; i < n; i++){
 		for(int j= i+1; j < n; j++){
 			if(i!= j){
+				//type dist = distanza(cacoords, i, j);
 				type dist = 0.0;
 				distanza1(cacoords, i, j, &dist);
 				//printf("dist %f\n", dist);
@@ -550,6 +552,7 @@ extern type packing_energy(char*s,MATRIX coords, MATRIX cacoords) {
 		type  density = 0.0;
 		for (int j = 0; j < n; j++) {
 			if(i != j){
+				//type dist = distanza(cacoords, i, j);
 				type dist = 0.0;
 				distanza1(cacoords, i, j, &dist);
 				if (dist < 10.0) {
