@@ -32,6 +32,7 @@
 
 section .data			; Sezione contenente dati inizializzati
 
+
 section .bss			; Sezione contenente dati non inizializzati
 
 alignb 32
@@ -74,49 +75,15 @@ extern free_block
 ; ------------------------------------------------------------
 ; Funzione prova
 ; ------------------------------------------------------------
-global prova
+global distanza1
 
-msg	db 'e:',32,0
-nl	db 10,0
-
-prova:
-		; ------------------------------------------------------------
-		; Sequenza di ingresso nella funzione
-		; ------------------------------------------------------------
-		push		rbp				; salva il Base Pointer
-		mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
-		pushaq						; salva i registri generali
-
-		; ------------------------------------------------------------
-		; I parametri sono passati nei registri
-		; ------------------------------------------------------------
-		; rdi = indirizzo della struct input
-		
-		; esempio: stampa input->e
-       	; [RDI] input->seq; 			    // sequenza
-		; [RDI + 8]  input->N;			    // lunghezza della sequenza
-		; [RDI + 12] input->sd; 		    // tasso raffredamento
-		; [RDI + 16] input->to;			    // temperatura
-		; [RDI + 24] input->alpha;		    // tasso raffredamento
-		; [RDI + 32] input->k; 		        // numero di features da estrarre
-		; [RDI + 40] input->hydrophobicity;	// hydrophobicity
-		; [RDI + 48] input->volume;		    // volume
-		; [RDI + 56] input->charge;		    // charge
-		; [RDI + 64] input->phi;		    // vettore angoli phi
-		; [RDI + 72] input-> psi;		    // vettore angoli psi
-		; [RDI + 80] input->e:			    // energy
-		; [RDI + 88] input->display;
-		; [RDI + 92] input->silent;
-
-		VMOVSD		XMM0, [RDI+80]
-		VMOVSD		[e], XMM0
-		prints 		msg
-		printsd		e
-		prints 		nl
-		; ------------------------------------------------------------
-		; Sequenza di uscita dalla funzione
-		; ------------------------------------------------------------
-		popaq				; ripristina i registri generali
-		mov		rsp, rbp	; ripristina lo Stack Pointer
-		pop		rbp		    ; ripristina il Base Pointer
-		ret				    ; torna alla funzione C chiamante
+N 		equ 	8
+seq		equ		12
+sd		equ		16
+t0		equ		20
+alpha	equ		24
+k		equ		28
+hydro	equ		32
+volume	equ		36
+charge 	equ		40
+energy 	equ		44

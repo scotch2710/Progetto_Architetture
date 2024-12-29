@@ -30,6 +30,7 @@
 %include "sseutils32.nasm"
 
 section .data			; Sezione contenente dati inizializzati
+	unroll equ 4
 
 section .bss			; Sezione contenente dati non inizializzati
 	alignb 16
@@ -79,13 +80,42 @@ extern free_block
 ; ------------------------------------------------------------
 
 global distanza1
+global coordsca
 
-input		equ		8
+N 		equ 	8
+seq		equ		12
+sd		equ		16
+t0		equ		20
+alpha	equ		24
+k		equ		28
+hydro	equ		32
+volume	equ		36
+charge 	equ		40
+energy 	equ		44
 
-msg	db	'e:',32,0
-nl	db	10,0
+;char* seq;		// sequenza di amminoacidi
+;	int N;			// lunghezza sequenza
+;	unsigned int sd; 	// seed per la generazione casuale
+;	type to;		// temperatura INIZIALE
+;	type alpha;		// tasso di raffredamento
+;	type k;		// costante
+;	VECTOR hydrophobicity; // hydrophobicity
+;	VECTOR volume;		// volume
+;	VECTOR charge;		// charge
+;	VECTOR phi;		// vettore angoli phi
+;	VECTOR psi;		// vettore angoli psi
+;	type e;		// energy
+;	int display;
+;	int silent;
 
 
+; ------------------------------------------------------------
+; Funzioni
+; ------------------------------------------------------------
+
+; ------------------------------------------------------------
+; Funzione distanza1
+; ------------------------------------------------------------
 distanza1:    
 	push	ebp			; salva il Base Pointer
 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
@@ -129,9 +159,41 @@ distanza1:
 	addss   xmm0, xmm4                  ; xmm0 += z_df^2    
 	; Radice quadrata    
 	sqrtss  xmm0, xmm0                  ; xmm0 = sqrt(x_df^2 + y_df^2 + z_df^2)    
-	movss   dword [ebp-4], xmm0         ; Salva risultato    
-	mov     eax, [ebp-4]   
+	mov 	eax, [ebp+20]				;[ebp+20] contiene l'indirizzo della variabile dist passata come parametro (&dist)
+	movss 	[eax], xmm0					;[eax] inserisce nell'indirizzo passato in eax il valore risultante in xmm0
+
 	
+	pop edi
+	pop	esi
+	pop	ebx
+	mov	esp, ebp	; ripristina lo Stack Pointer 
+	pop ebp    
+	ret
+
+; ------------------------------------------------------------
+; Funzione coordsca
+; ------------------------------------------------------------
+/*void coordsca(MATRIX coords, MATRIX cacoords) {
+    const int n = 256;
+	for (int i = 0; i < n; i++) {
+        cacoords[i * 3] = coords[i * 9 + 3]; //X
+        cacoords[i* 3 + 1] = coords[i * 9 + 4]; //Y
+        cacoords[i * 3 + 2] = coords[i * 9 + 5]; //Z
+    }
+}*/
+coordsca:
+	push	ebp			; salva il Base Pointer
+	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+	push	ebx			; salva i registri da preservare
+	push	esi
+	push	edi  
+
+	mov ebx, [ebp+8]	;coords
+	mov eax, [ebp+12]	;cacoords
+
+	xor esi, esi 		;ESI: i=0
+	
+
 	pop edi
 	pop	esi
 	pop	ebx
