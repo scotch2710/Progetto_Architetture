@@ -450,8 +450,8 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 	return coords;
 }
 
-
-extern void rama_energy(VECTOR phi, VECTOR psi, type energy){ {
+extern void rama_energy(VECTOR phi, VECTOR psi, type energy);
+/*void rama_energy(VECTOR phi, VECTOR psi, type energy){ {
     // Costanti di Ramachandran
     
     const type alpha_phi = -57.8;
@@ -477,7 +477,7 @@ extern void rama_energy(VECTOR phi, VECTOR psi, type energy){ {
         }
     }
     return ;
-}
+}*/
 
 extern void coordsca(MATRIX coords, MATRIX cacoords);
 /*void coordsca(MATRIX coords, MATRIX cacoords) {

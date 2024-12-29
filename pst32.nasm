@@ -38,6 +38,7 @@ section .data			; Sezione contenente dati inizializzati
 	alpha_psi	dd -47.0
 	beta_phi	dd -119.0
 	beta_psi	dd 113.0
+	un_mezzo    dd 0.5
 
 section .bss			; Sezione contenente dati non inizializzati
 	alignb 16
@@ -296,15 +297,15 @@ rama_energy:
 		; uso xmm5 per salvare psi[i]
 
 		;--------calcolo alpha_dist--------
-		movss xmm4, [ebx +esi*dim] ; recupero phi[i]
+		movss xmm4, [ebx +esi*dim]    ; recupero phi[i]
 		movss xmm6, xmm4 			; salvo phi[i] in xmm6
-		subss xmm6, alpha_phi 		; phi[i] - alpha_phi
-		mullss xmm6, xmm6			; (phi[i] - alpha_phi)^2
+		subss xmm6, alpha_phi		; phi[i] - alpha_phi
+		mulss xmm6, xmm6			; (phi[i] - alpha_phi)^2
 
-		movss xmm5, [ecx +esi*dim]] ; recupero psi[i]
+		movss xmm5, [ecx +esi*dim]    ; recupero psi[i]
 		movss xmm7, xmm5 			; salvo phi[i] in xmm6
-		subss xmm7, alpha_psi       ; psi[i] - alpha_psi
-		mullss xmm7, xmm7  	        ; (psi[i] - alpha_psi)^2
+		subss xmm7, alpha_psi		; psi[i] - alpha_psi
+		mulss xmm7, xmm7  	        ; (psi[i] - alpha_psi)^2
 
 		addss xmm6, xmm7 			; (phi[i] - alpha_phi)^2 + (psi[i] - alpha_psi)^2
 		sqrtss xmm6, xmm6 			; sqrt((phi[i] - alpha_phi)^2 + (psi[i] - alpha_psi)^2)
@@ -312,11 +313,11 @@ rama_energy:
 
     
 		;--------calcolo beta_dist--------
-		subss xmm4, beta_phi 		; phi[i] - beta_phi
-		mullss xmm4, xmm4			; (phi[i] - beta_phi)^2
+		subss xmm4, beta_phi		; phi[i] - beta_phi
+		mulss xmm4, xmm4			; (phi[i] - beta_phi)^2
 
-		subss xmm5, beta_psi 		; psi[i] - beta_psi
-		mullss xmm5, xmm5			; (psi[i] - beta_psi)^2
+		subss xmm5, beta_psi		; psi[i] - beta_psi
+		mulss xmm5, xmm5			; (psi[i] - beta_psi)^2
 		addss xmm4, xmm5 			; (phi[i] - beta_phi)^2 + (psi[i] - beta_psi)^2
 		sqrtss xmm4, xmm4 			; sqrt((phi[i] - beta_phi)^2 + (psi[i] - beta_psi)^2)
 		; in xmm4 ho beta_dist
@@ -325,13 +326,20 @@ rama_energy:
 		comiss xmm6, xmm4 			; xmm6 < xmm4
 		jge alpha_dist_minore
 		; se distanza alpha maggiore
-		mulss xmm6, 0.5 				; 0.5 * alpha_dist
+		mulss xmm6, un_mezzo	    ; 0.5 * alpha_dist
 		addss xmm7, xmm6 			; energy += 0.5 * alpha_dist
+		jmp fine_if
+		
 
 		;--------alpha_dist < beta_dist--------
 		alpha_dist_minore:
-		mulss xmm4, 0.5 				; 0.5 * beta_dist
+		mulss xmm4, un_mezzo		; 0.5 * beta_dist
 		addss xmm7, xmm4 			; energy += 0.5 * beta_dist
+	
+	fine_if:
+		inc esi
+		jmp forRamaEnergy
+
 
     fineRamaEnergy:
 	movss [eax], xmm7
