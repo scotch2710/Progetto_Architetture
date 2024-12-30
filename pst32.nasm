@@ -386,217 +386,84 @@ rama_energy:
 ; 	return;
 ; ; }
 
-; hydrofobic_energy:
-; 	push	ebp			; salva il Base Pointer
-; 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
-; 	push	ebx			; salva i registri da preservare
-; 	push	esi
-; 	push	edi  
+hydrofobic_energy:
+	push	ebp			; salva il Base Pointer
+	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+	push	ebx			; salva i registri da preservare
+	push	esi
+	push	edi  
 
-; 	mov ebx, [ebp+8]    	;sequenza
-; 	mov ecx, [ebp+12]		;coordinate
-; 	mov edx, [ebp+16]		;cacoords
+	mov ebx, [ebp+8]    	;sequenza
+	mov ecx, [ebp+12]		;coordinate
+	mov edx, [ebp+16]		;cacoords
 
-; 	xor esi, esi 			;esi: i=0
-; 	xorps xmm2, xmm2        ;init energy = 0.0
+	xor esi, esi 			;esi: i=0
+	xorps xmm2, xmm2        ;init energy = 0.0
 
-; 	externalLoop:
-; 		cmp esi, 256
-; 		jge fineHydrofobicEnergy
+	externalLoop:
+		cmp esi, 256
+		jge fineHydrofobicEnergy
 
-; 		xor edi, edi 			;edi: j=0
-; 		mov edi, esi			; edi = j =1
-; 		inc edi	
-; 						; edi = edi = j= i+1
-; 		internaloop:
-; 			cmp edi, 256
-; 			jge fine_internal_loop
+		xor edi, edi 			;edi: j=0
+		mov edi, esi			; edi = j =1
+		inc edi	
+						; edi = edi = j= i+1
+		internaloop:
+			cmp edi, 256
+			jge fine_internal_loop
 
-; 			;--------calcolo distanza--------
+			;--------calcolo distanza--------
 
-; 			; Salva i registri XMM
-; 			sub esp, 48
-; 			movdqu [esp], xmm4  ; Salva xmm4
-; 			movdqu [esp+8], xmm0; Salva xmm0
-; 			movdqu [esp+16], xmm1; Salva xmm1
-; 			movdqu [esp+24], xmm2; Salva xmm
-; 			movdqu [esp+32], xmm3; Salva xmm3
-; 			movdqu [esp+40], xmm5; Salva xmm
-; 			;uso xmm4 per salvare dist
-; 			xor eax, eax 
-; 			push eax
 			
-; 			push edi
-; 			push esi
-; 			push edx
+			;uso xmm4 per salvare dist
+			xor eax, eax 
+			push eax
+			
+			push edi
+			push esi
+			push edx
 			
 			
-; 			call distanza1
-; 			add esp, 16
-; 			xorps xmm4, xmm4
-; 			movss xmm4, [eax] ; xmm4 = dist
+			call distanza1
+			add esp, 16
+			xorps xmm4, xmm4
+			movss xmm4, [eax] ; xmm4 = dist
 
-; 			 movdqu xmm4, [esp]  ; Ripristina xmm0
-; 			 movdqu xmm0, [esp+8]  ; Ripristina xmm0
-; 			 movdqu xmm1, [esp+16]  ; Ripristina xmm1
-; 			 movdqu xmm2, [esp+24]  ; Ripristina xmm2
-; 			 movdqu xmm3, [esp+32]  ; Ripristina xmm3
-; 			 movdqu xmm5, [esp+40]  ; Ripristina xmm5
-
-;     		add esp,  48        ; Ripristina lo stack
 			
-; 			comiss xmm4,  [dieci]
-; 			jge distanza_maggiore
-; 			;--------calcolo energia--------
-; 			movzx eax, byte [ebx+esi] ; sequenza[i]
-; 			sub eax, 65				  ; sequenza[i] - 65
-; 			movss xmm0, [hydrophobicity1 + eax*4] ; hydrophobicity[sequenza[i]-65]
+			comiss xmm4,  [dieci]
+			jge distanza_maggiore
+			;--------calcolo energia--------
+			movzx eax, byte [ebx+esi] ; sequenza[i]
+			sub eax, 65				  ; sequenza[i] - 65
+			movss xmm0, [hydrophobicity1 + eax*4] ; hydrophobicity[sequenza[i]-65]
 
-; 			movzx eax, byte [ebx+edi] ; sequenza[j]
-; 			sub eax, 65 ; sequenza[j] - 65
-; 			movss xmm1, [hydrophobicity1 + eax*4] ; hydrophobicity[sequenza[j]-65]
-; 			mulss xmm0, xmm1 ; hydrophobicity[sequenza[i]-65] * hydrophobicity[sequenza[j]-65]
-; 			divss xmm0, xmm4 
-; 			addss xmm2, xmm0 
-; 		distanza_maggiore:
-; 			inc edi
-; 			jmp internaloop
+			movzx eax, byte [ebx+edi] ; sequenza[j]
+			sub eax, 65 ; sequenza[j] - 65
+			movss xmm1, [hydrophobicity1 + eax*4] ; hydrophobicity[sequenza[j]-65]
+			mulss xmm0, xmm1 ; hydrophobicity[sequenza[i]-65] * hydrophobicity[sequenza[j]-65]
+			divss xmm0, xmm4 
+			addss xmm2, xmm0 
+		distanza_maggiore:
+			inc edi
+			jmp internaloop
 		
-; 		fine_internal_loop:
-; 			inc esi
-; 			jmp externalLoop
-; 	fineHydrofobicEnergy:
-; 	xor eax, eax 
-; 	mov eax, [ebp+20]
-; 	movss [eax], xmm2
+		fine_internal_loop:
+			inc esi
+			jmp externalLoop
+	fineHydrofobicEnergy:
+	xor eax, eax 
+	mov eax, [ebp+20]
+	movss [eax], xmm2
 	
 
 
-; 	pop edi
-; 	pop	esi
-; 	pop	ebx
-; 	mov	esp, ebp	; ripristina lo Stack Pointer 
-; 	pop ebp    
-; 	ret
+	pop edi
+	pop	esi
+	pop	ebx
+	mov	esp, ebp	; ripristina lo Stack Pointer 
+	pop ebp    
+	ret
 
 
-; ---------------------------------------
-; FUNCTION: hydrofobic_energy
-; Calcola l'energia idrofobica di una sequenza
-; INPUT:
-;   [ebp+8]  = ebx = sequenza
-;   [ebp+12] = ecx = coordinate  (non usato direttamente qui?)
-;   [ebp+16] = edx = cacoords    (passato a distanza1)
-;   [ebp+20] = indirizzo float per scrivere la energy finale
-; OUTPUT:
-;   (float) in [ [ebp+20] ] = xmm2
-; ---------------------------------------
-hydrofobic_energy:
-    push    ebp             ; salva il Base Pointer
-    mov     ebp, esp        ; il BP punta al Record di Attivazione corrente
-
-    push    ebx             ; salva i registri base da preservare
-    push    esi
-    push    edi
-
-    ; Carica i parametri nelle relative variabili
-    mov     ebx, [ebp+8]    ; sequenza
-    mov     ecx, [ebp+12]   ; coordinate (non usato direttamente qui)
-    mov     edx, [ebp+16]   ; cacoords (usato nella call distanza1)
-
-    xor     esi, esi        ; i = 0
-    xorps   xmm2, xmm2      ; energy = 0.0
-
-externalLoop:
-    cmp     esi, 256
-    jge     fineHydrofobicEnergy
-
-    ; j parte da i+1
-    mov     edi, esi
-    inc     edi
-
-internalLoop:
-    cmp     edi, 256
-    jge     fine_internal_loop
-
-    ;-----------------------------------------------------
-    ; Chiamata a distanza1( edx, i, j ) 
-    ; Restituisce la distanza in [eax] come float
-    ; Salviamo i registri XMM (6 registri = 6*16=96 byte)
-    ;-----------------------------------------------------
-    sub     esp, 96
-    movdqu  [esp],      xmm4
-    movdqu  [esp+16],   xmm0
-    movdqu  [esp+32],   xmm1
-    movdqu  [esp+48],   xmm2
-    movdqu  [esp+64],   xmm3
-    movdqu  [esp+80],   xmm5
-
-    xor     eax, eax
-    push    eax          ; eventuale 4° parametro se serve (o placeholder)
-    push    edi          ; j
-    push    esi          ; i
-    push    edx          ; cacoords
-    call    distanza1
-    add     esp, 16      ; bilancia lo stack dei push fatti sopra
-
-    ; Carichiamo il risultato in un REGISTRO TEMPORANEO (es. xmm7)
-    ; per non perderlo dopo il ripristino dei vecchi registri.
-    xorps   xmm7, xmm7
-    movss   xmm7, [eax]   ; xmm7 = dist
-
-    ; Ripristino i registri XMM
-    movdqu  xmm4, [esp]
-    movdqu  xmm0, [esp+16]
-    movdqu  xmm1, [esp+32]
-    movdqu  xmm2, [esp+48]
-    movdqu  xmm3, [esp+64]
-    movdqu  xmm5, [esp+80]
-    add     esp, 96
-
-    ;--------------------------------------
-    ; Controllo se dist < 10.0
-    ;--------------------------------------
-    comiss  xmm7, [dieci]   ; confronta dist con costante 10.0 (float)
-    jge     distanza_maggiore
-
-    ;--------------------------------------
-    ; Calcolo energia se dist < 10.0
-    ;--------------------------------------
-    movzx   eax, byte [ebx + esi]   ; sequenza[i]
-    sub     eax, 65                 ; 'A' -> 0, 'B' -> 1, etc.
-    movss   xmm0, [hydrophobicity1 + eax*4]  ; hydrophobicity[ sequenza[i] - 'A']
-
-    movzx   eax, byte [ebx + edi]   ; sequenza[j]
-    sub     eax, 65
-    movss   xmm1, [hydrophobicity1 + eax*4]
-
-    mulss   xmm0, xmm1    ; prodotto di hydrophobicity
-    divss   xmm0, xmm7    ; diviso la distanza
-    addss   xmm2, xmm0    ; accumula in xmm2 (energia totale)
-
-distanza_maggiore:
-    inc     edi
-    jmp     internalLoop
-
-fine_internal_loop:
-    inc     esi
-    jmp     externalLoop
-
-;--------------------------------------------
-; Fine del doppio loop: salviamo il risultato
-;--------------------------------------------
-fineHydrofobicEnergy:
-    xor     eax, eax
-    mov     eax, [ebp+20]       ; ottengo il puntatore dove salvare la energy
-    movss   [eax], xmm2         ; salvo la energy calcolata
-
-    ; EPILOGO
-    pop     edi
-    pop     esi
-    pop     ebx
-    mov     esp, ebp
-    pop     ebp
-    ret
 
 
