@@ -156,7 +156,7 @@ distanza1:
 	; Calcola 3*i e 3*j    
 	lea     eax, [eax + eax * 2]       ; eax = 3*i    
 	lea     ebx, [ebx + ebx * 2]       ; ebx = 3*j    
-	
+
 	; X_df    
 	movss   xmm0, dword [esi + eax * 4] ; xmm0 = coordinateCa[3*i]    
 	movss   xmm1, dword [esi + ebx * 4] ; xmm1 = coordinateCa[3*j]    
@@ -188,6 +188,8 @@ distanza1:
 	movss 	[eax], xmm0					;[eax] inserisce nell'indirizzo passato in eax il valore risultante in xmm0
 
 	
+
+
 	pop edi
 	pop	esi
 	pop	ebx
@@ -413,12 +415,18 @@ hydrofobic_energy:
 			;--------calcolo distanza--------
 
 			;uso xmm4 per salvare dist
-			xorps xmm4, xmm4
-			push edx
+			xor eax, eax 
+			push eax
+			
 			push edi
 			push esi
+			push edx
+			
+			
 			call distanza1
-			movss xmm4, [ebp+20] ; xmm4 = dist
+			add esp, 16
+			xorps xmm4, xmm4
+			movss xmm4, [eax] ; xmm4 = dist
 			
 			comiss xmm4,  [dieci]
 			jge distanza_maggiore
