@@ -414,6 +414,14 @@ hydrofobic_energy:
 
 			;--------calcolo distanza--------
 
+			; Salva i registri XMM
+			sub esp, 48
+			movdqu [esp], xmm4  ; Salva xmm4
+			movdqu [esp+8], xmm0; Salva xmm0
+			movdqu [esp+16], xmm1; Salva xmm1
+			movdqu [esp+24], xmm2; Salva xmm
+			movdqu [esp+32], xmm3; Salva xmm3
+			movdqu [esp+40], xmm5; Salva xmm
 			;uso xmm4 per salvare dist
 			xor eax, eax 
 			push eax
@@ -427,6 +435,15 @@ hydrofobic_energy:
 			add esp, 16
 			xorps xmm4, xmm4
 			movss xmm4, [eax] ; xmm4 = dist
+
+			 movdqu xmm4, [esp]  ; Ripristina xmm0
+			 movdqu xmm0, [esp+8]  ; Ripristina xmm0
+			 movdqu xmm1, [esp+16]  ; Ripristina xmm1
+			 movdqu xmm2, [esp+24]  ; Ripristina xmm2
+			 movdqu xmm3, [esp+32]  ; Ripristina xmm3
+			 movdqu xmm5, [esp+40]  ; Ripristina xmm5
+
+    		add esp,  48        ; Ripristina lo stack
 			
 			comiss xmm4,  [dieci]
 			jge distanza_maggiore
