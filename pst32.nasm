@@ -39,17 +39,18 @@ section .data			; Sezione contenente dati inizializzati
 	beta_phi	dd -119.0
 	beta_psi	dd 113.0
 	un_mezzo    dd 0.5
+	dieci       dd 10.0
 	; Hydrophobicity
 	alignb 16
-	hydrophobicity dd 1.8, -1, 2.5, -3.5, -3.5, 2.8, -0.4, -3.2, 4.5, -1, -3.9, 3.8, 1.9, -3.5, -1, -1.6, -3.5, -4.5, -0.8, -0.7, -1, 4.2, -0.9, -1, -1.3, -1
+	hydrophobicity1 dd 1.8, -1, 2.5, -3.5, -3.5, 2.8, -0.4, -3.2, 4.5, -1, -3.9, 3.8, 1.9, -3.5, -1, -1.6, -3.5, -4.5, -0.8, -0.7, -1, 4.2, -0.9, -1, -1.3, -1
 
 	alignb 16 
 	; Volume
-	volume dd 88.6, -1, 108.5, 111.1, 138.4, 189.9, 60.1, 153.2, 166.7, -1, 168.6, 166.7, 162.9, 114.1, -1, 112.7, 143.8, 173.4, 89.0, 116.1, -1, 140.0, 227.8, -1, 193.6, -1
+	volume1 dd 88.6, -1, 108.5, 111.1, 138.4, 189.9, 60.1, 153.2, 166.7, -1, 168.6, 166.7, 162.9, 114.1, -1, 112.7, 143.8, 173.4, 89.0, 116.1, -1, 140.0, 227.8, -1, 193.6, -1
 	
 	alignb 16
 	; Charge
-	charge dd 0, -1, 0, -1, -1, 0, 0, 0.5, 0, -1, 1, 0, 0, 0, -1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, -1
+	charge1 dd 0, -1, 0, -1, -1, 0, 0, 0.5, 0, -1, 1, 0, 0, 0, -1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, -1
 
 
 section .bss			; Sezione contenente dati non inizializzati
@@ -407,7 +408,7 @@ hydrofobic_energy:
 						; edi = edi = j= i+1
 		internaloop:
 			cmp edi, 256
-			jge externalLoop
+			jge fine_internal_loop
 
 			;--------calcolo distanza--------
 
@@ -418,28 +419,29 @@ hydrofobic_energy:
 			push esi
 			call distanza1
 			movss xmm4, [ebp+20] ; xmm4 = dist
-
-			comiss xmm4, [10.0]
+			
+			comiss xmm4,  [dieci]
 			jge distanza_maggiore
 			;--------calcolo energia--------
 			movzx eax, byte [ebx+esi] ; sequenza[i]
 			sub eax, 65				  ; sequenza[i] - 65
-			movss xmm0, [hydrophobicity + eax*4] ; hydrophobicity[sequenza[i]-65]
+			movss xmm0, [hydrophobicity1 + eax*4] ; hydrophobicity[sequenza[i]-65]
 
 			movzx eax, byte [ebx+edi] ; sequenza[j]
 			sub eax, 65 ; sequenza[j] - 65
-			movss xmm1, [hydrophobicity + eax*4] ; hydrophobicity[sequenza[j]-65]
-			imul xmm0, xmm1 ; hydrophobicity[sequenza[i]-65] * hydrophobicity[sequenza[j]-65]
+			movss xmm1, [hydrophobicity1 + eax*4] ; hydrophobicity[sequenza[j]-65]
+			mulss xmm0, xmm1 ; hydrophobicity[sequenza[i]-65] * hydrophobicity[sequenza[j]-65]
 			divss xmm0, xmm4 
 			addss xmm2, xmm0 
-
+		distanza_maggiore:
 			inc edi
 			jmp internaloop
 		
-		inc esi
-	
+		fine_internal_loop:
+			inc esi
+			jmp externalLoop
 	fineHydrofobicEnergy:
-	
+	xor eax, eax 
 	mov eax, [ebp+20]
 	movss [eax], xmm2
 	

@@ -498,9 +498,9 @@ extern void distanza1 (MATRIX coordinateCa, int i, int j, type* dist);
 		return sqrt(x_df * x_df + y_df * y_df + z_df * z_df);
 }*/
 
-extern void hydrofobic_energy (char* sequenza, MATRIX coordinate, MATRIX cacoords, type* energy){
+extern void hydrofobic_energy (char* sequenza, MATRIX coordinate, MATRIX cacoords, type* energy);
 	//type energy = 0.0;
-	const int n = 256;
+	/*const int n = 256;
 	
 	for(int i=0; i< n; i++){
 		for(int j= i+1; j<n; j++){
@@ -515,7 +515,7 @@ extern void hydrofobic_energy (char* sequenza, MATRIX coordinate, MATRIX cacoord
 	}
 	//printf("energy hhydro: %f\n", energy);
 	return;
-}
+}*/
 
 extern type electrostatic_energy(char* s, MATRIX coords, MATRIX cacoords){
 	type energy= 0.0;
