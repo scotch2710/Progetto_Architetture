@@ -498,8 +498,8 @@ extern void distanza1 (MATRIX coordinateCa, int i, int j, type* dist);
 		return sqrt(x_df * x_df + y_df * y_df + z_df * z_df);
 }*/
 
-extern type hydrofobic_energy (char* sequenza, MATRIX coordinate, MATRIX cacoords){
-	type energy = 0.0;
+extern void hydrofobic_energy (char* sequenza, MATRIX coordinate, MATRIX cacoords, type* energy){
+	//type energy = 0.0;
 	const int n = 256;
 	
 	for(int i=0; i< n; i++){
@@ -509,12 +509,12 @@ extern type hydrofobic_energy (char* sequenza, MATRIX coordinate, MATRIX cacoord
 			distanza1(cacoords, i, j, &dist);
 			//printf("distanza: %f\n", dist);
 			if(dist < 10.0){
-				energy += (hydrophobicity[(int)sequenza[i]-65] * hydrophobicity[(int)sequenza[j]-65] )/ dist;
+				*energy += (hydrophobicity[(int)sequenza[i]-65] * hydrophobicity[(int)sequenza[j]-65] )/ dist;
 			}
 		}
 	}
 	//printf("energy hhydro: %f\n", energy);
-	return energy;
+	return;
 }
 
 extern type electrostatic_energy(char* s, MATRIX coords, MATRIX cacoords){
@@ -573,7 +573,8 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	coordsca(coords, cacoords);
 	type rama= 0.0;
 	rama_energy(phi, psi, &rama);
-	type hydro = hydrofobic_energy(seq, coords, cacoords);
+	type hydro = 0.0;
+	hydrofobic_energy(seq, coords, cacoords, &hydro);
 	type elec = electrostatic_energy(seq, coords, cacoords);
 	type pack = packing_energy(seq, coords, cacoords);
 	type w_rama= 1.0;

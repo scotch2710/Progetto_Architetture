@@ -39,6 +39,18 @@ section .data			; Sezione contenente dati inizializzati
 	beta_phi	dd -119.0
 	beta_psi	dd 113.0
 	un_mezzo    dd 0.5
+	; Hydrophobicity
+	alignb 16
+	hydrophobicity dd 1.8, -1, 2.5, -3.5, -3.5, 2.8, -0.4, -3.2, 4.5, -1, -3.9, 3.8, 1.9, -3.5, -1, -1.6, -3.5, -4.5, -0.8, -0.7, -1, 4.2, -0.9, -1, -1.3, -1
+
+	alignb 16 
+	; Volume
+	volume dd 88.6, -1, 108.5, 111.1, 138.4, 189.9, 60.1, 153.2, 166.7, -1, 168.6, 166.7, 162.9, 114.1, -1, 112.7, 143.8, 173.4, 89.0, 116.1, -1, 140.0, 227.8, -1, 193.6, -1
+	
+	alignb 16
+	; Charge
+	charge dd 0, -1, 0, -1, -1, 0, 0, 0.5, 0, -1, 1, 0, 0, 0, -1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, -1
+
 
 section .bss			; Sezione contenente dati non inizializzati
 	alignb 16
@@ -67,6 +79,7 @@ section .text			; Sezione contenente il codice macchina
 
 extern get_block
 extern free_block
+global hydrofobic_energy
 
 %macro	getmem	2
 	mov	eax, %1
@@ -350,5 +363,95 @@ rama_energy:
 	mov	esp, ebp	; ripristina lo Stack Pointer 
 	pop ebp    
 	ret
+
+; extern void hydrofobic_energy (char* sequenza, MATRIX coordinate, MATRIX cacoords, type* energy){
+; 	//type energy = 0.0;
+; 	const int n = 256;
+	
+; 	for(int i=0; i< n; i++){
+; 		for(int j= i+1; j<n; j++){
+; 			//type dist = distanza(cacoords, i, j);
+; 			type dist = 0.0;
+; 			distanza1(cacoords, i, j, &dist);
+; 			//printf("distanza: %f\n", dist);
+; 			if(dist < 10.0){
+; 				*energy += (hydrophobicity[(int)sequenza[i]-65] * hydrophobicity[(int)sequenza[j]-65] )/ dist;
+; 			}
+; 		}
+; 	}
+; 	//printf("energy hhydro: %f\n", energy);
+; 	return;
+; ; }
+
+hydrofobic_energy:
+	push	ebp			; salva il Base Pointer
+	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+	push	ebx			; salva i registri da preservare
+	push	esi
+	push	edi  
+
+	mov ebx, [ebp+8]    	;sequenza
+	mov ecx, [ebp+12]		;coordinate
+	mov edx, [ebp+16]		;cacoords
+
+	xor esi, esi 			;esi: i=0
+	xorps xmm2, xmm2        ;init energy = 0.0
+
+	externalLoop:
+		cmp esi, 256
+		jge fineHydrofobicEnergy
+
+		xor edi, edi 			;edi: j=0
+		mov edi, esi			; edi = j =1
+		inc edi	
+						; edi = edi = j= i+1
+		internaloop:
+			cmp edi, 256
+			jge externalLoop
+
+			;--------calcolo distanza--------
+
+			;uso xmm4 per salvare dist
+			xorps xmm4, xmm4
+			push edx
+			push edi
+			push esi
+			call distanza1
+			movss xmm4, [ebp+20] ; xmm4 = dist
+
+			comiss xmm4, [10.0]
+			jge distanza_maggiore
+			;--------calcolo energia--------
+			movzx eax, byte [ebx+esi] ; sequenza[i]
+			sub eax, 65				  ; sequenza[i] - 65
+			movss xmm0, [hydrophobicity + eax*4] ; hydrophobicity[sequenza[i]-65]
+
+			movzx eax, byte [ebx+edi] ; sequenza[j]
+			sub eax, 65 ; sequenza[j] - 65
+			movss xmm1, [hydrophobicity + eax*4] ; hydrophobicity[sequenza[j]-65]
+			imul xmm0, xmm1 ; hydrophobicity[sequenza[i]-65] * hydrophobicity[sequenza[j]-65]
+			divss xmm0, xmm4 
+			addss xmm2, xmm0 
+
+			inc edi
+			jmp internaloop
+		
+		inc esi
+	
+	fineHydrofobicEnergy:
+	
+	mov eax, [ebp+20]
+	movss [eax], xmm2
+	
+
+
+	pop edi
+	pop	esi
+	pop	ebx
+	mov	esp, ebp	; ripristina lo Stack Pointer 
+	pop ebp    
+	ret
+
+
 
 
