@@ -350,12 +350,12 @@ rotation:
 	movss xmm1, [ebx+dim] ; axis[1]
 	mulss xmm1, xmm1
 	addss xmm0, xmm1
-	;pxor xmm1, xmm1
+	pxor xmm1, xmm1
 
 	movss xmm1, [ebx+2*dim] ; axis[2]
 	mulss xmm1, xmm1
 	addss xmm0, xmm1
-	;pxor xmm1, xmm1
+	pxor xmm1, xmm1
 	; xmm0 ha il prodotto scalare
 
 	; Calcola 1/prodotto scalare
@@ -363,15 +363,17 @@ rotation:
 	divss xmm1, xmm0
 	movss [ebx], xmm1
 
-	;pxor xmm1, xmm1
+	pxor xmm1, xmm1
 	movss xmm1, [ebx+dim] ; axis[1]
 	divss xmm1, xmm0
 	movss [ebx+dim], xmm1
+	pxor xmm1, xmm1
 
-	;pxor xmm1, xmm1
+
 	movss xmm1, [ebx+2*dim] ; axis[2]
 	divss xmm1, xmm0
 	movss [ebx+2*dim], xmm1
+	pxor xmm1, xmm1
 
 	; Calcola a con approx del coseno
 	; return 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0);
