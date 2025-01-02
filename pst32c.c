@@ -311,34 +311,38 @@ type approx_sin(type theta) {
 
 }
 
-extern void rotation(VECTOR axis, type theta, MATRIX *result);
-//  {
-// 	type prod_scal= (axis[0]*axis[0])+(axis[1]*axis[1])+(axis[2]*axis[2]);
-	
-// 	axis[0] = axis[0] / prod_scal;
-// 	axis[1] = axis[1] / prod_scal;
-// 	axis[2] = axis[2] / prod_scal;
+extern void prodottoScalare(VECTOR axis, type *prod_scal);
 
-// 	type a = approx_cos(theta/2.0);
-// 	type s = -1.0 * approx_sin(theta / 2.0);
-//     type b = s * axis[0];
-//     type c = s * axis[1];
-//     type d = s * axis[2];
+extern void rotation(VECTOR axis, type theta, MATRIX result)
+ {
+	type prod_scal= (axis[0]*axis[0])+(axis[1]*axis[1])+(axis[2]*axis[2]);
+	// type prod_scal = 0.0;
+	// prodottoScalare(axis, &prod_scal);
+	
+	axis[0] = axis[0] / prod_scal;
+	axis[1] = axis[1] / prod_scal;
+	axis[2] = axis[2] / prod_scal;
+
+	type a = approx_cos(theta/2.0);
+	type s = -1.0 * approx_sin(theta / 2.0);
+    type b = s * axis[0];
+    type c = s * axis[1];
+    type d = s * axis[2];
 
     
-//     result[0] = a * a + b * b - c * c - d * d;
-//     result[1] = 2 * (b * c + a * d);
-//     result[2] = 2 * (b * d - a * c);
+    result[0] = a * a + b * b - c * c - d * d;
+    result[1] = 2 * (b * c + a * d);
+    result[2] = 2 * (b * d - a * c);
 
-//     result[3] = 2 * (b * c - a * d);
-//     result[4] = a * a + c * c - b * b - d * d;
-//     result[5] = 2 * (c * d + a * b);
+    result[3] = 2 * (b * c - a * d);
+    result[4] = a * a + c * c - b * b - d * d;
+    result[5] = 2 * (c * d + a * b);
 
-//     result[6] = 2 * (b * d + a * c);
-//     result[7] = 2 * (c * d - a * b);
-//     result[8] = a * a + d * d - b * b - c * c;
-//     return;
-// 	}
+    result[6] = 2 * (b * d + a * c);
+    result[7] = 2 * (c * d - a * b);
+    result[8] = a * a + d * d - b * b - c * c;
+    return;
+	}
 
 extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 	const int n = 256;
@@ -373,7 +377,7 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 			v1[2]/=norm_v1;
 
 			MATRIX rot = alloc_matrix(3, 3);
-			rotation(v1, theta_CNCa, &rot);
+			rotation(v1, theta_CNCa, rot);
 			// Stampa della matrice coords
 			
         	new_v[0] = 0;
@@ -403,7 +407,7 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 			//printf("vettore v2 %d: %f %f %f\n",i, v2[0],v2[1],v2[2]);
 			
 			MATRIX rot1 = alloc_matrix(3, 3);
-			rotation(v2, phi[i], &rot1);
+			rotation(v2, phi[i], rot1);
 			new_v[0] = 0;
 			new_v[1] = r_CaN;
 			new_v[2] = 0;
@@ -425,7 +429,7 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 		v3[1]/=norm_v3;
 		v3[2]/=norm_v3;
 		MATRIX rot2 = alloc_matrix(3, 3);
-		rotation(v3, psi[i], &rot2);
+		rotation(v3, psi[i], rot2);
         new_v[0] = 0;
 		new_v[1] = r_CaC;
 		new_v[2] = 0;

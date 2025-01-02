@@ -112,7 +112,8 @@ extern free_block
 global distanza1
 global coordsca
 global rama_energy
-global rotation
+global prodottoScalare
+;global rotation
 ;global hydrofobic_energy
 
 N 		equ 	8
@@ -330,21 +331,246 @@ coordsca:
 ; // 	} a*a, b*b, c*c, d*d, b*c, a*d, b*d, a*c, c*d, a*b
 ; 0, 4, 8 --- 1, 3 -- 2, 6 -- 5, 7
 
-rotation:
+; rotation:
+; 	push	ebp			; salva il Base Pointer
+; 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+; 	sub     esp, 12
+; 	push	ebx			; salva i registri da preservare
+; 	push	esi
+; 	push	edi
+
+; 	mov ebx, [ebp+8]    ;axis
+; 	mov ecx, [ebp+12]		;theta
+; 	mov eax, [ebp+16]		;result
+
+; 	; inizio logica
+
+; 	; Calcola il prodotto scalare
+; 	movss xmm0, [ebx] ; axis[0]
+; 	mulss xmm0, xmm0
+
+; 	movss xmm1, [ebx+dim] ; axis[1]
+; 	mulss xmm1, xmm1
+; 	addss xmm0, xmm1
+	   
+
+; 	movss xmm1, [ebx+2*dim] ; axis[2]
+; 	mulss xmm1, xmm1
+; 	addss xmm0, xmm1
+	   
+; 	; xmm0 ha il prodotto scalare
+
+; 	; Calcola 1/prodotto scalare
+; 	movss xmm1, [ebx] ; axis[0]
+; 	divss xmm1, xmm0
+; 	movss xmm2, [ebx+dim] ; axis[1]
+; 	divss xmm2, xmm0
+; 	movss xmm3, [ebx+2*dim] ; axis[2]
+; 	divss xmm3, xmm0
+	
+; 	movss [ebp-12], xmm1 ; new axis[0]
+; 	movss [ebp-8], xmm2  ; new axis[1]
+; 	movss [ebp-4], xmm3  ; new axis[2]
+	   
+
+; 	; Calcola a con approx del coseno
+; 	; return 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0);
+
+; 	movss xmm1, [ecx]
+; 	divss xmm1, [due] ; in rotation theta/2.0
+; 	movss xmm7, xmm1 ; xmm7 =theta
+; 	mulss xmm1, xmm1 ; xmm1 = theta^2
+; 	movss xmm2, xmm1
+; 	divss xmm2, [due] ; xmm2 = theta^2 / 2.0
+
+; 	movss xmm3, xmm1
+; 	mulss xmm3, xmm3 ; xmm3 = theta^4
+; 	movss xmm4, xmm3
+; 	movss xmm6, xmm3 ; xmm6 = theta^2 * theta^2
+; 	divss xmm3, [venti_quattro] ; xmm3 = theta^2 * theta^2 / 24.0
+
+; 	mulss xmm4, xmm1
+; 	divss xmm4, [settecento_venti] ; xmm4 = theta^2 * theta^2 * theta^2 / 720.0
+
+; 	movss xmm5, [uno]
+; 	subss xmm5, xmm2
+; 	addss xmm5, xmm3
+; 	subss xmm5, xmm4 ; xmm5 = 1 - (theta^2 / 2.0) + (theta^2 * theta^2 / 24.0) - (theta^2 * theta^2 * theta^2 / 720.0)
+
+; 	; xmm5 ha l'approssimazione del coseno
+
+; 	; Calcola s con approx del seno
+; 	;return theta - (x2 * theta / 6.0) + (x2 * x2 * theta / 120.0) - (x2 * x2 * x2 * theta/ 5040.0);
+
+; 	movss xmm2, xmm7
+; 	mulss xmm2, xmm1 ; xmm2 = theta^3
+; 	; free register , xmm4
+; 	movss xmm3, xmm2
+; 	divss xmm3, [sei] ; xmm3 = theta^3 / 6.0
+	
+; 	mulss  xmm6, xmm7 ; xmm6 = theta^5
+; 	movss xmm4, xmm6
+; 	divss xmm6, [cento_venti] ; xmm6 = theta^5 / 120.0
+
+; 	mulss xmm4, xmm1 ; xmm4 = theta^7
+; 	divss xmm4, [cinquemila_quaranta] ; xmm4 = theta^7 / 5040.0
+
+; 	subss xmm7, xmm3
+; 	addss xmm7, xmm6
+; 	subss xmm7, xmm4 ; xmm7 = theta - (theta^3 / 6.0) + (theta^5 / 120.0) - (theta^7 / 5040.0)
+
+; 	; xmm7 ha l'approssimazione del seno
+
+; 	mulss xmm7, [meno_uno] ; xmm7 = -1.0 * approx_sin(theta / 2.0)
+
+; 	; a = xmm5
+; 	; s = xmm7
+
+; 	; Calcol0 b, c, d
+
+; 	movss xmm0, [ebp-12] ; axis[0]
+; 	mulss xmm0, xmm7 ; b = s * axis[0]
+
+; 	movss xmm1, [ebp-8] ; axis[1]
+; 	mulss xmm1, xmm7 ; c = s * axis[1]
+
+; 	movss xmm2, [ebp-4] ; axis[2]
+; 	mulss xmm2, xmm7 ; d = s * axis[2]
+
+
+; 	; calcolo delle righe del risultato; 1, 3
+; 	; //     result[3] = 2 * (b * c - a * d);
+; 	; //     result[1] = 2 * (b * c + a * d);
+
+; 	movss xmm3, xmm0 ; xmm3 = b
+; 	mulss xmm3, xmm1 ; xmm3 = b * c
+; 	movss xmm4, xmm5; xmm4 = a
+; 	mulss xmm4, xmm2 ; xmm4 = a * d
+; 	movss xmm6, xmm3 ; xmm6 = b * c
+; 	movss xmm7, xmm3 ; xmm7 = b * c
+; 	subss xmm6, xmm4 ; xmm3 = b * c - a * d
+; 	addss xmm7,  xmm4 ; xmm7 = b * c + a * d
+; 	mulss xmm6, [due] ; xmm6 = 2 * (b * c - a * d)
+; 	mulss xmm7, [due] ; xmm7 = 2 * (b * c + a * d)
+; 	movss [eax+dim*3], xmm6 ; result[3] = 2 * (b * c - a * d)
+; 	movss [eax+dim], xmm7   ; result[1] = 2 * (b * c + a * d
+
+; 	; calcolo delle righe del risultato; 2, 6
+; 	; //     result[6] = 2 * (b * d + a * c);
+; 	; //     result[2] = 2 * (b * d - a * c);
+; 	; a= xmm5, b= xmm0, c= xmm1, d= xmm2  ---> registri liberi xmm3, xmm4, xmm6, xmm7
+
+; 	movss xmm3, xmm0 ; xmm3 = b
+; 	mulss xmm3, xmm2 ; xmm3 = b * d
+; 	movss xmm4, xmm5; xmm4 = a
+; 	mulss xmm4, xmm1 ; xmm4 = a * c
+; 	movss xmm6, xmm3 ; xmm6 = b * d
+; 	movss xmm7, xmm3 ; xmm7 = b * d
+; 	subss xmm6, xmm4 ; xmm3 = b * d - a * c
+; 	addss xmm7,  xmm4 ; xmm7 = b * d + a * c
+; 	mulss xmm6, [due] ; xmm6 = 2 * (b * d - a * c)
+; 	mulss xmm7, [due] ; xmm7 = 2 * (b * d + a * c)
+; 	movss [eax+dim*6], xmm6   ; result[6] = 2 * (b * d - a * c)
+; 	movss [eax+dim*2], xmm7   ; result[2] = 2 * (b * d + a * c)
+
+; 	; calcolo delle righe del risultato; 5, 7
+; 	; //     result[7] = 2 * (c * d - a * b);
+; 	; //     result[5] = 2 * (c * d + a * b);
+; 	; a= xmm5, b= xmm0, c= xmm1, d= xmm2  ---> registri liberi xmm3, xmm4, xmm6, xmm7
+
+; 	movss xmm3, xmm1 ; xmm3 = c
+; 	mulss xmm3, xmm2 ; xmm3 = c * d
+; 	movss xmm4, xmm5; xmm4 = a
+; 	mulss xmm4, xmm0 ; xmm4 = a * b
+; 	movss xmm6, xmm3 ; xmm6 = c * d
+; 	movss xmm7, xmm3 ; xmm7 = c * d
+; 	subss xmm6, xmm4 ; xmm3 = c * d - a * b
+; 	addss xmm7,  xmm4 ; xmm7 = c * d + a * b
+; 	mulss xmm6, [due] ; xmm6 = 2 * (c * d - a * b)
+; 	mulss xmm7, [due] ; xmm7 = 2 * (c * d + a * b)
+; 	movss [eax+dim*7], xmm6   ; result[7] = 2 * (c * d - a * b)
+; 	movss [eax+dim*5], xmm7   ; result[5] = 2 * (c * d + a * b)
+
+
+; 	; implementazioni delle seguenti righe del result: 0, 4, 8
+; 	; a= xmm5, b= xmm0, c= xmm1, d= xmm2  ---> registri liberi xmm3, xmm4, xmm6, xmm7
+; 	; calcolare a*a, b*b, c*c, d*d
+; 	mulss xmm5, xmm5 ; xmm5 = a*a
+; 	mulss xmm0, xmm0 ; xmm0 = b*b
+; 	mulss xmm1, xmm1 ; xmm1 = c*c
+; 	mulss xmm2, xmm2 ; xmm2 = d*d
+
+; 	; //     result[0] = a * a + b * b - c * c - d * d; 
+; 	movss xmm3, xmm5 ; xmm3 = a*a
+; 	addss xmm3, xmm0 ; xmm3 = a*a + b*b
+; 	subss xmm3, xmm1 ; xmm3 = a*a + b*b - c*c
+; 	subss xmm3, xmm2 ; xmm3 = a*a + b*b - c*c - d*d
+; 	movss [eax], xmm3 ; result[0] = a*a + b*b - c*c - d*d
+
+; 	; //     result[4] = a * a + c * c - b * b - d * d;
+; 	movss xmm4, xmm5 ; xmm4 = a*a
+; 	addss xmm4, xmm1 ; xmm4 = a*a + c*c
+; 	subss xmm4, xmm0 ; xmm4 = a*a + c*c - b*b
+; 	subss xmm4, xmm2 ; xmm4 = a*a + c*c - b*b - d*d
+; 	movss [eax+dim*4], xmm4 ; result[4] = a*a + c*c - b*b - d*d
+
+; 	; //     result[8] = a * a + d * d - b * b - c * c;
+; 	movss xmm6, xmm5 ; xmm6 = a*a
+; 	addss xmm6, xmm2 ; xmm6 = a*a + d*d
+; 	subss xmm6, xmm0 ; xmm6 = a*a + d*d - b*b
+; 	subss xmm6, xmm1 ; xmm6 = a*a + d*d - b*b - c*c
+; 	movss [eax+dim*8], xmm6 ; result[8] = a*a + d*d - b*b - c*c
+
+; 	;--- fine logica ---
+
+; 	pop edi
+; 	pop	esi
+; 	pop	ebx
+; 	mov	esp, ebp	; ripristina lo Stack Pointer 
+; 	pop ebp    
+; 	ret
+
+; rotation:
+; 	push	ebp			; salva il Base Pointer
+; 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+; 	push	ebx			; salva i registri da preservare
+; 	push 	edx
+; 	push	esi
+; 	push	edi
+
+
+; 	mov ebx, [ebp+8]    ;axis
+; 	mov ecx, [ebp+12]		;theta
+; 	mov edx, [ebp+16]		;axis Normalizzato
+; 	mov eax, [ebp+20]		;result
+
+; 	call prodottoScalare
+
+
+
+
+
+; 	pop edi
+; 	pop	esi
+; 	pop edx
+; 	pop	ebx
+; 	mov	esp, ebp	; ripristina lo Stack Pointer 
+; 	pop ebp    
+; 	ret
+
+prodottoScalare:
 	push	ebp			; salva il Base Pointer
 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
-	sub     esp, 12
 	push	ebx			; salva i registri da preservare
+	push 	edx
 	push	esi
 	push	edi
 
+
 	mov ebx, [ebp+8]    ;axis
-	mov ecx, [ebp+12]		;theta
-	mov eax, [ebp+16]		;result
+	mov ecx, [ebp+12]		;axis Normalizzato
 
-	; inizio logica
-
-	; Calcola il prodotto scalare
+		; Calcola il prodotto scalare
 	movss xmm0, [ebx] ; axis[0]
 	mulss xmm0, xmm0
 
@@ -360,174 +586,30 @@ rotation:
 	; xmm0 ha il prodotto scalare
 
 	; Calcola 1/prodotto scalare
-	movss xmm1, [ebx] ; axis[0]
-	divss xmm1, xmm0
-	movss xmm2, [ebx+dim] ; axis[1]
-	divss xmm2, xmm0
-	movss xmm3, [ebx+2*dim] ; axis[2]
-	divss xmm3, xmm0
+	; movss xmm1, [ebx] ; axis[0]
+	; divss xmm1, xmm0
+	; movss xmm2, [ebx+dim] ; axis[1]
+	; divss xmm2, xmm0
+	; movss xmm3, [ebx+2*dim] ; axis[2]
+	; divss xmm3, xmm0
 	
-	movss [ebp-12], xmm1 ; new axis[0]
-	movss [ebp-8], xmm2  ; new axis[1]
-	movss [ebp-4], xmm3  ; new axis[2]
-	   
-
-	; Calcola a con approx del coseno
-	; return 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0);
-
-	movss xmm1, [ecx]
-	divss xmm1, [due] ; in rotation theta/2.0
-	movss xmm7, xmm1 ; xmm7 =theta
-	mulss xmm1, xmm1 ; xmm1 = theta^2
-	movss xmm2, xmm1
-	divss xmm2, [due] ; xmm2 = theta^2 / 2.0
-
-	movss xmm3, xmm1
-	mulss xmm3, xmm3 ; xmm3 = theta^4
-	movss xmm4, xmm3
-	movss xmm6, xmm3 ; xmm6 = theta^2 * theta^2
-	divss xmm3, [venti_quattro] ; xmm3 = theta^2 * theta^2 / 24.0
-
-	mulss xmm4, xmm1
-	divss xmm4, [settecento_venti] ; xmm4 = theta^2 * theta^2 * theta^2 / 720.0
-
-	movss xmm5, [uno]
-	subss xmm5, xmm2
-	addss xmm5, xmm3
-	subss xmm5, xmm4 ; xmm5 = 1 - (theta^2 / 2.0) + (theta^2 * theta^2 / 24.0) - (theta^2 * theta^2 * theta^2 / 720.0)
-
-	; xmm5 ha l'approssimazione del coseno
-
-	; Calcola s con approx del seno
-	;return theta - (x2 * theta / 6.0) + (x2 * x2 * theta / 120.0) - (x2 * x2 * x2 * theta/ 5040.0);
-
-	movss xmm2, xmm7
-	mulss xmm2, xmm1 ; xmm2 = theta^3
-	; free register , xmm4
-	movss xmm3, xmm2
-	divss xmm3, [sei] ; xmm3 = theta^3 / 6.0
+	movss [eax], xmm0
+	; movss [edx], xmm1 ; new axis[0]
+	; movss [edx+dim], xmm2  ; new axis[1]
+	; movss [edx+2*dim], xmm3  ; new axis[2]
 	
-	mulss  xmm6, xmm7 ; xmm6 = theta^5
-	movss xmm4, xmm6
-	divss xmm6, [cento_venti] ; xmm6 = theta^5 / 120.0
-
-	mulss xmm4, xmm1 ; xmm4 = theta^7
-	divss xmm4, [cinquemila_quaranta] ; xmm4 = theta^7 / 5040.0
-
-	subss xmm7, xmm3
-	addss xmm7, xmm6
-	subss xmm7, xmm4 ; xmm7 = theta - (theta^3 / 6.0) + (theta^5 / 120.0) - (theta^7 / 5040.0)
-
-	; xmm7 ha l'approssimazione del seno
-
-	mulss xmm7, [meno_uno] ; xmm7 = -1.0 * approx_sin(theta / 2.0)
-
-	; a = xmm5
-	; s = xmm7
-
-	; Calcol0 b, c, d
-
-	movss xmm0, [ebp-12] ; axis[0]
-	mulss xmm0, xmm7 ; b = s * axis[0]
-
-	movss xmm1, [ebp-8] ; axis[1]
-	mulss xmm1, xmm7 ; c = s * axis[1]
-
-	movss xmm2, [ebp-4] ; axis[2]
-	mulss xmm2, xmm7 ; d = s * axis[2]
-
-
-	; calcolo delle righe del risultato; 1, 3
-	; //     result[3] = 2 * (b * c - a * d);
-	; //     result[1] = 2 * (b * c + a * d);
-
-	movss xmm3, xmm0 ; xmm3 = b
-	mulss xmm3, xmm1 ; xmm3 = b * c
-	movss xmm4, xmm5; xmm4 = a
-	mulss xmm4, xmm2 ; xmm4 = a * d
-	movss xmm6, xmm3 ; xmm6 = b * c
-	movss xmm7, xmm3 ; xmm7 = b * c
-	subss xmm6, xmm4 ; xmm3 = b * c - a * d
-	addss xmm7,  xmm4 ; xmm7 = b * c + a * d
-	mulss xmm6, [due] ; xmm6 = 2 * (b * c - a * d)
-	mulss xmm7, [due] ; xmm7 = 2 * (b * c + a * d)
-	movss [eax+dim*3], xmm6 ; result[3] = 2 * (b * c - a * d)
-	movss [eax+dim], xmm7   ; result[1] = 2 * (b * c + a * d
-
-	; calcolo delle righe del risultato; 2, 6
-	; //     result[6] = 2 * (b * d + a * c);
-	; //     result[2] = 2 * (b * d - a * c);
-	; a= xmm5, b= xmm0, c= xmm1, d= xmm2  ---> registri liberi xmm3, xmm4, xmm6, xmm7
-
-	movss xmm3, xmm0 ; xmm3 = b
-	mulss xmm3, xmm2 ; xmm3 = b * d
-	movss xmm4, xmm5; xmm4 = a
-	mulss xmm4, xmm1 ; xmm4 = a * c
-	movss xmm6, xmm3 ; xmm6 = b * d
-	movss xmm7, xmm3 ; xmm7 = b * d
-	subss xmm6, xmm4 ; xmm3 = b * d - a * c
-	addss xmm7,  xmm4 ; xmm7 = b * d + a * c
-	mulss xmm6, [due] ; xmm6 = 2 * (b * d - a * c)
-	mulss xmm7, [due] ; xmm7 = 2 * (b * d + a * c)
-	movss [eax+dim*6], xmm6   ; result[6] = 2 * (b * d - a * c)
-	movss [eax+dim*2], xmm7   ; result[2] = 2 * (b * d + a * c)
-
-	; calcolo delle righe del risultato; 5, 7
-	; //     result[7] = 2 * (c * d - a * b);
-	; //     result[5] = 2 * (c * d + a * b);
-	; a= xmm5, b= xmm0, c= xmm1, d= xmm2  ---> registri liberi xmm3, xmm4, xmm6, xmm7
-
-	movss xmm3, xmm1 ; xmm3 = c
-	mulss xmm3, xmm2 ; xmm3 = c * d
-	movss xmm4, xmm5; xmm4 = a
-	mulss xmm4, xmm0 ; xmm4 = a * b
-	movss xmm6, xmm3 ; xmm6 = c * d
-	movss xmm7, xmm3 ; xmm7 = c * d
-	subss xmm6, xmm4 ; xmm3 = c * d - a * b
-	addss xmm7,  xmm4 ; xmm7 = c * d + a * b
-	mulss xmm6, [due] ; xmm6 = 2 * (c * d - a * b)
-	mulss xmm7, [due] ; xmm7 = 2 * (c * d + a * b)
-	movss [eax+dim*7], xmm6   ; result[7] = 2 * (c * d - a * b)
-	movss [eax+dim*5], xmm7   ; result[5] = 2 * (c * d + a * b)
-
-
-	; implementazioni delle seguenti righe del result: 0, 4, 8
-	; a= xmm5, b= xmm0, c= xmm1, d= xmm2  ---> registri liberi xmm3, xmm4, xmm6, xmm7
-	; calcolare a*a, b*b, c*c, d*d
-	mulss xmm5, xmm5 ; xmm5 = a*a
-	mulss xmm0, xmm0 ; xmm0 = b*b
-	mulss xmm1, xmm1 ; xmm1 = c*c
-	mulss xmm2, xmm2 ; xmm2 = d*d
-
-	; //     result[0] = a * a + b * b - c * c - d * d; 
-	movss xmm3, xmm5 ; xmm3 = a*a
-	addss xmm3, xmm0 ; xmm3 = a*a + b*b
-	subss xmm3, xmm1 ; xmm3 = a*a + b*b - c*c
-	subss xmm3, xmm2 ; xmm3 = a*a + b*b - c*c - d*d
-	movss [eax], xmm3 ; result[0] = a*a + b*b - c*c - d*d
-
-	; //     result[4] = a * a + c * c - b * b - d * d;
-	movss xmm4, xmm5 ; xmm4 = a*a
-	addss xmm4, xmm1 ; xmm4 = a*a + c*c
-	subss xmm4, xmm0 ; xmm4 = a*a + c*c - b*b
-	subss xmm4, xmm2 ; xmm4 = a*a + c*c - b*b - d*d
-	movss [eax+dim*4], xmm4 ; result[4] = a*a + c*c - b*b - d*d
-
-	; //     result[8] = a * a + d * d - b * b - c * c;
-	movss xmm6, xmm5 ; xmm6 = a*a
-	addss xmm6, xmm2 ; xmm6 = a*a + d*d
-	subss xmm6, xmm0 ; xmm6 = a*a + d*d - b*b
-	subss xmm6, xmm1 ; xmm6 = a*a + d*d - b*b - c*c
-	movss [eax+dim*8], xmm6 ; result[8] = a*a + d*d - b*b - c*c
-
-	;--- fine logica ---
-
 	pop edi
 	pop	esi
+	pop edx
 	pop	ebx
 	mov	esp, ebp	; ripristina lo Stack Pointer 
 	pop ebp    
 	ret
+
+
+
+
+
 
 	
 
