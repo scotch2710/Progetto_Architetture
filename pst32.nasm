@@ -333,6 +333,7 @@ coordsca:
 rotation:
 	push	ebp			; salva il Base Pointer
 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+	sub     esp, 12
 	push	ebx			; salva i registri da preservare
 	push	esi
 	push	edi
@@ -365,9 +366,10 @@ rotation:
 	divss xmm2, xmm0
 	movss xmm3, [ebx+2*dim] ; axis[2]
 	divss xmm3, xmm0
-	movss [ebx], xmm1
-	movss [ebx+dim], xmm2
-	movss [ebx+2*dim], xmm3
+	
+	movss [ebp-12], xmm1 ; new axis[0]
+	movss [ebp-8], xmm2  ; new axis[1]
+	movss [ebp-4], xmm3  ; new axis[2]
 	   
 
 	; Calcola a con approx del coseno
@@ -425,13 +427,13 @@ rotation:
 
 	; Calcol0 b, c, d
 
-	movss xmm0, [ebx] ; axis[0]
+	movss xmm0, [ebp-12] ; axis[0]
 	mulss xmm0, xmm7 ; b = s * axis[0]
 
-	movss xmm1, [ebx+dim] ; axis[1]
+	movss xmm1, [ebp-8] ; axis[1]
 	mulss xmm1, xmm7 ; c = s * axis[1]
 
-	movss xmm2, [ebx+2*dim] ; axis[2]
+	movss xmm2, [ebp-4] ; axis[2]
 	mulss xmm2, xmm7 ; d = s * axis[2]
 
 
