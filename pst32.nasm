@@ -383,7 +383,8 @@ rotation:
 	movss xmm2, xmm1
 	divss xmm2, [due] ; xmm2 = theta^2 / 2.0
 
-	mulss xmm3, xmm1, xmm1
+	movss xmm3, xmm1
+	mulss xmm3, xmm3 ; xmm3 = theta^4
 	movss xmm4, xmm3
 	movss xmm6, xmm3 ; xmm6 = theta^2 * theta^2
 	divss xmm3, [venti_quattro] ; xmm3 = theta^2 * theta^2 / 24.0
@@ -401,7 +402,8 @@ rotation:
 	; Calcola s con approx del seno
 	;return theta - (x2 * theta / 6.0) + (x2 * x2 * theta / 120.0) - (x2 * x2 * x2 * theta/ 5040.0);
 
-	mulss xmm2, xmm7, xmm1 ; xmm2 = theta^3
+	movss xmm2, xmm7
+	mulss xmm2, xmm1 ; xmm2 = theta^3
 	; free register , xmm4
 	movss xmm3, xmm2
 	divss xmm3, [sei] ; xmm3 = theta^3 / 6.0
@@ -415,11 +417,11 @@ rotation:
 
 	subss xmm7, xmm3
 	addss xmm7, xmm6
-	subbss xmm7, xmm4 ; xmm7 = theta - (theta^3 / 6.0) + (theta^5 / 120.0) - (theta^7 / 5040.0)
+	subss xmm7, xmm4 ; xmm7 = theta - (theta^3 / 6.0) + (theta^5 / 120.0) - (theta^7 / 5040.0)
 
 	; xmm7 ha l'approssimazione del seno
 
-	imull xmm7, [meno_uno] ; xmm7 = -1.0 * approx_sin(theta / 2.0)
+	mulss xmm7, [meno_uno] ; xmm7 = -1.0 * approx_sin(theta / 2.0)
 
 	; a = xmm5
 	; s = xmm7
@@ -447,7 +449,7 @@ rotation:
 	movss xmm6, xmm3 ; xmm6 = b * c
 	movss xmm7, xmm3 ; xmm7 = b * c
 	subss xmm6, xmm4 ; xmm3 = b * c - a * d
-	adds xmm7,  xmm4 ; xmm7 = b * c + a * d
+	addss xmm7,  xmm4 ; xmm7 = b * c + a * d
 	mulss xmm6, [due] ; xmm6 = 2 * (b * c - a * d)
 	mulss xmm7, [due] ; xmm7 = 2 * (b * c + a * d)
 	movss [eax+dim*3], xmm6 ; result[3] = 2 * (b * c - a * d)
@@ -507,14 +509,14 @@ rotation:
 
 	; //     result[4] = a * a + c * c - b * b - d * d;
 	movss xmm4, xmm5 ; xmm4 = a*a
-	adds xmm4, xmm1 ; xmm4 = a*a + c*c
+	addss xmm4, xmm1 ; xmm4 = a*a + c*c
 	subss xmm4, xmm0 ; xmm4 = a*a + c*c - b*b
 	subss xmm4, xmm2 ; xmm4 = a*a + c*c - b*b - d*d
 	movss [eax+dim*4], xmm4 ; result[4] = a*a + c*c - b*b - d*d
 
 	; //     result[8] = a * a + d * d - b * b - c * c;
 	movss xmm6, xmm5 ; xmm6 = a*a
-	adds xmm6, xmm2 ; xmm6 = a*a + d*d
+	addss xmm6, xmm2 ; xmm6 = a*a + d*d
 	subss xmm6, xmm0 ; xmm6 = a*a + d*d - b*b
 	subss xmm6, xmm1 ; xmm6 = a*a + d*d - b*b - c*c
 	movss [eax+dim*8], xmm6 ; result[8] = a*a + d*d - b*b - c*c
