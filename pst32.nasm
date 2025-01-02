@@ -104,6 +104,7 @@ global hydrofobic_energy
 global distanza1
 global coordsca
 global rama_energy
+global rotation
 
 N 		equ 	8
 seq		equ		12
@@ -289,6 +290,72 @@ coordsca:
 	; 	return energy;
 	; }
 	;----------------------------------------------------------------------------
+		; IMPLEMENTAZIONE DI ROTATION
+	;extern MATRIX rotation(VECTOR axis, type theta){
+	;type prod_scal= (axis[0]*axis[0])+(axis[1]*axis[1])+(axis[2]*axis[2]);
+	
+	;axis[0] = axis[0] / prod_scal;
+	;axis[1] = axis[1] / prod_scal;
+	;axis[2] = axis[2] / prod_scal;
+
+	;type a = approx_cos(theta/2.0);
+	;type s = -1.0 * approx_sin(theta / 2.0);
+   ;type b = s * axis[0];
+    ;type c = s * axis[1];
+    ;type d = s * axis[2];
+    
+	;MATRIX result = alloc_matrix(3, 3);
+
+    
+    ;result[0] = a * a + b * b - c * c - d * d;
+    ;result[1] = 2 * (b * c + a * d);
+    ;result[2] = 2 * (b * d - a * c)
+
+    ;result[3] = 2 * (b * c - a * d);;
+    ;:esult[4] = a * a + c * c - b * ;b - d * d;
+    ;result[5] = 2 * (c * d + a * b);;
+
+    ;result[6] = 2 * (b * d + a * c);
+    ;result[7] = 2 * (c * d - a * b);
+    ;result[8] = a * a + d * d - b * b - c * c;
+
+	
+    ;return result;
+	;}
+
+rotation:
+	push	ebp			; salva il Base Pointer
+	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+	push	ebx			; salva i registri da preservare
+	push	esi
+	push	edi
+
+	mov ebx, [ebp+8]    ;axis
+	mov ecx, [ebp+12]		;theta
+	mov edx, [ebp+16]		;result
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	;--------------------------------------------------------------------
 rama_energy: 
 	push	ebp			; salva il Base Pointer
 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
@@ -405,9 +472,9 @@ hydrofobic_energy:
 		jge fineHydrofobicEnergy
 
 		xor edi, edi 			;edi: j=0
-		mov edi, esi			; edi = j =1
-		inc edi	
-						; edi = edi = j= i+1
+		mov edi, esi			; edi = j = i
+		inc edi					; edi = j= i+1
+						
 		internaloop:
 			cmp edi, 256
 			jge fine_internal_loop
@@ -416,7 +483,7 @@ hydrofobic_energy:
 
 			
 			;uso xmm4 per salvare dist
-			xor eax, eax 
+			;xor eax, eax 
 			push eax
 			
 			push edi
@@ -428,11 +495,14 @@ hydrofobic_energy:
 			add esp, 16
 			xorps xmm4, xmm4
 			movss xmm4, [eax] ; xmm4 = dist
-
+			;movss xmm4, [ebp+20] ; xmm4 = dist
 			
 			comiss xmm4,  [dieci]
 			jge distanza_maggiore
+
 			;--------calcolo energia--------
+			;push eax
+
 			movzx eax, byte [ebx+esi] ; sequenza[i]
 			sub eax, 65				  ; sequenza[i] - 65
 			movss xmm0, [hydrophobicity1 + eax*4] ; hydrophobicity[sequenza[i]-65]
@@ -440,6 +510,7 @@ hydrofobic_energy:
 			movzx eax, byte [ebx+edi] ; sequenza[j]
 			sub eax, 65 ; sequenza[j] - 65
 			movss xmm1, [hydrophobicity1 + eax*4] ; hydrophobicity[sequenza[j]-65]
+			;pop eax
 			mulss xmm0, xmm1 ; hydrophobicity[sequenza[i]-65] * hydrophobicity[sequenza[j]-65]
 			divss xmm0, xmm4 
 			addss xmm2, xmm0 
@@ -451,18 +522,20 @@ hydrofobic_energy:
 			inc esi
 			jmp externalLoop
 	fineHydrofobicEnergy:
-	xor eax, eax 
+	;xor eax, eax 
 	mov eax, [ebp+20]
 	movss [eax], xmm2
 	
-
-
 	pop edi
 	pop	esi
 	pop	ebx
 	mov	esp, ebp	; ripristina lo Stack Pointer 
 	pop ebp    
 	ret
+
+
+
+
 
 
 
