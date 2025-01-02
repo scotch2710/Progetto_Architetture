@@ -34,12 +34,20 @@ section .data			; Sezione contenente dati inizializzati
 	n 	   equ 256
 	dim    equ 4
 	; Costanti di Ramachandran
-	alpha_phi	dd -57.8
-	alpha_psi	dd -47.0
-	beta_phi	dd -119.0
-	beta_psi	dd 113.0
-	un_mezzo    dd 0.5
-	dieci       dd 10.0
+	alpha_phi	 dd -57.8
+	alpha_psi	 dd -47.0
+	beta_phi	 dd -119.0
+	beta_psi	 dd 113.0
+	un_mezzo     dd 0.5
+	dieci        dd 10.0
+	uno 	     dd 1.0
+	24s			 dd 24.0
+	720s         dd 720.0	
+	2s           dd 2.0
+	6s 			 dd 6.0
+	120s 	     dd 120.0
+	5040s		 dd 5040.0
+	meno1		 dd -1.0
 	; Hydrophobicity
 	alignb 16
 	hydrophobicity1 dd 1.8, -1, 2.5, -3.5, -3.5, 2.8, -0.4, -3.2, 4.5, -1, -3.9, 3.8, 1.9, -3.5, -1, -1.6, -3.5, -4.5, -0.8, -0.7, -1, 4.2, -0.9, -1, -1.3, -1
@@ -292,7 +300,7 @@ coordsca:
 	;----------------------------------------------------------------------------
 		; IMPLEMENTAZIONE DI ROTATION
 	;extern MATRIX rotation(VECTOR axis, type theta){
-	;type prod_scal= (axis[0]*axis[0])+(axis[1]*axis[1])+(axis[2]*axis[2]);
+	;type prod_scal= (axis[0]*axis[0])+(axis[1]*axis[1])+(axis[2]*axis[2]); x^2+Y^2+z^2
 	
 	;axis[0] = axis[0] / prod_scal;
 	;axis[1] = axis[1] / prod_scal;
@@ -333,6 +341,134 @@ rotation:
 	mov ebx, [ebp+8]    ;axis
 	mov ecx, [ebp+12]		;theta
 	mov edx, [ebp+16]		;result
+
+	; inizio logica
+
+	; Calcola il prodotto scalare
+	movss xmm0, [ebx] ; axis[0]
+	imulss xmm0, xmm0
+
+	movss xmm1, [ebx+dim] ; axis[1]
+	imulss xmm1, xmm1
+	addss xmm0, xmm1
+	;pxor xmm1, xmm1
+
+	movss xmm1, [ebx+2*dim] ; axis[2]
+	imulss xmm1, xmm1
+	addss xmm0, xmm1
+	;pxor xmm1, xmm1
+	; xmm0 ha il prodotto scalare
+
+	; Calcola 1/prodotto scalare
+	movss xmm1, [ebx] ; axis[0]
+	divss xmm1, xmm0
+	movss [ebx], xmm1
+
+	;pxor xmm1, xmm1
+	movss xmm1, [ebx+dim] ; axis[1]
+	divss xmm1, xmm0
+	movss [ebx+dim], xmm1
+
+	;pxor xmm1, xmm1
+	movss xmm1, [ebx+2*dim] ; axis[2]
+	divss xmm1, xmm0
+	movss [ebx+2*dim], xmm1
+
+	; Calcola a con approx del coseno
+	; return 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0);
+
+	movss xmm1, [ecx]
+	divss xmm1, [2s] ; in rotation theta/2.0
+	movss xmm7, xmm1 ; xmm7 =theta
+	mulss xmm1, xmm1 ; xmm1 = theta^2
+	movss xmm2, xmm1
+	divss xmm2, [2s] ; xmm2 = theta^2 / 2.0
+
+	imulss xmm3, xmm1, xmm1
+	movss xmm4, xmm3
+	movss xmm6, xmm3 ; xmm6 = theta^2 * theta^2
+	divss xmm3, [24s] ; xmm3 = theta^2 * theta^2 / 24.0
+
+	imulss xmm4, xmm1
+	divss xmm4, [720s] ; xmm4 = theta^2 * theta^2 * theta^2 / 720.0
+
+	movss xmm5, [uno]
+	subss xmm5, xmm2
+	addss xmm5, xmm3
+	subss xmm5, xmm4 ; xmm5 = 1 - (theta^2 / 2.0) + (theta^2 * theta^2 / 24.0) - (theta^2 * theta^2 * theta^2 / 720.0)
+
+	; xmm5 ha l'approssimazione del coseno
+
+	; Calcola s con approx del seno
+	;return theta - (x2 * theta / 6.0) + (x2 * x2 * theta / 120.0) - (x2 * x2 * x2 * theta/ 5040.0);
+
+	imulss xmm2, xmm7, xmm1 ; xmm2 = theta^3
+	; free register , xmm4
+	movss xmm3, xmm2
+	divss xmm3, [6s] ; xmm3 = theta^3 / 6.0
+	
+	imulss  xmm6, xmm7 ; xmm6 = theta^5
+	movss xmm4, xmm6
+	divss xmm6, [120s] ; xmm6 = theta^5 / 120.0
+
+	imulss xmm4, xmm1 ; xmm4 = theta^7
+	divss xmm4, [5040s] ; xmm4 = theta^7 / 5040.0
+
+	subss xmm7, xmm3
+	addss xmm7, xmm6
+	subbss xmm7, xmm4 ; xmm7 = theta - (theta^3 / 6.0) + (theta^5 / 120.0) - (theta^7 / 5040.0)
+
+	; xmm7 ha l'approssimazione del seno
+
+	imull xmm7, [meno1] ; xmm7 = -1.0 * approx_sin(theta / 2.0)
+
+	; a = xmm5
+	; s = xmm7
+
+	; Calcol0 b, c, d
+
+	movss xmm0, [ebx] ; axis[0]
+	mulss xmm0, xmm7 ; b = s * axis[0]
+
+	movss xmm1, [ebx+dim] ; axis[1]
+	mulss xmm1, xmm7 ; c = s * axis[1]
+
+	movss xmm2, [ebx+2*dim] ; axis[2]
+	mulss xmm2, xmm7 ; d = s * axis[2]
+
+	; da finire di implementare, da implementare l'alloc_matrix
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	;--- fine logica ---
+
+	pop edi
+	pop	esi
+	pop	ebx
+	mov	esp, ebp	; ripristina lo Stack Pointer 
+	pop ebp    
+	ret
 
 	
 
