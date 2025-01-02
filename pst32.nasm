@@ -41,13 +41,13 @@ section .data			; Sezione contenente dati inizializzati
 	un_mezzo     dd 0.5
 	dieci        dd 10.0
 	uno 	     dd 1.0
-	24s			 dd 24.0
-	720s         dd 720.0	
-	2s           dd 2.0
-	6s 			 dd 6.0
-	120s 	     dd 120.0
-	5040s		 dd 5040.0
-	meno1		 dd -1.0
+	venti_quattro			 dd 24.0
+	settecento_venti        dd 720.0	
+	due           dd 2.0
+	sei 			 dd 6.0
+	cento_venti 	     dd 120.0
+	cinquemila_quaranta		 dd 5040.0
+	meno_uno		 dd -1.0
 	; Hydrophobicity
 	alignb 16
 	hydrophobicity1 dd 1.8, -1, 2.5, -3.5, -3.5, 2.8, -0.4, -3.2, 4.5, -1, -3.9, 3.8, 1.9, -3.5, -1, -1.6, -3.5, -4.5, -0.8, -0.7, -1, 4.2, -0.9, -1, -1.3, -1
@@ -377,19 +377,19 @@ rotation:
 	; return 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0);
 
 	movss xmm1, [ecx]
-	divss xmm1, [2s] ; in rotation theta/2.0
+	divss xmm1, [due] ; in rotation theta/2.0
 	movss xmm7, xmm1 ; xmm7 =theta
 	mulss xmm1, xmm1 ; xmm1 = theta^2
 	movss xmm2, xmm1
-	divss xmm2, [2s] ; xmm2 = theta^2 / 2.0
+	divss xmm2, [due] ; xmm2 = theta^2 / 2.0
 
 	mulss xmm3, xmm1, xmm1
 	movss xmm4, xmm3
 	movss xmm6, xmm3 ; xmm6 = theta^2 * theta^2
-	divss xmm3, [24s] ; xmm3 = theta^2 * theta^2 / 24.0
+	divss xmm3, [venti_quattro] ; xmm3 = theta^2 * theta^2 / 24.0
 
 	mulss xmm4, xmm1
-	divss xmm4, [720s] ; xmm4 = theta^2 * theta^2 * theta^2 / 720.0
+	divss xmm4, [settecento_venti] ; xmm4 = theta^2 * theta^2 * theta^2 / 720.0
 
 	movss xmm5, [uno]
 	subss xmm5, xmm2
@@ -404,14 +404,14 @@ rotation:
 	mulss xmm2, xmm7, xmm1 ; xmm2 = theta^3
 	; free register , xmm4
 	movss xmm3, xmm2
-	divss xmm3, [6s] ; xmm3 = theta^3 / 6.0
+	divss xmm3, [sei] ; xmm3 = theta^3 / 6.0
 	
 	mulss  xmm6, xmm7 ; xmm6 = theta^5
 	movss xmm4, xmm6
-	divss xmm6, [120s] ; xmm6 = theta^5 / 120.0
+	divss xmm6, [cento_venti] ; xmm6 = theta^5 / 120.0
 
 	mulss xmm4, xmm1 ; xmm4 = theta^7
-	divss xmm4, [5040s] ; xmm4 = theta^7 / 5040.0
+	divss xmm4, [cinquemila_quaranta] ; xmm4 = theta^7 / 5040.0
 
 	subss xmm7, xmm3
 	addss xmm7, xmm6
@@ -419,7 +419,7 @@ rotation:
 
 	; xmm7 ha l'approssimazione del seno
 
-	imull xmm7, [meno1] ; xmm7 = -1.0 * approx_sin(theta / 2.0)
+	imull xmm7, [meno_uno] ; xmm7 = -1.0 * approx_sin(theta / 2.0)
 
 	; a = xmm5
 	; s = xmm7
@@ -448,8 +448,8 @@ rotation:
 	movss xmm7, xmm3 ; xmm7 = b * c
 	subss xmm6, xmm4 ; xmm3 = b * c - a * d
 	adds xmm7,  xmm4 ; xmm7 = b * c + a * d
-	mulss xmm6, [2s] ; xmm6 = 2 * (b * c - a * d)
-	mulss xmm7, [2s] ; xmm7 = 2 * (b * c + a * d)
+	mulss xmm6, [due] ; xmm6 = 2 * (b * c - a * d)
+	mulss xmm7, [due] ; xmm7 = 2 * (b * c + a * d)
 	movss [eax+dim*3], xmm6 ; result[3] = 2 * (b * c - a * d)
 	movss [eax+dim], xmm7   ; result[1] = 2 * (b * c + a * d
 
@@ -466,8 +466,8 @@ rotation:
 	movss xmm7, xmm3 ; xmm7 = b * d
 	subss xmm6, xmm4 ; xmm3 = b * d - a * c
 	addss xmm7,  xmm4 ; xmm7 = b * d + a * c
-	mulss xmm6, [2s] ; xmm6 = 2 * (b * d - a * c)
-	mulss xmm7, [2s] ; xmm7 = 2 * (b * d + a * c)
+	mulss xmm6, [due] ; xmm6 = 2 * (b * d - a * c)
+	mulss xmm7, [due] ; xmm7 = 2 * (b * d + a * c)
 	movss [eax+dim*6], xmm6   ; result[6] = 2 * (b * d - a * c)
 	movss [eax+dim*2], xmm7   ; result[2] = 2 * (b * d + a * c)
 
@@ -484,8 +484,8 @@ rotation:
 	movss xmm7, xmm3 ; xmm7 = c * d
 	subss xmm6, xmm4 ; xmm3 = c * d - a * b
 	addss xmm7,  xmm4 ; xmm7 = c * d + a * b
-	mulss xmm6, [2s] ; xmm6 = 2 * (c * d - a * b)
-	mulss xmm7, [2s] ; xmm7 = 2 * (c * d + a * b)
+	mulss xmm6, [due] ; xmm6 = 2 * (c * d - a * b)
+	mulss xmm7, [due] ; xmm7 = 2 * (c * d + a * b)
 	movss [eax+dim*7], xmm6   ; result[7] = 2 * (c * d - a * b)
 	movss [eax+dim*5], xmm7   ; result[5] = 2 * (c * d + a * b)
 
