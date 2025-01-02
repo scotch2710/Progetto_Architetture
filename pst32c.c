@@ -311,37 +311,34 @@ type approx_sin(type theta) {
 
 }
 
-extern MATRIX rotation(VECTOR axis, type theta){
-	type prod_scal= (axis[0]*axis[0])+(axis[1]*axis[1])+(axis[2]*axis[2]);
+extern void rotation(VECTOR axis, type theta, MATRIX result);
+//  {
+// 	type prod_scal= (axis[0]*axis[0])+(axis[1]*axis[1])+(axis[2]*axis[2]);
 	
-	axis[0] = axis[0] / prod_scal;
-	axis[1] = axis[1] / prod_scal;
-	axis[2] = axis[2] / prod_scal;
+// 	axis[0] = axis[0] / prod_scal;
+// 	axis[1] = axis[1] / prod_scal;
+// 	axis[2] = axis[2] / prod_scal;
 
-	type a = approx_cos(theta/2.0);
-	type s = -1.0 * approx_sin(theta / 2.0);
-    type b = s * axis[0];
-    type c = s * axis[1];
-    type d = s * axis[2];
-    
-	MATRIX result = alloc_matrix(3, 3);
+// 	type a = approx_cos(theta/2.0);
+// 	type s = -1.0 * approx_sin(theta / 2.0);
+//     type b = s * axis[0];
+//     type c = s * axis[1];
+//     type d = s * axis[2];
 
     
-    result[0] = a * a + b * b - c * c - d * d;
-    result[1] = 2 * (b * c + a * d);
-    result[2] = 2 * (b * d - a * c);
+//     result[0] = a * a + b * b - c * c - d * d;
+//     result[1] = 2 * (b * c + a * d);
+//     result[2] = 2 * (b * d - a * c);
 
-    result[3] = 2 * (b * c - a * d);
-    result[4] = a * a + c * c - b * b - d * d;
-    result[5] = 2 * (c * d + a * b);
+//     result[3] = 2 * (b * c - a * d);
+//     result[4] = a * a + c * c - b * b - d * d;
+//     result[5] = 2 * (c * d + a * b);
 
-    result[6] = 2 * (b * d + a * c);
-    result[7] = 2 * (c * d - a * b);
-    result[8] = a * a + d * d - b * b - c * c;
-
-	
-    return result;
-	}
+//     result[6] = 2 * (b * d + a * c);
+//     result[7] = 2 * (c * d - a * b);
+//     result[8] = a * a + d * d - b * b - c * c;
+//     return;
+// 	}
 
 extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 	const int n = 256;
@@ -374,7 +371,9 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 			v1[0]/=norm_v1;
 			v1[1]/=norm_v1;
 			v1[2]/=norm_v1;
-			MATRIX rot= rotation(v1, theta_CNCa);
+
+			MATRIX rot = alloc_matrix(3, 3);
+			rotation(v1, theta_CNCa, rot);
 			// Stampa della matrice coords
 			
         	new_v[0] = 0;
@@ -403,8 +402,8 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 			
 			//printf("vettore v2 %d: %f %f %f\n",i, v2[0],v2[1],v2[2]);
 			
-			
-			rot= rotation(v2, phi[i]);
+			MATRIX rot = alloc_matrix(3, 3);
+			rotation(v2, phi[i], rot);
 			new_v[0] = 0;
 			new_v[1] = r_CaN;
 			new_v[2] = 0;
@@ -425,7 +424,8 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 		v3[0]/=norm_v3;
 		v3[1]/=norm_v3;
 		v3[2]/=norm_v3;
-		MATRIX rot= rotation(v3, psi[i]);
+		MATRIX rot = alloc_matrix(3, 3);
+		rotation(v3, psi[i], rot);
         new_v[0] = 0;
 		new_v[1] = r_CaC;
 		new_v[2] = 0;
@@ -498,9 +498,9 @@ extern void distanza1 (MATRIX coordinateCa, int i, int j, type* dist);
 		return sqrt(x_df * x_df + y_df * y_df + z_df * z_df);
 }*/
 
-extern void hydrofobic_energy (char* sequenza, MATRIX coordinate, MATRIX cacoords, type* energy);
+extern void hydrofobic_energy (char* sequenza, MATRIX coordinate, MATRIX cacoords, type* energy){
 	//type energy = 0.0;
-	/*const int n = 256;
+	const int n = 256;
 	
 	for(int i=0; i< n; i++){
 		for(int j= i+1; j<n; j++){
@@ -515,7 +515,7 @@ extern void hydrofobic_energy (char* sequenza, MATRIX coordinate, MATRIX cacoord
 	}
 	//printf("energy hhydro: %f\n", energy);
 	return;
-}*/
+}
 
 extern type electrostatic_energy(char* s, MATRIX coords, MATRIX cacoords){
 	type energy= 0.0;

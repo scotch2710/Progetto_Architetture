@@ -88,7 +88,7 @@ section .text			; Sezione contenente il codice macchina
 
 extern get_block
 extern free_block
-global hydrofobic_energy
+
 
 %macro	getmem	2
 	mov	eax, %1
@@ -113,6 +113,7 @@ global distanza1
 global coordsca
 global rama_energy
 global rotation
+;global hydrofobic_energy
 
 N 		equ 	8
 seq		equ		12
@@ -300,36 +301,34 @@ coordsca:
 	;----------------------------------------------------------------------------
 		; IMPLEMENTAZIONE DI ROTATION
 	;extern MATRIX rotation(VECTOR axis, type theta){
-	;type prod_scal= (axis[0]*axis[0])+(axis[1]*axis[1])+(axis[2]*axis[2]); x^2+Y^2+z^2
+; 	//  {
+; // 	type prod_scal= (axis[0]*axis[0])+(axis[1]*axis[1])+(axis[2]*axis[2]);
 	
-	;axis[0] = axis[0] / prod_scal;
-	;axis[1] = axis[1] / prod_scal;
-	;axis[2] = axis[2] / prod_scal;
+; // 	axis[0] = axis[0] / prod_scal;
+; // 	axis[1] = axis[1] / prod_scal;
+; // 	axis[2] = axis[2] / prod_scal;
 
-	;type a = approx_cos(theta/2.0);
-	;type s = -1.0 * approx_sin(theta / 2.0);
-   ;type b = s * axis[0];
-    ;type c = s * axis[1];
-    ;type d = s * axis[2];
-    
-	;MATRIX result = alloc_matrix(3, 3);
+; // 	type a = approx_cos(theta/2.0);
+; // 	type s = -1.0 * approx_sin(theta / 2.0);
+; //     type b = s * axis[0];
+; //     type c = s * axis[1];
+; //     type d = s * axis[2];
 
     
-    ;result[0] = a * a + b * b - c * c - d * d;
-    ;result[1] = 2 * (b * c + a * d);
-    ;result[2] = 2 * (b * d - a * c)
+; //     result[0] = a * a + b * b - c * c - d * d; 
+; //     result[1] = 2 * (b * c + a * d);
+; //     result[2] = 2 * (b * d - a * c);
 
-    ;result[3] = 2 * (b * c - a * d);;
-    ;:esult[4] = a * a + c * c - b * ;b - d * d;
-    ;result[5] = 2 * (c * d + a * b);;
+; //     result[3] = 2 * (b * c - a * d);
+; //     result[4] = a * a + c * c - b * b - d * d;
+; //     result[5] = 2 * (c * d + a * b);
 
-    ;result[6] = 2 * (b * d + a * c);
-    ;result[7] = 2 * (c * d - a * b);
-    ;result[8] = a * a + d * d - b * b - c * c;
-
-	
-    ;return result;
-	;}
+; //     result[6] = 2 * (b * d + a * c);
+; //     result[7] = 2 * (c * d - a * b);
+; //     result[8] = a * a + d * d - b * b - c * c;
+; //     return;
+; // 	} a*a, b*b, c*c, d*d, b*c, a*d, b*d, a*c, c*d, a*b
+; 0, 4, 8 --- 1, 3 -- 2, 6 -- 5, 7
 
 rotation:
 	push	ebp			; salva il Base Pointer
@@ -340,21 +339,21 @@ rotation:
 
 	mov ebx, [ebp+8]    ;axis
 	mov ecx, [ebp+12]		;theta
-	mov edx, [ebp+16]		;result
+	mov eax, [ebp+16]		;result
 
 	; inizio logica
 
 	; Calcola il prodotto scalare
 	movss xmm0, [ebx] ; axis[0]
-	imulss xmm0, xmm0
+	mulss xmm0, xmm0
 
 	movss xmm1, [ebx+dim] ; axis[1]
-	imulss xmm1, xmm1
+	mulss xmm1, xmm1
 	addss xmm0, xmm1
 	;pxor xmm1, xmm1
 
 	movss xmm1, [ebx+2*dim] ; axis[2]
-	imulss xmm1, xmm1
+	mulss xmm1, xmm1
 	addss xmm0, xmm1
 	;pxor xmm1, xmm1
 	; xmm0 ha il prodotto scalare
@@ -384,12 +383,12 @@ rotation:
 	movss xmm2, xmm1
 	divss xmm2, [2s] ; xmm2 = theta^2 / 2.0
 
-	imulss xmm3, xmm1, xmm1
+	mulss xmm3, xmm1, xmm1
 	movss xmm4, xmm3
 	movss xmm6, xmm3 ; xmm6 = theta^2 * theta^2
 	divss xmm3, [24s] ; xmm3 = theta^2 * theta^2 / 24.0
 
-	imulss xmm4, xmm1
+	mulss xmm4, xmm1
 	divss xmm4, [720s] ; xmm4 = theta^2 * theta^2 * theta^2 / 720.0
 
 	movss xmm5, [uno]
@@ -402,16 +401,16 @@ rotation:
 	; Calcola s con approx del seno
 	;return theta - (x2 * theta / 6.0) + (x2 * x2 * theta / 120.0) - (x2 * x2 * x2 * theta/ 5040.0);
 
-	imulss xmm2, xmm7, xmm1 ; xmm2 = theta^3
+	mulss xmm2, xmm7, xmm1 ; xmm2 = theta^3
 	; free register , xmm4
 	movss xmm3, xmm2
 	divss xmm3, [6s] ; xmm3 = theta^3 / 6.0
 	
-	imulss  xmm6, xmm7 ; xmm6 = theta^5
+	mulss  xmm6, xmm7 ; xmm6 = theta^5
 	movss xmm4, xmm6
 	divss xmm6, [120s] ; xmm6 = theta^5 / 120.0
 
-	imulss xmm4, xmm1 ; xmm4 = theta^7
+	mulss xmm4, xmm1 ; xmm4 = theta^7
 	divss xmm4, [5040s] ; xmm4 = theta^7 / 5040.0
 
 	subss xmm7, xmm3
@@ -436,30 +435,89 @@ rotation:
 	movss xmm2, [ebx+2*dim] ; axis[2]
 	mulss xmm2, xmm7 ; d = s * axis[2]
 
-	; da finire di implementare, da implementare l'alloc_matrix
+
+	; calcolo delle righe del risultato; 1, 3
+	; //     result[3] = 2 * (b * c - a * d);
+	; //     result[1] = 2 * (b * c + a * d);
+
+	movss xmm3, xmm0 ; xmm3 = b
+	mulss xmm3, xmm1 ; xmm3 = b * c
+	movss xmm4, xmm5; xmm4 = a
+	mulss xmm4, xmm2 ; xmm4 = a * d
+	movss xmm6, xmm3 ; xmm6 = b * c
+	movss xmm7, xmm3 ; xmm7 = b * c
+	subss xmm6, xmm4 ; xmm3 = b * c - a * d
+	adds xmm7,  xmm4 ; xmm7 = b * c + a * d
+	mulss xmm6, [2s] ; xmm6 = 2 * (b * c - a * d)
+	mulss xmm7, [2s] ; xmm7 = 2 * (b * c + a * d)
+	movss [eax+dim*3], xmm6 ; result[3] = 2 * (b * c - a * d)
+	movss [eax+dim], xmm7   ; result[1] = 2 * (b * c + a * d
+
+	; calcolo delle righe del risultato; 2, 6
+	; //     result[6] = 2 * (b * d + a * c);
+	; //     result[2] = 2 * (b * d - a * c);
+	; a= xmm5, b= xmm0, c= xmm1, d= xmm2  ---> registri liberi xmm3, xmm4, xmm6, xmm7
+
+	movss xmm3, xmm0 ; xmm3 = b
+	mulss xmm3, xmm2 ; xmm3 = b * d
+	movss xmm4, xmm5; xmm4 = a
+	mulss xmm4, xmm1 ; xmm4 = a * c
+	movss xmm6, xmm3 ; xmm6 = b * d
+	movss xmm7, xmm3 ; xmm7 = b * d
+	subss xmm6, xmm4 ; xmm3 = b * d - a * c
+	addss xmm7,  xmm4 ; xmm7 = b * d + a * c
+	mulss xmm6, [2s] ; xmm6 = 2 * (b * d - a * c)
+	mulss xmm7, [2s] ; xmm7 = 2 * (b * d + a * c)
+	movss [eax+dim*6], xmm6   ; result[6] = 2 * (b * d - a * c)
+	movss [eax+dim*2], xmm7   ; result[2] = 2 * (b * d + a * c)
+
+	; calcolo delle righe del risultato; 5, 7
+	; //     result[7] = 2 * (c * d - a * b);
+	; //     result[5] = 2 * (c * d + a * b);
+	; a= xmm5, b= xmm0, c= xmm1, d= xmm2  ---> registri liberi xmm3, xmm4, xmm6, xmm7
+
+	movss xmm3, xmm1 ; xmm3 = c
+	mulss xmm3, xmm2 ; xmm3 = c * d
+	movss xmm4, xmm5; xmm4 = a
+	mulss xmm4, xmm0 ; xmm4 = a * b
+	movss xmm6, xmm3 ; xmm6 = c * d
+	movss xmm7, xmm3 ; xmm7 = c * d
+	subss xmm6, xmm4 ; xmm3 = c * d - a * b
+	addss xmm7,  xmm4 ; xmm7 = c * d + a * b
+	mulss xmm6, [2s] ; xmm6 = 2 * (c * d - a * b)
+	mulss xmm7, [2s] ; xmm7 = 2 * (c * d + a * b)
+	movss [eax+dim*7], xmm6   ; result[7] = 2 * (c * d - a * b)
+	movss [eax+dim*5], xmm7   ; result[5] = 2 * (c * d + a * b)
 
 
+	; implementazioni delle seguenti righe del result: 0, 4, 8
+	; a= xmm5, b= xmm0, c= xmm1, d= xmm2  ---> registri liberi xmm3, xmm4, xmm6, xmm7
+	; calcolare a*a, b*b, c*c, d*d
+	mulss xmm5, xmm5 ; xmm5 = a*a
+	mulss xmm0, xmm0 ; xmm0 = b*b
+	mulss xmm1, xmm1 ; xmm1 = c*c
+	mulss xmm2, xmm2 ; xmm2 = d*d
 
+	; //     result[0] = a * a + b * b - c * c - d * d; 
+	movss xmm3, xmm5 ; xmm3 = a*a
+	addss xmm3, xmm0 ; xmm3 = a*a + b*b
+	subss xmm3, xmm1 ; xmm3 = a*a + b*b - c*c
+	subss xmm3, xmm2 ; xmm3 = a*a + b*b - c*c - d*d
+	movss [eax], xmm3 ; result[0] = a*a + b*b - c*c - d*d
 
-	
+	; //     result[4] = a * a + c * c - b * b - d * d;
+	movss xmm4, xmm5 ; xmm4 = a*a
+	adds xmm4, xmm1 ; xmm4 = a*a + c*c
+	subss xmm4, xmm0 ; xmm4 = a*a + c*c - b*b
+	subss xmm4, xmm2 ; xmm4 = a*a + c*c - b*b - d*d
+	movss [eax+dim*4], xmm4 ; result[4] = a*a + c*c - b*b - d*d
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	; //     result[8] = a * a + d * d - b * b - c * c;
+	movss xmm6, xmm5 ; xmm6 = a*a
+	adds xmm6, xmm2 ; xmm6 = a*a + d*d
+	subss xmm6, xmm0 ; xmm6 = a*a + d*d - b*b
+	subss xmm6, xmm1 ; xmm6 = a*a + d*d - b*b - c*c
+	movss [eax+dim*8], xmm6 ; result[8] = a*a + d*d - b*b - c*c
 
 	;--- fine logica ---
 
