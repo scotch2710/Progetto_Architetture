@@ -39,6 +39,28 @@ section .data			; Sezione contenente dati inizializzati
 	beta_phi	dd -119.0
 	beta_psi	dd 113.0
 	un_mezzo    dd 0.5
+	dieci       dd 10.0
+	due         dd 2.0
+	venti_quattro dd 24.0
+	settecento_venti dd 720.0
+	uno         dd 1.0
+	sei         dd 6.0
+	cento_venti dd 120.0
+	cinquemila_quaranta dd 5040.0
+	meno_uno    dd -1.0
+
+	; Hydrophobicity
+	alignb 16
+	hydrophobicity1 dd 1.8, -1, 2.5, -3.5, -3.5, 2.8, -0.4, -3.2, 4.5, -1, -3.9, 3.8, 1.9, -3.5, -1, -1.6, -3.5, -4.5, -0.8, -0.7, -1, 4.2, -0.9, -1, -1.3, -1
+
+	alignb 16 
+	; Volume
+	volume1 dd 88.6, -1, 108.5, 111.1, 138.4, 189.9, 60.1, 153.2, 166.7, -1, 168.6, 166.7, 162.9, 114.1, -1, 112.7, 143.8, 173.4, 89.0, 116.1, -1, 140.0, 227.8, -1, 193.6, -1
+	
+	alignb 16
+	; Charge
+	charge1 dd 0, -1, 0, -1, -1, 0, 0, 0.5, 0, -1, 1, 0, 0, 0, -1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, -1
+
 
 section .bss			; Sezione contenente dati non inizializzati
 	alignb 16
@@ -90,6 +112,9 @@ extern free_block
 global distanza1
 global coordsca
 global rama_energy
+global approx_cos
+global prodottoScalare
+global approx_sin
 
 N 		equ 	8
 seq		equ		12
@@ -241,38 +266,6 @@ coordsca:
 ; ------------------------------------------------------------
 ; Funzione rama_energy
 ; ------------------------------------------------------------
-	;-----------implematation of the rama_energy method------------------------
-	; 	extern type rama_energy(VECTOR phi, VECTOR psi) {
-	; 	// Costanti di Ramachandran
-		
-	; 	const type alpha_phi = -57.8;
-	; 	const type alpha_psi = -47.0;
-	; 	const type beta_phi = -119.0;
-	; 	const type beta_psi = 113.0;
-	; 	const int n = 256;
-		
-		
-	; 	type energy = 0.0;
-
-	; 	// Itera su tutti gli elementi
-	; 	for (int i = 0; i < n; i++) {
-	; 		// Calcola la distanza alpha
-	; 		type alpha_dist = sqrt((phi[i] - alpha_phi) * (phi[i] - alpha_phi) + (psi[i] - alpha_psi) * (psi[i] - alpha_psi));
-
-	; 		// Calcola la distanza beta
-	; 		type beta_dist = sqrt((phi[i] - beta_phi) * (phi[i] - beta_phi) + (psi[i] - beta_psi) * (psi[i] - beta_psi));
-
-	; 		// Somma il contributo minimo all'energia con confronto esplicito
-	; 		if (alpha_dist < beta_dist) {
-	; 			energy += 0.5 * alpha_dist;
-	; 		} else {
-	; 			energy += 0.5 * beta_dist;
-	; 		}
-	; 	}
-
-	; 	return energy;
-	; }
-	;----------------------------------------------------------------------------
 rama_energy: 
 	push	ebp			; salva il Base Pointer
 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
@@ -351,4 +344,191 @@ rama_energy:
 	pop ebp    
 	ret
 
+; ------------------------------------------------------------
+; Funzione approx_cos
+; ------------------------------------------------------------
+approx_cos:    
+	push	ebp			; salva il Base Pointer
+	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+	push	ebx			; salva i registri da preservare
+	push 	edx
+	push	esi
+	push	edi
+	
+	; Recupero parametro theta    
+	movss xmm1, [ebp+8] ; theta     
+	mulss xmm1, xmm1    ; x2 = theta * theta    
+	movss xmm2, xmm1    ; copia di x2 
 
+	; Calcolo x2 / 2.0    
+	divss xmm2, [due]   ; xmm2 = x2 / 2.0 
+
+	; Calcolo x2 * x2 / 24.0    
+	movss xmm3, xmm1    
+	mulss xmm3, xmm3    ; xmm3 = x2 * x2    
+	movss xmm4, xmm3    
+	divss xmm4, [venti_quattro] ; xmm4 = x2 * x2 / 24.0    
+	
+	; Calcolo x2 * x2 * x2 / 720.0    
+	mulss xmm3, xmm1    ; xmm3 = x2 * x2 * x2    
+	movss xmm5, xmm3    
+	divss xmm5, [settecento_venti] ; xmm5 = x2 * x2 * x2 / 720.0    
+	
+	; Combinazione dei risultati per il coseno approssimato    
+	movss xmm6, [uno]   ; xmm6 = 1.0    
+	subss xmm6, xmm2    ; xmm6 = 1 - (x2 / 2.0)    
+	addss xmm6, xmm4    ; xmm6 = 1 - (x2 / 2.0) + (x2 * x2 / 24.0)    
+	subss xmm6, xmm5    ; xmm6 = 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0)    
+	
+	; Salva il risultato in [ebp+12] (result) 
+	mov eax, [ebp+12] ; result 
+	movss [eax], xmm6    
+	;movss [ebp+12], xmm6    
+	
+	pop edi
+	pop	esi
+	pop edx
+	pop	ebx
+	mov	esp, ebp	; ripristina lo Stack Pointer 
+	pop ebp    
+	ret
+
+
+; ------------------------------------------------------------
+; Funzione prod_scal
+; ------------------------------------------------------------
+prodottoScalare:
+	push	ebp			; salva il Base Pointer
+	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+	push	ebx			; salva i registri da preservare
+	push 	edx
+	push	esi
+	push	edi
+ 
+ 
+	mov ebx, [ebp+8]    ;axis
+	mov eax, [ebp+12]		;axis Normalizzato
+ 
+		; Calcola il prodotto scalare
+	
+	movss xmm0, [ebx] ; axis[0]
+	mulss xmm0, xmm0
+ 
+	movss xmm1, [ebx+4] ; axis[1]
+	mulss xmm1, xmm1
+	addss xmm0, xmm1
+ 
+ 
+	movss xmm2, [ebx+2*4] ; axis[2]
+	mulss xmm2, xmm2
+	addss xmm0, xmm2
+
+	sqrtss xmm0, xmm0
+ 
+	; xmm0 ha il prodotto scalare
+ 
+	; Calcola 1/prodotto scalare
+	movss xmm1, [ebx] ; axis[0]
+	divss xmm1, xmm0
+	movss xmm2, [ebx+dim] ; axis[1]
+	divss xmm2, xmm0
+	movss xmm3, [ebx+2*dim] ; axis[2]
+	divss xmm3, xmm0
+ 
+	movss [eax], xmm0
+
+	;movss [eax], xmm1 ; new axis[0]
+	;movss [eax+dim], xmm2  ; new axis[1]
+	;movss [eax+2*dim], xmm3  ; new axis[2]
+ 
+	pop edi
+	pop	esi
+	pop edx
+	pop	ebx
+	mov	esp, ebp	; ripristina lo Stack Pointer 
+	pop ebp    
+	ret
+
+; ------------------------------------------------------------
+; Funzione approx_sin
+; ------------------------------------------------------------
+;approx_sin:
+	; push	ebp			; salva il Base Pointer
+	; mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+	; push	ebx			; salva i registri da preservare
+	; push 	edx
+	; push	esi
+	; push	edi
+
+	; ; Calcolo del seno
+	; movss xmm7, [ebp+8] ; theta
+	; movss xmm1, xmm7
+	; movss xmm5, xmm7 ; theta
+	; mulss xmm1, xmm1 ; theta^2
+	; movss xmm2, xmm7
+	; mulss xmm2, xmm1 ; theta^3
+	; movss xmm3, xmm2
+	; divss xmm3, [sei]; theta^3 / 6.0
+	; subss xmm7, xmm3 ; risultato parziale theta - theta^3 / 6.0
+
+	; movss xmm6, xmm1 ; theta^2
+	; mulss xmm6, xmm1 ; theta^4
+	; mulss xmm6, xmm5 ; theta^5
+	; movss xmm5, xmm6 ; theta^5
+	; divss xmm6, [cento_venti] ; theta^5 / 120.0
+	; addss xmm7, xmm6 ; risultato parziale theta - theta^3 / 6.0 + theta^5 / 120.0
+
+	; mulss xmm5, xmm1 ; theta^7
+	; divss xmm5, [cinquemila_quaranta] ; theta^7 / 5040.0 
+	; subss xmm7, xmm5 ; risultato finale theta - theta^3 / 6.0 + theta^5 / 120.0 - theta^7 / 5040.0
+
+	; mulss xmm7, [meno_uno]
+
+	; mov eax, [ebp+12]
+	; movss [eax], xmm7
+
+	; pop edi
+	; pop	esi
+	; pop edx
+	; pop	ebx
+	; mov	esp, ebp	; ripristina lo Stack Pointer 
+	; pop ebp    
+	; ret
+
+	approx_sin:
+	push ebp
+	mov ebp, esp
+	push ebx
+
+	; Calcolo del seno
+	movss xmm7, [ebp+8] ; theta
+	movss xmm1, xmm7
+	movss xmm5, xmm7 ; theta
+	mulss xmm1, xmm1 ; theta^2
+	movss xmm2, xmm7
+	mulss xmm2, xmm1 ; theta^3
+	movss xmm3, xmm2
+	divss xmm3, [sei]; theta^3 / 6.0
+	subss xmm7, xmm3 ; risultato parziale theta - theta^3 / 6.0
+
+	movss xmm6, xmm1 ; theta^2
+	mulss xmm6, xmm1 ; theta^4
+	mulss xmm6, xmm5 ; theta^5
+	movss xmm5, xmm6 ; theta^5
+	divss xmm6, [cento_venti] ; theta^5 / 120.0
+	addss xmm7, xmm6 ; risultato parziale theta - theta^3 / 6.0 + theta^5 / 120.0
+
+	mulss xmm5, xmm1 ; theta^7
+	divss xmm5, [cinquemila_quaranta] ; theta^7 / 5040.0 
+	subss xmm7, xmm5 ; risultato finale theta - theta^3 / 6.0 + theta^5 / 120.0 - theta^7 / 5040.0
+
+	mulss xmm7, [meno_uno]
+	
+	mov eax, [ebp+12]
+	movss [eax], xmm7
+
+	pop ebx
+	mov esp, ebp
+	pop ebp
+	
+	ret
