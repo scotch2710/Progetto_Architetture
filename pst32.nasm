@@ -699,7 +699,7 @@ electrostatic_energy:
 ; }*/
 
 packing_energy:
-push	ebp			; salva il Base Pointer
+	push	ebp			; salva il Base Pointer
 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
 	push	ebx			; salva i registri da preservare
 	push 	edx
@@ -713,17 +713,18 @@ push	ebp			; salva il Base Pointer
 	xor esi, esi 	; esi = i = 0
 	pxor xmm3, xmm3 ;energy = 0
 
-	fori: 
+	for_i: 
 		cmp esi, n
-		jge finefori
+		jge fine_fori
+		pxor xmm4, xmm4 ; densità
 		xor edi, edi ;edi = j = 0
-		mov edi, esi ;edi = i
-		inc edi		 ;edi = i+1
+		
 
-		forj: 
+		for_j: 
 			cmp edi, n
-			jge fineforj
-
+			jge fine_forj
+			cmp edi, esi ; if j==i
+			je incremento_j
 			;Chiamata alla funzione distanza
 			push eax ; &dist
 			push edi ;j
@@ -739,40 +740,36 @@ push	ebp			; salva il Base Pointer
 			
 			;if (dist <10.0)
 			comiss xmm0, [dieci]
-			jge incrementoj
+			jge incremento_j
 
-			;if charge[s[i]-65] !=0			
-			mov edx, [ebx + esi  * dim]
-			sub edx, [sessanta_cinque]
-			movss xmm1, [charge1 + edx * dim]
-			
-
-			comiss xmm1, [zero]
-			je incrementoj 
-
-			;if charge[s[j]-65] !=0
+			;if volume[s[i]-65] !=0			
+			xor edx, edx
 			mov edx, [ebx + edi  * dim]
 			sub edx, [sessanta_cinque]
-			movss xmm2, [charge1 + edx *dim]
+			movss xmm1, [volume1 + edx * dim]
+			movss xmm7, xmm0 
+			mulss xmm7, xmm0
 			
-
-			comiss xmm2, [zero]
-			je incrementoj 
-
-			;energy += (charge[(int)s[i]-65]*charge[(int)s[j]-65])/(dist*4.0);
-			mulss xmm2, xmm1
-			mulss xmm0, [dim]
-			divss xmm2, xmm0
-
-			addss xmm3, xmm2
-
-			incrementoj: 
+			mulss xmm7, xmm0 ; xmm0= dist^3
+			divss xmm1, xmm7 
+			addss xmm4, xmm1 ; densità +=
+			
+			incremento_j: 
 				inc edi
-				jmp forj
-				fineforj:
+				jmp for_j
+				fine_forj:
+					xor edx, edx
+					mov edx, [ebx + esi  * dim]
+					sub edx, [sessanta_cinque]
+					movss xmm1, [volume1 + edx * dim]
+					subss xmm1, xmm4; volume-densità
+					mulss xmm1, xmm1
+					addss xmm3, xmm1; energia+=
+					
 					inc esi
-					jmp fori
-					finefori:
+
+					jmp for_i
+					fine_fori:
 						mov eax, [ebp+16]
 						movss [eax], xmm3
 
