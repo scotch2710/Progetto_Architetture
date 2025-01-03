@@ -40,6 +40,15 @@ section .data			; Sezione contenente dati inizializzati
 	beta_psi	dd 113.0
 	un_mezzo    dd 0.5
 	dieci       dd 10.0
+	due         dd 2.0
+	venti_quattro dd 24.0
+	settecento_venti dd 720.0
+	uno         dd 1.0
+	sei         dd 6.0
+	cento_venti dd 120.0
+	cinquemila_quaranta dd 5040.0
+	meno_uno    dd -1.0
+
 	; Hydrophobicity
 	alignb 16
 	hydrophobicity1 dd 1.8, -1, 2.5, -3.5, -3.5, 2.8, -0.4, -3.2, 4.5, -1, -3.9, 3.8, 1.9, -3.5, -1, -1.6, -3.5, -4.5, -0.8, -0.7, -1, 4.2, -0.9, -1, -1.3, -1
@@ -80,7 +89,8 @@ section .text			; Sezione contenente il codice macchina
 
 extern get_block
 extern free_block
-global hydrofobic_energy
+
+;global hydrofobic_energy
 
 %macro	getmem	2
 	mov	eax, %1
@@ -104,6 +114,10 @@ global hydrofobic_energy
 global distanza1
 global coordsca
 global rama_energy
+global prodottoScalare
+;global rotation
+global approx_cos
+global approx_sin
 
 N 		equ 	8
 seq		equ		12
@@ -465,5 +479,369 @@ hydrofobic_energy:
 	ret
 
 
+prodottoScalare:
+	push	ebp			; salva il Base Pointer
+	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+	push	ebx			; salva i registri da preservare
+	push 	edx
+	push	esi
+	push	edi
+ 
+ 
+	mov ebx, [ebp+8]    ;axis
+	mov eax, [ebp+12]		;axis Normalizzato
+ 
+		; Calcola il prodotto scalare
+	
+	movss xmm0, [ebx] ; axis[0]
+	mulss xmm0, xmm0
+ 
+	movss xmm1, [ebx+4] ; axis[1]
+	mulss xmm1, xmm1
+	addss xmm0, xmm1
+ 
+ 
+	movss xmm2, [ebx+2*4] ; axis[2]
+	mulss xmm2, xmm2
+	addss xmm0, xmm2
+
+	sqrtss xmm0, xmm0
+ 
+	; xmm0 ha il prodotto scalare
+ 
+	; Calcola 1/prodotto scalare
+	movss xmm1, [ebx] ; axis[0]
+	divss xmm1, xmm0
+	movss xmm2, [ebx+dim] ; axis[1]
+	divss xmm2, xmm0
+	movss xmm3, [ebx+2*dim] ; axis[2]
+	divss xmm3, xmm0
+ 
+	;movss [eax], xmm0
+
+	movss [eax], xmm1 ; new axis[0]
+	movss [eax+dim], xmm2  ; new axis[1]
+	movss [eax+2*dim], xmm3  ; new axis[2]
+ 
+	pop edi
+	pop	esi
+	pop edx
+	pop	ebx
+	mov	esp, ebp	; ripristina lo Stack Pointer 
+	pop ebp    
+	ret
 
 
+; ------------------------------------------------------------
+; rotation:
+	
+; 	push	ebp			; salva il Base Pointer
+; 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+; 	push	ebx			; salva i registri da preservare
+; 	push	esi
+; 	push	edi
+ 
+;  	;VECTOR axis, type theta, VECTOR axis_scal, MATRIX result)
+; 	mov ebx, [ebp+8]    ;axis
+; 	mov ecx, [ebp+12]		;theta
+; 	mov edx, [ebp+16]		;axis_scal
+; 	mov eax, [ebp+20]		;result
+ 
+; 	; inizio logica
+; 	push edx
+; 	push ebx
+; 	call prodottoScalare
+	
+; 	; Calcola a con approx del coseno
+; 	; return 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0);
+ 
+; 	movss xmm1, [ecx]
+; 	divss xmm1, [due] ; in rotation theta/2.0
+; 	movss xmm7, xmm1 ; xmm7 =theta
+; 	mulss xmm1, xmm1 ; xmm1 = theta^2
+; 	movss xmm2, xmm1
+; 	divss xmm2, [due] ; xmm2 = theta^2 / 2.0
+ 
+; 	movss xmm3, xmm1
+; 	mulss xmm3, xmm3 ; xmm3 = theta^4
+; 	movss xmm4, xmm3
+; 	movss xmm6, xmm3 ; xmm6 = theta^2 * theta^2
+; 	divss xmm3, [venti_quattro] ; xmm3 = theta^2 * theta^2 / 24.0
+ 
+; 	mulss xmm4, xmm1
+; 	divss xmm4, [settecento_venti] ; xmm4 = theta^2 * theta^2 * theta^2 / 720.0
+ 
+; 	movss xmm5, [uno]
+; 	subss xmm5, xmm2
+; 	addss xmm5, xmm3
+; 	subss xmm5, xmm4 ; xmm5 = 1 - (theta^2 / 2.0) + (theta^2 * theta^2 / 24.0) - (theta^2 * theta^2 * theta^2 / 720.0)
+ 
+; 	; xmm5 ha l'approssimazione del coseno
+ 
+; 	; Calcola s con approx del seno
+; 	;return theta - (x2 * theta / 6.0) + (x2 * x2 * theta / 120.0) - (x2 * x2 * x2 * theta/ 5040.0);
+ 
+; 	movss xmm2, xmm7
+; 	mulss xmm2, xmm1 ; xmm2 = theta^3
+; 	; free register , xmm4
+; 	movss xmm3, xmm2
+; 	divss xmm3, [sei] ; xmm3 = theta^3 / 6.0
+ 
+; 	mulss  xmm6, xmm7 ; xmm6 = theta^5
+; 	movss xmm4, xmm6
+; 	divss xmm6, [cento_venti] ; xmm6 = theta^5 / 120.0
+ 
+; 	mulss xmm4, xmm1 ; xmm4 = theta^7
+; 	divss xmm4, [cinquemila_quaranta] ; xmm4 = theta^7 / 5040.0
+ 
+; 	subss xmm7, xmm3
+; 	addss xmm7, xmm6
+; 	subss xmm7, xmm4 ; xmm7 = theta - (theta^3 / 6.0) + (theta^5 / 120.0) - (theta^7 / 5040.0)
+ 
+; 	; xmm7 ha l'approssimazione del seno
+ 
+; 	mulss xmm7, [meno_uno] ; xmm7 = -1.0 * approx_sin(theta / 2.0)
+ 
+; 	; a = xmm5
+; 	; s = xmm7
+ 
+; 	; Calcol0 b, c, d
+ 
+; 	movss xmm0, [edx] ; axis[0]
+; 	mulss xmm0, xmm7 ; b = s * axis[0]
+ 
+; 	movss xmm1, [edx+dim] ; axis[1]
+; 	mulss xmm1, xmm7 ; c = s * axis[1]
+ 
+; 	movss xmm2, [edx+2*dim] ; axis[2]
+; 	mulss xmm2, xmm7 ; d = s * axis[2]
+ 
+ 
+; 	; calcolo delle righe del risultato; 1, 3
+; 	; //     result[3] = 2 * (b * c - a * d);
+; 	; //     result[1] = 2 * (b * c + a * d);
+
+	
+ 
+; 	movss xmm3, xmm0 ; xmm3 = b
+; 	mulss xmm3, xmm1 ; xmm3 = b * c
+; 	movss xmm4, xmm5; xmm4 = a
+; 	mulss xmm4, xmm2 ; xmm4 = a * d
+; 	movss xmm6, xmm3 ; xmm6 = b * c
+; 	movss xmm7, xmm3 ; xmm7 = b * c
+; 	subss xmm6, xmm4 ; xmm3 = b * c - a * d
+; 	addss xmm7,  xmm4 ; xmm7 = b * c + a * d
+; 	mulss xmm6, [due] ; xmm6 = 2 * (b * c - a * d)
+; 	mulss xmm7, [due] ; xmm7 = 2 * (b * c + a * d)
+; 	movss [eax+dim*3], xmm6 ; result[3] = 2 * (b * c - a * d)
+; 	movss [eax+dim], xmm7   ; result[1] = 2 * (b * c + a * d
+ 
+; 	; calcolo delle righe del risultato; 2, 6
+; 	; //     result[6] = 2 * (b * d + a * c);
+; 	; //     result[2] = 2 * (b * d - a * c);
+; 	; a= xmm5, b= xmm0, c= xmm1, d= xmm2  ---> registri liberi xmm3, xmm4, xmm6, xmm7
+ 
+; 	movss xmm3, xmm0 ; xmm3 = b
+; 	mulss xmm3, xmm2 ; xmm3 = b * d
+; 	movss xmm4, xmm5; xmm4 = a
+; 	mulss xmm4, xmm1 ; xmm4 = a * c
+; 	movss xmm6, xmm3 ; xmm6 = b * d
+; 	movss xmm7, xmm3 ; xmm7 = b * d
+; 	subss xmm6, xmm4 ; xmm3 = b * d - a * c
+; 	addss xmm7,  xmm4 ; xmm7 = b * d + a * c
+; 	mulss xmm6, [due] ; xmm6 = 2 * (b * d - a * c)
+; 	mulss xmm7, [due] ; xmm7 = 2 * (b * d + a * c)
+; 	movss [eax+dim*6], xmm6   ; result[6] = 2 * (b * d - a * c)
+; 	movss [eax+dim*2], xmm7   ; result[2] = 2 * (b * d + a * c)
+ 
+; 	; calcolo delle righe del risultato; 5, 7
+; 	; //     result[7] = 2 * (c * d - a * b);
+; 	; //     result[5] = 2 * (c * d + a * b);
+; 	; a= xmm5, b= xmm0, c= xmm1, d= xmm2  ---> registri liberi xmm3, xmm4, xmm6, xmm7
+ 
+; 	movss xmm3, xmm1 ; xmm3 = c
+; 	mulss xmm3, xmm2 ; xmm3 = c * d
+; 	movss xmm4, xmm5; xmm4 = a
+; 	mulss xmm4, xmm0 ; xmm4 = a * b
+; 	movss xmm6, xmm3 ; xmm6 = c * d
+; 	movss xmm7, xmm3 ; xmm7 = c * d
+; 	subss xmm6, xmm4 ; xmm3 = c * d - a * b
+; 	addss xmm7,  xmm4 ; xmm7 = c * d + a * b
+; 	mulss xmm6, [due] ; xmm6 = 2 * (c * d - a * b)
+; 	mulss xmm7, [due] ; xmm7 = 2 * (c * d + a * b)
+; 	movss [eax+dim*7], xmm6   ; result[7] = 2 * (c * d - a * b)
+; 	movss [eax+dim*5], xmm7   ; result[5] = 2 * (c * d + a * b)
+ 
+ 
+; 	; implementazioni delle seguenti righe del result: 0, 4, 8
+; 	; a= xmm5, b= xmm0, c= xmm1, d= xmm2  ---> registri liberi xmm3, xmm4, xmm6, xmm7
+; 	; calcolare a*a, b*b, c*c, d*d
+; 	mulss xmm5, xmm5 ; xmm5 = a*a
+; 	mulss xmm0, xmm0 ; xmm0 = b*b
+; 	mulss xmm1, xmm1 ; xmm1 = c*c
+; 	mulss xmm2, xmm2 ; xmm2 = d*d
+ 
+; 	; //     result[0] = a * a + b * b - c * c - d * d; 
+; 	movss xmm3, xmm5 ; xmm3 = a*a
+; 	addss xmm3, xmm0 ; xmm3 = a*a + b*b
+; 	subss xmm3, xmm1 ; xmm3 = a*a + b*b - c*c
+; 	subss xmm3, xmm2 ; xmm3 = a*a + b*b - c*c - d*d
+; 	movss [eax], xmm3 ; result[0] = a*a + b*b - c*c - d*d
+ 
+; 	; //     result[4] = a * a + c * c - b * b - d * d;
+; 	movss xmm4, xmm5 ; xmm4 = a*a
+; 	addss xmm4, xmm1 ; xmm4 = a*a + c*c
+; 	subss xmm4, xmm0 ; xmm4 = a*a + c*c - b*b
+; 	subss xmm4, xmm2 ; xmm4 = a*a + c*c - b*b - d*d
+; 	movss [eax+dim*4], xmm4 ; result[4] = a*a + c*c - b*b - d*d
+ 
+; 	; //     result[8] = a * a + d * d - b * b - c * c;
+; 	movss xmm6, xmm5 ; xmm6 = a*a
+; 	addss xmm6, xmm2 ; xmm6 = a*a + d*d
+; 	subss xmm6, xmm0 ; xmm6 = a*a + d*d - b*b
+; 	subss xmm6, xmm1 ; xmm6 = a*a + d*d - b*b - c*c
+; 	movss [eax+dim*8], xmm6 ; result[8] = a*a + d*d - b*b - c*c
+ 
+; 	;--- fine logica ---
+ 
+; 	pop edi
+; 	pop	esi
+; 	pop	ebx
+; 	mov	esp, ebp	; ripristina lo Stack Pointer 
+; 	pop ebp    
+; 	ret
+
+
+ ; --- Metodo approx_cos ---
+approx_cos:
+    push ebp
+    mov ebp, esp
+    push ebx
+
+    ; Recupero parametro theta
+    movss xmm1, [ebp+8] ; theta
+	
+    mulss xmm1, xmm1    ; x2 = theta * theta
+    movss xmm2, xmm1    ; copia di x2
+
+    ; Calcolo x2 / 2.0
+    divss xmm2, [due]   ; xmm2 = x2 / 2.0
+
+    ; Calcolo x2 * x2 / 24.0
+    movss xmm3, xmm1
+    mulss xmm3, xmm3    ; xmm3 = x2 * x2
+    movss xmm4, xmm3
+    divss xmm4, [venti_quattro] ; xmm4 = x2 * x2 / 24.0
+
+    ; Calcolo x2 * x2 * x2 / 720.0
+    mulss xmm3, xmm1    ; xmm3 = x2 * x2 * x2
+    movss xmm5, xmm3
+    divss xmm5, [settecento_venti] ; xmm5 = x2 * x2 * x2 / 720.0
+
+    ; Combinazione dei risultati per il coseno approssimato
+    movss xmm6, [uno]   ; xmm6 = 1.0
+    subss xmm6, xmm2    ; xmm6 = 1 - (x2 / 2.0)
+    addss xmm6, xmm4    ; xmm6 = 1 - (x2 / 2.0) + (x2 * x2 / 24.0)
+    subss xmm6, xmm5    ; xmm6 = 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0)
+
+    ; Salva il risultato in [ebp+12] (result)
+	mov eax, [ebp+12] ; result
+	movss [eax], xmm6
+    ;movss [ebp+12], xmm6
+
+    pop ebx
+    mov esp, ebp
+    pop ebp
+    ret
+
+; --- Metodo approx_sin ---
+approx_sin:
+	push ebp
+	mov ebp, esp
+	push ebx
+
+	; Calcolo del seno
+	movss xmm7, [ebp+8] ; theta
+	movss xmm1, xmm7
+	mulss xmm1, xmm1 ; theta^2
+	movss xmm2, xmm7
+	mulss xmm2, xmm1 ; theta^3
+	movss xmm3, xmm2
+	divss xmm3, [sei] ; theta^3 / 6.0
+	subss xmm7, xmm3 ; risultato parziale theta - theta^3 / 6.0
+
+	movss xmm6, xmm1 ; theta^2
+	mulss xmm6, xmm2 ; theta^5
+	movss xmm5, xmm6 ; theta^5
+	divss xmm6, [cento_venti] ; theta^5 / 120.0
+	addss xmm7, xmm6 ; risultato parziale theta - theta^3 / 6.0 + theta^5 / 120.0
+
+	mulss xmm5, xmm1 ; theta^7
+	divss xmm5, [cinquemila_quaranta] ; theta^7 / 5040.0 
+	addss xmm7, xmm5 ; risultato finale theta - theta^3 / 6.0 + theta^5 / 120.0 - theta^7 / 5040.0
+
+	; mulss xmm7, [meno_uno] ; risultato con segno invertito
+	
+	mov eax, [ebp+12]
+	movss [eax], xmm7
+	
+
+	pop ebx
+	mov esp, ebp
+	pop ebp
+	
+	ret
+
+; --- Metodo principale rotation ---
+rotation:
+    push ebp
+    mov ebp, esp
+    push ebx
+    push esi
+    push edi
+
+    ; Recupero parametri
+    mov ebx, [ebp+8]  ; axis
+    mov ecx, [ebp+12] ; theta
+    mov edx, [ebp+16] ; axis_scal
+    mov eax, [ebp+20] ; result
+
+    ; Calcolo del prodotto scalare axis * axis_scal
+    push edx          ; salva axis_scal sullo stack
+    push ebx          ; salva axis sullo stack
+    call prodottoScalare ; chiama funzione prodotto scalare
+    add esp, 8        ; ripristina lo stack
+
+    ; Risultato del prodotto scalare non salvato in questo frammento
+    ; Usa il valore come necessario (es. normalizzazione)
+
+    ; Calcolo approx_cos
+    movss xmm1, [ecx] ; theta
+    divss xmm1, [due] ; theta / 2.0
+    movss [ecx], xmm1 ; theta
+    push ecx
+    call approx_cos
+    movss xmm5, xmm0 ; xmm5 = coseno(theta / 2.0)
+
+    ; Calcolo approx_sin
+    push ecx
+    call approx_sin
+    movss xmm7, xmm0 ; xmm7 = seno(theta / 2.0)
+
+    ; Continuazione logica principale
+    ; Calcolo di b, c, d
+    movss xmm0, [edx] ; axis[0]
+    mulss xmm0, xmm7 ; b = s * axis[0]
+    movss xmm1, [edx+dim] ; axis[1]
+    mulss xmm1, xmm7 ; c = s * axis[1]
+    movss xmm2, [edx+2*dim] ; axis[2]
+    mulss xmm2, xmm7 ; d = s * axis[2]
+
+    ; ... (continua con la logica principale)
+
+    pop edi
+    pop esi
+    pop ebx
+    mov esp, ebp
+    pop ebp
+    ret
