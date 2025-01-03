@@ -784,7 +784,6 @@ approx_sin:
 	
 	mov eax, [ebp+12]
 	movss [eax], xmm7
-	
 
 	pop ebx
 	mov esp, ebp
