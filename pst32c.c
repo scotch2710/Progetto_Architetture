@@ -503,7 +503,7 @@ extern void distanza1 (MATRIX coordinateCa, int i, int j, type* dist);
 		return sqrt(x_df * x_df + y_df * y_df + z_df * z_df);
 }*/
 
-extern type hydrofobic_energy (char* sequenza, MATRIX coordinate, MATRIX cacoords){
+extern void hydrofobic_energy (char* sequenza, MATRIX cacoords, type *hydro); /*{
 	type energy = 0.0;
 	const int n = 256;
 	
@@ -518,9 +518,10 @@ extern type hydrofobic_energy (char* sequenza, MATRIX coordinate, MATRIX cacoord
 			}
 		}
 	}
+	*hydro = energy;
 	//printf("energy hhydro: %f\n", energy);
-	return energy;
-}
+	return ;
+}*/
 
 extern void electrostatic_energy(char* s, MATRIX cacoords, type *elec);
 /*{
@@ -545,12 +546,9 @@ extern void electrostatic_energy(char* s, MATRIX cacoords, type *elec);
 	return ; 
 }*/
 
-extern type packing_energy(char*s,MATRIX coords, MATRIX cacoords) {
+extern void packing_energy(char*s, MATRIX cacoords, type *pack); 
+/*{
     const int n = 256; 
-	/*printf("Coordinate di CA:\n");
-	for(int i = 0; i<n; i++){
-		printf("%f %f %f\n", cacoords[i*3], cacoords[i*3+1], cacoords[i*3+2]);
-	}*/
     type energy = 0.0;
     for (int i = 0; i < n; i++) {
 		type  density = 0.0;
@@ -564,11 +562,12 @@ extern type packing_energy(char*s,MATRIX coords, MATRIX cacoords) {
 				}
 			}
 		}
-		energy = energy + ((volume[(int)s[i]-65] - density) * (volume[(int)s[i]-65] - density));
+		energy  += ((volume[(int)s[i]-65] - density) * (volume[(int)s[i]-65] - density));
     }
 	//printf("energy pack %f\n", energy);
-	return energy;
-}
+	*pack = energy;
+	return ;
+}*/
 
 
 
@@ -580,10 +579,12 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	coordsca(coords, cacoords);
 	type rama= 0.0;
 	rama_energy(phi, psi, &rama);
-	type hydro = hydrofobic_energy(seq, coords, cacoords);
+	type hydro = 0.0;
+	hydrofobic_energy(seq, cacoords, &hydro);
 	type elec = 0.0;
 	electrostatic_energy(seq, cacoords, &elec);
-	type pack = packing_energy(seq, coords, cacoords);
+	type pack = 0.0; 
+	packing_energy(seq, cacoords, &pack);
 	type w_rama= 1.0;
 	type w_hydro= 0.5;
 	type w_elec= 0.2;

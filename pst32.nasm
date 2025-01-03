@@ -116,8 +116,11 @@ global coordsca
 global rama_energy
 global approx_cos
 global prodottoScalare
-global electrostatic_energy
 ;global approx_sin
+global hydrofobic_energy
+global electrostatic_energy
+global packing_energy
+
 
 N 		equ 	8
 seq		equ		12
@@ -499,6 +502,87 @@ prodottoScalare:
 	; ret
 
 ; ------------------------------------------------------------
+; Funzione hydro_energy
+; ------------------------------------------------------------
+
+hydrofobic_energy:
+	push	ebp			; salva il Base Pointer
+	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+	push	ebx			; salva i registri da preservare
+	push 	edx
+	push	esi
+	push	edi
+
+	;INPUT
+	mov ebx, [ebp + 8] ;ebx = s
+	mov ecx, [ebp + 12] ;ecx = cacoords
+
+	xor esi, esi 	; esi = i = 0
+	pxor xmm3, xmm3 ;energy = 0
+
+	loopEsterno: 
+		cmp esi, 256
+		jge fineloopEsterno
+		xor edi, edi ;edi = j = 0
+		mov edi, esi ;edi = i
+		inc edi		 ;edi = i+1
+
+		loopInterno: 
+			cmp edi, 255
+			jge fineloopInterno
+
+			;Chiamata alla funzione distanza
+			push eax ; &dist
+			push edi ;j
+			push esi ;i
+			push ecx ;cacoords
+
+			call distanza1
+			;fase di svuotamento dello stack
+			add esp, 16
+			;pxor xmm0, xmm0
+			movss xmm0, [eax] ;xmm0 = dist
+			
+			
+			;if (dist <10.0)
+			comiss xmm0, [dieci]
+			jge incj
+
+			mov edx, [ebx + esi  * dim]
+			sub edx, [sessanta_cinque]
+			movss xmm1, [hydrophobicity1 + edx * dim]
+
+			mov edx, [ebx + edi  * dim]
+			sub edx, [sessanta_cinque]
+			movss xmm2, [hydrophobicity1 + edx *dim]
+			
+
+			;energy += (hydrophobicity[(int)s[i]-65]*hydrophobicity[(int)s[j]-65])/(dist);
+			mulss xmm2, xmm1
+			divss xmm2, xmm0
+
+			addss xmm3, xmm2
+
+			incj: 
+				inc edi
+				jmp loopInterno
+				fineloopInterno:
+					inc esi
+					jmp loopEsterno
+					fineloopEsterno:
+						mov eax, [ebp+16]
+						movss [eax], xmm3
+
+	pop edi
+	pop	esi
+	pop edx
+	pop	ebx
+	mov	esp, ebp	; ripristina lo Stack Pointer 
+	pop ebp    
+	ret
+
+
+; ------------------------------------------------------------
 ; Funzione elec_energy
 ; ------------------------------------------------------------
 
@@ -518,14 +602,126 @@ electrostatic_energy:
 	pxor xmm3, xmm3 ;energy = 0
 
 	fori: 
-		cmp esi, 256
+		cmp esi, n
 		jge finefori
 		xor edi, edi ;edi = j = 0
 		mov edi, esi ;edi = i
 		inc edi		 ;edi = i+1
 
 		forj: 
-			cmp edi, 255
+			cmp edi, n
+			jge fineforj
+
+			;Chiamata alla funzione distanza
+			push eax ; &dist
+			push edi ;j
+			push esi ;i
+			push ecx ;cacoords
+
+			call distanza1
+			;fase di svuotamento dello stack
+			add esp, 16
+			;pxor xmm0, xmm0
+			movss xmm0, [eax] ;xmm0 = dist
+			
+			
+			;if (dist <10.0)
+			comiss xmm0, [dieci]
+			jge incrementoj
+
+			;if charge[s[i]-65] !=0			
+			mov edx, [ebx + esi  * dim]
+			sub edx, [sessanta_cinque]
+			movss xmm1, [charge1 + edx * dim]
+			
+
+			comiss xmm1, [zero]
+			je incrementoj 
+
+			;if charge[s[j]-65] !=0
+			mov edx, [ebx + edi  * dim]
+			sub edx, [sessanta_cinque]
+			movss xmm2, [charge1 + edx *dim]
+			
+
+			comiss xmm2, [zero]
+			je incrementoj 
+
+			;energy += (charge[(int)s[i]-65]*charge[(int)s[j]-65])/(dist*4.0);
+			mulss xmm2, xmm1
+			mulss xmm0, [dim]
+			divss xmm2, xmm0
+
+			addss xmm3, xmm2
+
+			incrementoj: 
+				inc edi
+				jmp forj
+				fineforj:
+					inc esi
+					jmp fori
+					finefori:
+						mov eax, [ebp+16]
+						movss [eax], xmm3
+
+	pop edi
+	pop	esi
+	pop edx
+	pop	ebx
+	mov	esp, ebp	; ripristina lo Stack Pointer 
+	pop ebp    
+	ret
+
+; ------------------------------------------------------------
+; Funzione packing_energy
+; ------------------------------------------------------------
+; extern void packing_energy(char*s, MATRIX cacoords, type *pack); 
+; /*{
+;     const int n = 256; 
+;     type energy = 0.0;
+;     for (int i = 0; i < n; i++) {
+; 		type  density = 0.0;
+; 		for (int j = 0; j < n; j++) {
+; 			if(i != j){
+; 				//type dist = distanza(cacoords, i, j);
+; 				type dist = 0.0;
+; 				distanza1(cacoords, i, j, &dist);
+; 				if (dist < 10.0) {
+; 					density  += volume[(int)s[j]-65] / (dist * dist * dist); 
+; 				}
+; 			}
+; 		}
+; 		energy  += ((volume[(int)s[i]-65] - density) * (volume[(int)s[i]-65] - density));
+;     }
+; 	//printf("energy pack %f\n", energy);
+; 	*pack = energy;
+; 	return ;
+; }*/
+
+packing_energy:
+push	ebp			; salva il Base Pointer
+	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+	push	ebx			; salva i registri da preservare
+	push 	edx
+	push	esi
+	push	edi
+
+	;INPUT
+	mov ebx, [ebp + 8] ;ebx = s
+	mov ecx, [ebp + 12] ;ecx = cacoords
+
+	xor esi, esi 	; esi = i = 0
+	pxor xmm3, xmm3 ;energy = 0
+
+	fori: 
+		cmp esi, n
+		jge finefori
+		xor edi, edi ;edi = j = 0
+		mov edi, esi ;edi = i
+		inc edi		 ;edi = i+1
+
+		forj: 
+			cmp edi, n
 			jge fineforj
 
 			;Chiamata alla funzione distanza
