@@ -40,6 +40,8 @@ section .data			; Sezione contenente dati inizializzati
 	beta_psi	dd 113.0
 	un_mezzo    dd 0.5
 	dieci       dd 10.0
+	sessanta_cinque dd 65.0
+	zero 		dd 0.0
 	due         dd 2.0
 	venti_quattro dd 24.0
 	settecento_venti dd 720.0
@@ -114,7 +116,8 @@ global coordsca
 global rama_energy
 global approx_cos
 global prodottoScalare
-global approx_sin
+global electrostatic_energy
+;global approx_sin
 
 N 		equ 	8
 seq		equ		12
@@ -495,40 +498,116 @@ prodottoScalare:
 	; pop ebp    
 	; ret
 
-	approx_sin:
-	push ebp
-	mov ebp, esp
-	push ebx
+; ------------------------------------------------------------
+; Funzione elec_energy
+; ------------------------------------------------------------
 
-	; Calcolo del seno
-	movss xmm7, [ebp+8] ; theta
-	movss xmm1, xmm7
-	movss xmm5, xmm7 ; theta
-	mulss xmm1, xmm1 ; theta^2
-	movss xmm2, xmm7
-	mulss xmm2, xmm1 ; theta^3
-	movss xmm3, xmm2
-	divss xmm3, [sei]; theta^3 / 6.0
-	subss xmm7, xmm3 ; risultato parziale theta - theta^3 / 6.0
+; extern void electrostatic_energy(char* s, MATRIX cacoords, type *elec){
+; 	type energy= 0.0;
+; 	const int n = 256;
+; 	for(int i=0; i < n; i++){
+; 		for(int j= i+1; j < n; j++){
+; 			if(i!= j){
+; 				//type dist = distanza(cacoords, i, j);
+; 				type dist = 0.0;
+; 				distanza1(cacoords, i, j, &dist);
+; 				//printf("dist %f\n", dist);
+; 				if(dist < 10.0 && charge[(int)s[i]-65] !=0 && charge[(int)s[j]-65] != 0 ){
+; 					energy += (charge[(int)s[i]-65]*charge[(int)s[j]-65])/(dist*4.0);
+; 					//printf("energy: %f\n", energy);
+; 				}
+; 			}
+; 		}
+; 	}
+; 	*elec = energy;
+; 	//printf("energy elec %f\n", energy);
+; 	return ; 
+; ; }
+electrostatic_energy:
+	push	ebp			; salva il Base Pointer
+	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+	push	ebx			; salva i registri da preservare
+	push 	edx
+	push	esi
+	push	edi
 
-	movss xmm6, xmm1 ; theta^2
-	mulss xmm6, xmm1 ; theta^4
-	mulss xmm6, xmm5 ; theta^5
-	movss xmm5, xmm6 ; theta^5
-	divss xmm6, [cento_venti] ; theta^5 / 120.0
-	addss xmm7, xmm6 ; risultato parziale theta - theta^3 / 6.0 + theta^5 / 120.0
+	;INPUT
+	mov ebx, [ebp + 8] ;ebx = s
+	mov ecx, [ebp + 12] ;ecx = cacoords
 
-	mulss xmm5, xmm1 ; theta^7
-	divss xmm5, [cinquemila_quaranta] ; theta^7 / 5040.0 
-	subss xmm7, xmm5 ; risultato finale theta - theta^3 / 6.0 + theta^5 / 120.0 - theta^7 / 5040.0
+	xor esi, esi ; esi = i = 0
+	pxor xmm3, xmm3
+	fori: 
+		cmp esi, [n]
+		jge finefori
+		xor edi, edi ;edi = j = 0
+		mov edi, esi ;edi = i
+		inc edi		 ;edi = i+1
+		forj: 
+			cmp edi, [n]
+			jge fineforj
 
-	mulss xmm7, [meno_uno]
-	
-	mov eax, [ebp+12]
-	movss [eax], xmm7
+			;Chiamata alla funzione distanza
+			push eax ; &dist
+			push edi ;j
+			push esi ;i
+			push ecx ;cacoords
 
-	pop ebx
-	mov esp, ebp
-	pop ebp
-	
+			call distanza1
+
+			add esp, 20
+			pxor xmm0, xmm0
+			movss xmm0, [eax] ;xmm0 = dist
+			
+			
+			;if (dist <10.0)
+			comiss xmm0, [dieci]
+			jge incrementoj
+
+			;if charge[s[i]-65] !=0
+			push edx
+			xor edx, edx
+			mov edx, [ebx + esi  * dim]
+			sub edx, [sessanta_cinque]
+			movss xmm1, [charge1 + edx * dim]
+			pop edx
+
+			comiss xmm1, [zero]
+			je incrementoj 
+
+			;if charge[s[j]-65] !=0
+			push edx
+			xor edx, edx
+			mov edx, [ebx + edi  * dim]
+			sub edx, [sessanta_cinque]
+			movss xmm2, [charge1 + edx *dim]
+			pop edx
+
+			comiss xmm2, [zero]
+			je incrementoj 
+
+			;energy += (charge[(int)s[i]-65]*charge[(int)s[j]-65])/(dist*4.0);
+			mulss xmm2, xmm1
+			mulss xmm0, [dim]
+			divss xmm2, xmm0
+
+			addss xmm3, xmm2
+
+			incrementoj: 
+				inc edi
+				jmp forj
+				fineforj:
+					inc esi
+					jmp fori
+				finefori:
+		
+	mov eax, [ebp+16]
+	movss [eax], xmm3
+
+	pop edi
+	pop	esi
+	pop edx
+	pop	ebx
+	mov	esp, ebp	; ripristina lo Stack Pointer 
+	pop ebp    
 	ret

@@ -305,11 +305,12 @@ extern void approx_cos(type theta, type *a); /*{
     return 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0);
 }*/
 
-extern void approx_sin(type theta, type *s);/* {
+extern type approx_sin(type theta) {
     type x2 = theta * theta;
     return theta - (x2 * theta / 6.0) + (x2 * x2 * theta / 120.0) - (x2 * x2 * x2 * theta/ 5040.0);
 
-}*/
+}
+
 extern void prodottoScalare (VECTOR axis, type *prod);
 
 extern MATRIX rotation(VECTOR axis, type theta){
@@ -322,8 +323,7 @@ extern MATRIX rotation(VECTOR axis, type theta){
 
 	type a = 0.0;
 	approx_cos(theta/2.0, &a);
-	type s1 = 0.0;
-	approx_sin(theta / 2.0, &s1);
+	type s1 = approx_sin(theta / 2.0);
 	type s = -1.0 * s1;
     type b = s * axis[0];
     type c = s * axis[1];
@@ -522,7 +522,8 @@ extern type hydrofobic_energy (char* sequenza, MATRIX coordinate, MATRIX cacoord
 	return energy;
 }
 
-extern type electrostatic_energy(char* s, MATRIX coords, MATRIX cacoords){
+extern void electrostatic_energy(char* s, MATRIX cacoords, type *elec);
+/*{
 	type energy= 0.0;
 	const int n = 256;
 	for(int i=0; i < n; i++){
@@ -539,9 +540,10 @@ extern type electrostatic_energy(char* s, MATRIX coords, MATRIX cacoords){
 			}
 		}
 	}
+	*elec = energy;
 	//printf("energy elec %f\n", energy);
-	return energy; 
-}
+	return ; 
+}*/
 
 extern type packing_energy(char*s,MATRIX coords, MATRIX cacoords) {
     const int n = 256; 
@@ -579,7 +581,8 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	type rama= 0.0;
 	rama_energy(phi, psi, &rama);
 	type hydro = hydrofobic_energy(seq, coords, cacoords);
-	type elec = electrostatic_energy(seq, coords, cacoords);
+	type elec = 0.0;
+	electrostatic_energy(seq, cacoords, &elec);
 	type pack = packing_energy(seq, coords, cacoords);
 	type w_rama= 1.0;
 	type w_hydro= 0.5;
