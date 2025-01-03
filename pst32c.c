@@ -308,7 +308,7 @@ extern void  approx_cos(type theta, type *result);
 // 	return;
 // }
 
-extern void approx_sin(type theta, type *result);
+extern void approx_sin(type theta, type* result);
 // {
 // 	type x2 = theta * theta;
 //     *result=  theta - (x2 * theta / 6.0) + (x2 * x2 * theta / 120.0) - (x2 * x2 * x2 * theta/ 5040.0);
@@ -355,8 +355,8 @@ extern void prodottoScalare(VECTOR axis, VECTOR axis_scal);
 
 extern void rotation(VECTOR axis, type theta, VECTOR axis_scal, MATRIX result)
 {
-	//type prod_scal= (axis[0]*axis[0])+(axis[1]*axis[1])+(axis[2]*axis[2]);
-	//VECTOR axis_scal = alloc_matrix(1, 3);
+	// type prod_scal= (axis[0]*axis[0])+(axis[1]*axis[1])+(axis[2]*axis[2]);
+	// VECTOR axis_scal = alloc_matrix(1, 3);
 	prodottoScalare(axis, axis_scal);
 
     type a = 0.0;
@@ -472,9 +472,9 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 		v3[0]/=norm_v3;
 		v3[1]/=norm_v3;
 		v3[2]/=norm_v3;
-		VECTOR v4 = alloc_matrix(1, 3);
+		VECTOR v4_6 = alloc_matrix(1, 3);
 		MATRIX rot= alloc_matrix(3, 3);
-		rotation(v3, psi[i], v4, rot);
+		rotation(v3, psi[i], v4_6, rot);
         new_v[0] = 0;
 		new_v[1] = r_CaC;
 		new_v[2] = 0;

@@ -755,6 +755,7 @@ approx_cos:
     ret
 
 ; --- Metodo approx_sin ---
+
 approx_sin:
 	push ebp
 	mov ebp, esp
@@ -763,25 +764,25 @@ approx_sin:
 	; Calcolo del seno
 	movss xmm7, [ebp+8] ; theta
 	movss xmm1, xmm7
+	movss xmm5, xmm7 ; theta
 	mulss xmm1, xmm1 ; theta^2
 	movss xmm2, xmm7
 	mulss xmm2, xmm1 ; theta^3
 	movss xmm3, xmm2
-	divss xmm3, [sei] ; theta^3 / 6.0
+	divss xmm3, [sei]; theta^3 / 6.0
 	subss xmm7, xmm3 ; risultato parziale theta - theta^3 / 6.0
 
 	movss xmm6, xmm1 ; theta^2
-	mulss xmm6, xmm2 ; theta^5
+	mulss xmm6, xmm1 ; theta^4
+	mulss xmm6, xmm5 ; theta^5
 	movss xmm5, xmm6 ; theta^5
 	divss xmm6, [cento_venti] ; theta^5 / 120.0
 	addss xmm7, xmm6 ; risultato parziale theta - theta^3 / 6.0 + theta^5 / 120.0
 
 	mulss xmm5, xmm1 ; theta^7
 	divss xmm5, [cinquemila_quaranta] ; theta^7 / 5040.0 
-	addss xmm7, xmm5 ; risultato finale theta - theta^3 / 6.0 + theta^5 / 120.0 - theta^7 / 5040.0
+	subss xmm7, xmm5 ; risultato finale theta - theta^3 / 6.0 + theta^5 / 120.0 - theta^7 / 5040.0
 
-	; mulss xmm7, [meno_uno] ; risultato con segno invertito
-	
 	mov eax, [ebp+12]
 	movss [eax], xmm7
 
