@@ -502,27 +502,6 @@ prodottoScalare:
 ; Funzione elec_energy
 ; ------------------------------------------------------------
 
-; extern void electrostatic_energy(char* s, MATRIX cacoords, type *elec){
-; 	type energy= 0.0;
-; 	const int n = 256;
-; 	for(int i=0; i < n; i++){
-; 		for(int j= i+1; j < n; j++){
-; 			if(i!= j){
-; 				//type dist = distanza(cacoords, i, j);
-; 				type dist = 0.0;
-; 				distanza1(cacoords, i, j, &dist);
-; 				//printf("dist %f\n", dist);
-; 				if(dist < 10.0 && charge[(int)s[i]-65] !=0 && charge[(int)s[j]-65] != 0 ){
-; 					energy += (charge[(int)s[i]-65]*charge[(int)s[j]-65])/(dist*4.0);
-; 					//printf("energy: %f\n", energy);
-; 				}
-; 			}
-; 		}
-; 	}
-; 	*elec = energy;
-; 	//printf("energy elec %f\n", energy);
-; 	return ; 
-; ; }
 electrostatic_energy:
 	push	ebp			; salva il Base Pointer
 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
@@ -535,16 +514,18 @@ electrostatic_energy:
 	mov ebx, [ebp + 8] ;ebx = s
 	mov ecx, [ebp + 12] ;ecx = cacoords
 
-	xor esi, esi ; esi = i = 0
-	pxor xmm3, xmm3
+	xor esi, esi 	; esi = i = 0
+	pxor xmm3, xmm3 ;energy = 0
+
 	fori: 
-		cmp esi, [n]
+		cmp esi, 256
 		jge finefori
 		xor edi, edi ;edi = j = 0
 		mov edi, esi ;edi = i
 		inc edi		 ;edi = i+1
+
 		forj: 
-			cmp edi, [n]
+			cmp edi, 255
 			jge fineforj
 
 			;Chiamata alla funzione distanza
@@ -554,9 +535,9 @@ electrostatic_energy:
 			push ecx ;cacoords
 
 			call distanza1
-
-			add esp, 20
-			pxor xmm0, xmm0
+			;fase di svuotamento dello stack
+			add esp, 16
+			;pxor xmm0, xmm0
 			movss xmm0, [eax] ;xmm0 = dist
 			
 			
@@ -564,24 +545,20 @@ electrostatic_energy:
 			comiss xmm0, [dieci]
 			jge incrementoj
 
-			;if charge[s[i]-65] !=0
-			push edx
-			xor edx, edx
+			;if charge[s[i]-65] !=0			
 			mov edx, [ebx + esi  * dim]
 			sub edx, [sessanta_cinque]
 			movss xmm1, [charge1 + edx * dim]
-			pop edx
+			
 
 			comiss xmm1, [zero]
 			je incrementoj 
 
 			;if charge[s[j]-65] !=0
-			push edx
-			xor edx, edx
 			mov edx, [ebx + edi  * dim]
 			sub edx, [sessanta_cinque]
 			movss xmm2, [charge1 + edx *dim]
-			pop edx
+			
 
 			comiss xmm2, [zero]
 			je incrementoj 
@@ -599,10 +576,9 @@ electrostatic_energy:
 				fineforj:
 					inc esi
 					jmp fori
-				finefori:
-		
-	mov eax, [ebp+16]
-	movss [eax], xmm3
+					finefori:
+						mov eax, [ebp+16]
+						movss [eax], xmm3
 
 	pop edi
 	pop	esi
