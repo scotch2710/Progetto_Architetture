@@ -447,7 +447,8 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 }
 
 
-extern type rama_energy(VECTOR phi, VECTOR psi) {
+extern void rama_energy(VECTOR phi, VECTOR psi, type *rama); 
+/*{
     // Costanti di Ramachandran
     
     const type alpha_phi = -57.8;
@@ -476,9 +477,10 @@ extern type rama_energy(VECTOR phi, VECTOR psi) {
     }
 
     return energy;
-}
+}*/
 
-extern MATRIX coordsca(MATRIX coords) {
+extern void coordsca(MATRIX coords, MATRIX coordsca); 
+/*{
     const int n = 256;
 	MATRIX Cacoords = alloc_matrix(n, 3);
     
@@ -488,43 +490,47 @@ extern MATRIX coordsca(MATRIX coords) {
         Cacoords[i * 3 + 2] = coords[i * 9 + 5]; //Z
     }
     return Cacoords; 
-}
+}*/
 
 
-type distanza (MATRIX coordinateCa, int i, int j){
+extern void distanza1 (MATRIX coordinateCa, int i, int j, type *dist);
+/*{
 		type x_df = coordinateCa[3*i] - coordinateCa[3*j];
 		type y_df = coordinateCa[3*i+1] - coordinateCa[3*j+1];
 		type z_df = coordinateCa[3*i+2] - coordinateCa[3*j+2];
 		return sqrt(pow(x_df,2) + pow(y_df,2 ) + pow(z_df,2));
-}
+}*/
 
-extern type hydrofobic_energy (char* sequenza, MATRIX coordinate){
+extern type hydrofobic_energy (char* sequenza, MATRIX coordinateCa){
 	type energy = 0.0;
-	MATRIX coordinateCa = coordsca(coordinate);
+	
 	const int n = 256;
-
+	
 	for(int i=0; i< n; i++){
 		for(int j= i+1; j<n; j++){
-			type dist = distanza(coordinateCa, i, j);
+			type dist = 0;
+			distanza1(coordinateCa, i, j, &dist);
 			//printf("distanza: %f\n", dist);
 			if(dist < 10.0){
 				energy += (hydrophobicity[(int)sequenza[i]-65] * hydrophobicity[(int)sequenza[j]-65] )/ dist;
 			}
 		}
 	}
-	dealloc_matrix(coordinateCa);
+	
 	//printf("energy hhydro: %f\n", energy);
 	return energy;
 }
 
-extern type electrostatic_energy(char* s, MATRIX coords){
-	MATRIX coordinateCa= coordsca(coords);
-	type energy= 0.0;
+extern type electrostatic_energy(char* s, MATRIX coordinateCa){
 	const int n = 256;
+	
+	type energy= 0.0;
+	
 	for(int i=0; i < n; i++){
 		for(int j= i+1; j < n; j++){
 			if(i!= j){
-				type dist= distanza(coordinateCa, i, j);
+				type dist= 0;
+				distanza1(coordinateCa, i, j, &dist);
 				//printf("dist %f\n", dist);
 				if(dist < 10.0 && charge[(int)s[i]-65] !=0 && charge[(int)s[j]-65] != 0 ){
 					energy += (charge[(int)s[i]-65]*charge[(int)s[j]-65])/(dist*4.0);
@@ -533,14 +539,14 @@ extern type electrostatic_energy(char* s, MATRIX coords){
 			}
 		}
 	}
-	dealloc_matrix(coordinateCa);
+	
 	//printf("energy elec %f\n", energy);
 	return energy; 
 }
 
-extern type packing_energy(char*s,MATRIX coords) {
+extern type packing_energy(char*s, MATRIX coordinateCa) {
     const int n = 256; 
-    MATRIX coordinateCa = coordsca(coords);
+    
 	/*printf("Coordinate di CA:\n");
 	for(int i = 0; i<n; i++){
 		printf("%f %f %f\n", cacoords[i*3], cacoords[i*3+1], cacoords[i*3+2]);
@@ -550,7 +556,8 @@ extern type packing_energy(char*s,MATRIX coords) {
 		type  density = 0.0;
 		for (int j = 0; j < n; j++) {
 			if(i != j){
-				type dist = distanza(coordinateCa, i, j);
+				type dist = 0;
+				distanza1(coordinateCa, i, j, &dist);
 				if (dist < 10.0) {
 					density = density + volume[(int)s[j]-65] / (pow(dist, 3)); 
 				}
@@ -558,7 +565,7 @@ extern type packing_energy(char*s,MATRIX coords) {
 		}
 		energy = energy + pow((volume[(int)s[i]-65] - density), 2);
     }
-	dealloc_matrix(coordinateCa);
+	
 	//printf("energy pack %f\n", energy);
 	return energy;
 }
@@ -568,11 +575,14 @@ extern type packing_energy(char*s,MATRIX coords) {
 extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	MATRIX coords= backbone(seq, phi, psi);
 	for(int i=0; i<25; i++) printf("coords[%d]: %f\n", i, coords[i]);
-	
-	type rama= rama_energy(phi, psi);
-	type hydro = hydrofobic_energy(seq, coords);
-	type elec = electrostatic_energy(seq, coords);
-	type pack = packing_energy(seq, coords);
+	MATRIX coordinateCa= alloc_matrix(256,3);
+	coordsca(coords, coordinateCa);
+	type rama= 0;
+	rama_energy(phi, psi, &rama);
+	type hydro = hydrofobic_energy(seq, coordinateCa);
+	type elec = electrostatic_energy(seq, coordinateCa);
+	type pack = packing_energy(seq, coordinateCa);
+	dealloc_matrix(coordinateCa);
 	type w_rama= 1.0;
 	type w_hydro= 0.5;
 	type w_elec= 0.2;
