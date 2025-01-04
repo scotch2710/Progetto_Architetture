@@ -568,7 +568,6 @@ extern type packing_energy(char*s,MATRIX coords) {
 extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	MATRIX coords= backbone(seq, phi, psi);
 	for(int i=0; i<25; i++) printf("coords[%d]: %f\n", i, coords[i]);
-	
 	type rama= rama_energy(phi, psi);
 	type hydro = hydrofobic_energy(seq, coords);
 	type elec = electrostatic_energy(seq, coords);

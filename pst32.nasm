@@ -723,7 +723,8 @@ packing_energy:
 		for_j: 
 			cmp edi, n
 			jge fine_forj
-			cmp edi, esi ; if j==i
+			; if j==i
+			cmp edi, esi 
 			je incremento_j
 			;Chiamata alla funzione distanza
 			push eax ; &dist
@@ -742,7 +743,7 @@ packing_energy:
 			comiss xmm0, [dieci]
 			jge incremento_j
 
-			;if volume[s[i]-65] !=0			
+			;volume[s[j]-65]		
 			xor edx, edx
 			mov edx, [ebx + edi  * dim]
 			sub edx, [sessanta_cinque]
@@ -758,13 +759,19 @@ packing_energy:
 				inc edi
 				jmp for_j
 				fine_forj:
+					;volume[s[j]-65]
 					xor edx, edx
 					mov edx, [ebx + esi  * dim]
 					sub edx, [sessanta_cinque]
+					cmp edx, 25
+					jg outbound
+					cmp edx, 0
+					jl outbound
 					movss xmm1, [volume1 + edx * dim]
 					subss xmm1, xmm4; volume-densità
 					mulss xmm1, xmm1
 					addss xmm3, xmm1; energia+=
+					outbound:
 					
 					inc esi
 
