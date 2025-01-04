@@ -296,10 +296,12 @@ extern void vector_matrix_product(VECTOR v, MATRIX R, VECTOR result) {
     }
 }
 
-type approx_cos(type theta) {
-    type x2 = theta * theta;
-    return 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0);
-}
+extern void approx_cos(type theta, type* cos); 
+/*{
+    
+	type x2 = theta * theta;
+    *cos = 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0);
+}*/
 
 type approx_sin(type theta) {
     type x2 = theta * theta;
@@ -314,7 +316,8 @@ extern MATRIX rotation(VECTOR axis, type theta){
 	axis[1] = axis[1] / prod_scal;
 	axis[2] = axis[2] / prod_scal;
 
-	type a = approx_cos(theta/2.0);
+	type a = 0;
+	approx_cos(theta/2.0, &a);
 	type s = -1.0 * approx_sin(theta / 2.0);
     type b = s * axis[0];
     type c = s * axis[1];

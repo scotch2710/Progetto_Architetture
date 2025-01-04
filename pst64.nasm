@@ -115,7 +115,7 @@ section .data			; Sezione contenente dati inizializzati
 global distanza1
 global coordsca
 global rama_energy
-; global approx_cos
+global approx_cos
 ; global prodottoScalare
 ; global approx_sin
 ; global hydrofobic_energy
@@ -339,58 +339,52 @@ rama_energy:
 	popaq
 	mov	rsp, rbp	; ripristina lo Stack Pointer 
  	pop rbp
-	ret
 
 	ret
 
 ; ; ------------------------------------------------------------
 ; ; Funzione approx_cos
 ; ; ------------------------------------------------------------
-; approx_cos:    
-; 	push	ebp			; salva il Base Pointer
-; 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
-; 	push	ebx			; salva i registri da preservare
-; 	push 	edx
-; 	push	esi
-; 	push	edi
+approx_cos:    
+	push	rbp			; salva il Base Pointer
+	mov		rbp, rsp	; il Base Pointer punta al Record di Attivazione corrente
+	pushaq  
 	
-; 	; Recupero parametro theta    
-; 	movsd xmm1, [ebp+8] ; theta     
-; 	mulss xmm1, xmm1    ; x2 = theta * theta    
-; 	movsd xmm2, xmm1    ; copia di x2 
+	; theta   XMM0
+	; Recupero parametro theta    
+	movsd xmm7, xmm0    ; theta     
+	mulsd xmm7, xmm7    ; x2 = theta * theta    
+	movsd xmm2, xmm7    ; copia di x2 
 
-; 	; Calcolo x2 / 2.0    
-; 	divss xmm2, [due]   ; xmm2 = x2 / 2.0 
+	; Calcolo x2 / 2.0    
+	divsd xmm2, [due]   ; xmm2 = x2 / 2.0 
 
-; 	; Calcolo x2 * x2 / 24.0    
-; 	movsd xmm3, xmm1    
-; 	mulss xmm3, xmm3    ; xmm3 = x2 * x2    
-; 	movsd xmm4, xmm3    
-; 	divss xmm4, [venti_quattro] ; xmm4 = x2 * x2 / 24.0    
+	; Calcolo x2 * x2 / 24.0    
+	movsd xmm3, xmm7    
+	mulsd xmm3, xmm3    ; xmm3 = x2 * x2    
+	movsd xmm4, xmm3    
+	divsd xmm4, [venti_quattro] ; xmm4 = x2 * x2 / 24.0    
 	
-; 	; Calcolo x2 * x2 * x2 / 720.0    
-; 	mulss xmm3, xmm1    ; xmm3 = x2 * x2 * x2    
-; 	movsd xmm5, xmm3    
-; 	divss xmm5, [settecento_venti] ; xmm5 = x2 * x2 * x2 / 720.0    
+	; Calcolo x2 * x2 * x2 / 720.0    
+	mulsd xmm3, xmm7    ; xmm3 = x2 * x2 * x2    
+	movsd xmm5, xmm3    
+	divsd xmm5, [settecento_venti] ; xmm5 = x2 * x2 * x2 / 720.0    
 	
-; 	; Combinazione dei risultati per il coseno approssimato    
-; 	movsd xmm6, [uno]   ; xmm6 = 1.0    
-; 	subss xmm6, xmm2    ; xmm6 = 1 - (x2 / 2.0)    
-; 	addss xmm6, xmm4    ; xmm6 = 1 - (x2 / 2.0) + (x2 * x2 / 24.0)    
-; 	subss xmm6, xmm5    ; xmm6 = 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0)    
+	; Combinazione dei risultati per il coseno approssimato    
+	movsd xmm6, [uno]   ; xmm6 = 1.0    
+	subsd xmm6, xmm2    ; xmm6 = 1 - (x2 / 2.0)    
+	addsd xmm6, xmm4    ; xmm6 = 1 - (x2 / 2.0) + (x2 * x2 / 24.0)    
+	subsd xmm6, xmm5    ; xmm6 = 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0)    
 	
-; 	; Salva il risultato in [ebp+12] (result) 
-; 	mov eax, [ebp+12] ; result 
-; 	movsd [eax], xmm6    
-; 	;movsd [ebp+12], xmm6    
-	
-; 	pop edi
-; 	pop	esi
-; 	pop edx
-; 	pop	ebx
-; 	mov	esp, ebp	; ripristina lo Stack Pointer 
-; 	pop ebp    
-; 	ret
+	; Salva il risultato in [ebp+12] (result) 
+	; result 
+	movsd qword[rdi], xmm6    
+	    
+	popaq
+	mov	rsp, rbp	; ripristina lo Stack Pointer 
+ 	pop rbp
+	   
+	ret
 
 
 ; ; ------------------------------------------------------------
