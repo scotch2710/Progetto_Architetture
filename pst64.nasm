@@ -93,7 +93,7 @@ section .data			; Sezione contenente dati inizializzati
 	cento_venti dq 120.0
 	cinquemila_quaranta dq 5040.0
 	meno_uno    dq -1.0
-
+	tmp         dd  0.0
 	; Hydrophobicity
 	alignb 32
 	hydrophobicity1 dq 1.8, -1, 2.5, -3.5, -3.5, 2.8, -0.4, -3.2, 4.5, -1, -3.9, 3.8, 1.9, -3.5, -1, -1.6, -3.5, -4.5, -0.8, -0.7, -1, 4.2, -0.9, -1, -1.3, -1
@@ -115,12 +115,13 @@ section .data			; Sezione contenente dati inizializzati
 global distanza1
 global coordsca
 global rama_energy
-; global approx_cos
-; global prodottoScalare
-; global approx_sin
+global approx_cos
+global prodotto_scal
+global approx_sin
 ; global hydrofobic_energy
 ; global electrostatic_energy
 ; global packing_energy
+
 
 
 
@@ -151,7 +152,7 @@ global rama_energy
 ; Funzione distanza1
 ; ------------------------------------------------------------
 section .text
-
+extern size
 ; La funzione accetta i seguenti argomenti:
 ; RDI: pointer a coordinateCa (array di float)
 ; RSI: i
@@ -233,8 +234,10 @@ coordsca:
 	; rcx= ecx  rbx= esi   
 	xor rbx, rbx 		;ESI: i=0
 	
+	
     forCacoords:
-		cmp rbx, 256
+		
+		cmp rbx, [size]
 		jge fineCacoords
 		mov rcx, rbx ;ecx contatore di coords
 		imul rcx, 9
@@ -281,7 +284,7 @@ rama_energy:
 	xorps xmm0, xmm0        ;init energy = 0.0
 	
     forRamaEnergy:
-		cmp rcx, 256
+		cmp rcx, [size]
 		jge fineRamaEnergy
 		; uso xmm4 per salvare phi[i]
 		; uso xmm5 per salvare psi[i]
@@ -346,153 +349,120 @@ rama_energy:
 ; ; ------------------------------------------------------------
 ; ; Funzione approx_cos
 ; ; ------------------------------------------------------------
-; approx_cos:    
-; 	push	ebp			; salva il Base Pointer
-; 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
-; 	push	ebx			; salva i registri da preservare
-; 	push 	edx
-; 	push	esi
-; 	push	edi
+approx_cos:    
+	push	rbp			; salva il Base Pointer
+	mov		rbp, rsp	; il Base Pointer punta al Record di Attivazione corrente
+	pushaq  
 	
-; 	; Recupero parametro theta    
-; 	movsd xmm1, [ebp+8] ; theta     
-; 	mulss xmm1, xmm1    ; x2 = theta * theta    
-; 	movsd xmm2, xmm1    ; copia di x2 
+	; theta   XMM0
+	; Recupero parametro theta    
+	movsd xmm7, xmm0    ; theta     
+	mulsd xmm7, xmm7    ; x2 = theta * theta    
+	movsd xmm2, xmm7    ; copia di x2 
 
-; 	; Calcolo x2 / 2.0    
-; 	divss xmm2, [due]   ; xmm2 = x2 / 2.0 
+	; Calcolo x2 / 2.0    
+	divsd xmm2, [due]   ; xmm2 = x2 / 2.0 
 
-; 	; Calcolo x2 * x2 / 24.0    
-; 	movsd xmm3, xmm1    
-; 	mulss xmm3, xmm3    ; xmm3 = x2 * x2    
-; 	movsd xmm4, xmm3    
-; 	divss xmm4, [venti_quattro] ; xmm4 = x2 * x2 / 24.0    
+	; Calcolo x2 * x2 / 24.0    
+	movsd xmm3, xmm7    
+	mulsd xmm3, xmm3    ; xmm3 = x2 * x2    
+	movsd xmm4, xmm3    
+	divsd xmm4, [venti_quattro] ; xmm4 = x2 * x2 / 24.0    
 	
-; 	; Calcolo x2 * x2 * x2 / 720.0    
-; 	mulss xmm3, xmm1    ; xmm3 = x2 * x2 * x2    
-; 	movsd xmm5, xmm3    
-; 	divss xmm5, [settecento_venti] ; xmm5 = x2 * x2 * x2 / 720.0    
+	; Calcolo x2 * x2 * x2 / 720.0    
+	mulsd xmm3, xmm7    ; xmm3 = x2 * x2 * x2    
+	movsd xmm5, xmm3    
+	divsd xmm5, [settecento_venti] ; xmm5 = x2 * x2 * x2 / 720.0    
 	
-; 	; Combinazione dei risultati per il coseno approssimato    
-; 	movsd xmm6, [uno]   ; xmm6 = 1.0    
-; 	subss xmm6, xmm2    ; xmm6 = 1 - (x2 / 2.0)    
-; 	addss xmm6, xmm4    ; xmm6 = 1 - (x2 / 2.0) + (x2 * x2 / 24.0)    
-; 	subss xmm6, xmm5    ; xmm6 = 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0)    
+	; Combinazione dei risultati per il coseno approssimato    
+	movsd xmm6, [uno]   ; xmm6 = 1.0    
+	subsd xmm6, xmm2    ; xmm6 = 1 - (x2 / 2.0)    
+	addsd xmm6, xmm4    ; xmm6 = 1 - (x2 / 2.0) + (x2 * x2 / 24.0)    
+	subsd xmm6, xmm5    ; xmm6 = 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0)    
 	
-; 	; Salva il risultato in [ebp+12] (result) 
-; 	mov eax, [ebp+12] ; result 
-; 	movsd [eax], xmm6    
-; 	;movsd [ebp+12], xmm6    
-	
-; 	pop edi
-; 	pop	esi
-; 	pop edx
-; 	pop	ebx
-; 	mov	esp, ebp	; ripristina lo Stack Pointer 
-; 	pop ebp    
-; 	ret
+	; Salva il risultato in [ebp+12] (result) 
+	; result 
+	movsd qword[rdi], xmm6    
+	    
+	popaq
+	mov	rsp, rbp	; ripristina lo Stack Pointer 
+ 	pop rbp
+	   
+	ret
 
-
-; ; ------------------------------------------------------------
-; ; Funzione prod_scal
-; ; ------------------------------------------------------------
-; prodottoScalare:
-; 	push	ebp			; salva il Base Pointer
-; 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
-; 	push	ebx			; salva i registri da preservare
-; 	push 	edx
-; 	push	esi
-; 	push	edi
- 
- 
-; 	mov ebx, [ebp+8]    ;axis
-; 	mov eax, [ebp+12]		;axis Normalizzato
- 
-; 		; Calcola il prodotto scalare
-	
-; 	movsd xmm0, [ebx] ; axis[0]
-; 	mulss xmm0, xmm0
- 
-; 	movsd xmm1, [ebx+4] ; axis[1]
-; 	mulss xmm1, xmm1
-; 	addss xmm0, xmm1
- 
- 
-; 	movsd xmm2, [ebx+2*4] ; axis[2]
-; 	mulss xmm2, xmm2
-; 	addss xmm0, xmm2
-
-; 	sqrtss xmm0, xmm0
- 
-; 	; xmm0 ha il prodotto scalare
- 
-; 	; Calcola 1/prodotto scalare
-; 	movsd xmm1, [ebx] ; axis[0]
-; 	divss xmm1, xmm0
-; 	movsd xmm2, [ebx+dim] ; axis[1]
-; 	divss xmm2, xmm0
-; 	movsd xmm3, [ebx+2*dim] ; axis[2]
-; 	divss xmm3, xmm0
- 
-; 	movsd [eax], xmm0
-
-; 	;movsd [eax], xmm1 ; new axis[0]
-; 	;movsd [eax+dim], xmm2  ; new axis[1]
-; 	;movsd [eax+2*dim], xmm3  ; new axis[2]
- 
-; 	pop edi
-; 	pop	esi
-; 	pop edx
-; 	pop	ebx
-; 	mov	esp, ebp	; ripristina lo Stack Pointer 
-; 	pop ebp    
-; 	ret
 
 ; ; ------------------------------------------------------------
 ; ; Funzione approx_sin
 ; ; ------------------------------------------------------------
-; ;approx_sin:
-; 	; push	ebp			; salva il Base Pointer
-; 	; mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
-; 	; push	ebx			; salva i registri da preservare
-; 	; push 	edx
-; 	; push	esi
-; 	; push	edi
+approx_sin:
+	push	rbp			; salva il Base Pointer
+	mov		rbp, rsp	; il Base Pointer punta al Record di Attivazione corrente
+	pushaq  
 
-; 	; ; Calcolo del seno
-; 	; movsd xmm7, [ebp+8] ; theta
-; 	; movsd xmm1, xmm7
-; 	; movsd xmm5, xmm7 ; theta
-; 	; mulss xmm1, xmm1 ; theta^2
-; 	; movsd xmm2, xmm7
-; 	; mulss xmm2, xmm1 ; theta^3
-; 	; movsd xmm3, xmm2
-; 	; divss xmm3, [sei]; theta^3 / 6.0
-; 	; subss xmm7, xmm3 ; risultato parziale theta - theta^3 / 6.0
+	; Calcolo del seno
+	movsd xmm7, xmm0 ; theta
+	movsd xmm1, xmm7
+	movsd xmm5, xmm7 ; theta
+	mulsd xmm1, xmm1 ; theta^2
+	movsd xmm2, xmm7
+	mulsd xmm2, xmm1 ; theta^3
+	movsd xmm3, xmm2
+	divsd xmm3, [sei]; theta^3 / 6.0
+	subsd xmm7, xmm3 ; risultato parziale theta - theta^3 / 6.0
 
-; 	; movsd xmm6, xmm1 ; theta^2
-; 	; mulss xmm6, xmm1 ; theta^4
-; 	; mulss xmm6, xmm5 ; theta^5
-; 	; movsd xmm5, xmm6 ; theta^5
-; 	; divss xmm6, [cento_venti] ; theta^5 / 120.0
-; 	; addss xmm7, xmm6 ; risultato parziale theta - theta^3 / 6.0 + theta^5 / 120.0
+	movsd xmm6, xmm1 ; theta^2
+	mulsd xmm6, xmm1 ; theta^4
+	mulsd xmm6, xmm5 ; theta^5
+	movsd xmm5, xmm6 ; theta^5
+	divsd xmm6, [cento_venti] ; theta^5 / 120.0
+	addsd xmm7, xmm6 ; risultato parziale theta - theta^3 / 6.0 + theta^5 / 120.0
 
-; 	; mulss xmm5, xmm1 ; theta^7
-; 	; divss xmm5, [cinquemila_quaranta] ; theta^7 / 5040.0 
-; 	; subss xmm7, xmm5 ; risultato finale theta - theta^3 / 6.0 + theta^5 / 120.0 - theta^7 / 5040.0
+	mulsd xmm5, xmm1 ; theta^7
+	divsd xmm5, [cinquemila_quaranta] ; theta^7 / 5040.0 
+	subsd xmm7, xmm5 ; risultato finale theta - theta^3 / 6.0 + theta^5 / 120.0 - theta^7 / 5040.0
 
-; 	; mulss xmm7, [meno_uno]
+	mulsd xmm7, [meno_uno]
 
-; 	; mov eax, [ebp+12]
-; 	; movsd [eax], xmm7
+	
+	movsd qword[rdi], xmm7
 
-; 	; pop edi
-; 	; pop	esi
-; 	; pop edx
-; 	; pop	ebx
-; 	; mov	esp, ebp	; ripristina lo Stack Pointer 
-; 	; pop ebp    
-; 	; ret
+	popaq
+	mov	rsp, rbp	; ripristina lo Stack Pointer 
+ 	pop rbp
+	ret
+
+	
+; ; ------------------------------------------------------------
+; ; Funzione prod_scal
+; ; ------------------------------------------------------------
+prodotto_scal:
+
+	push	rbp			; salva il Base Pointer
+	mov		rbp, rsp	; il Base Pointer punta al Record di Attivazione corrente
+	pushaq 
+ 
+	movsd xmm0, [rdi]    ;axis 0                 ;axis rdi
+	movsd xmm1, [rdi+8]	 ;axis 1
+	movsd xmm2, [rdi+16] ;axis 2
+			             ;res RDI 
+ 
+	; Calcola il prodotto scalare
+	mulsd xmm0, xmm0
+ 
+ 	mulsd xmm1, xmm1
+	addsd xmm0, xmm1
+ 
+ 	mulsd xmm2, xmm2
+	addsd xmm0, xmm2
+	; xmm0 ha il prodotto scalare
+ 	movsd [rsi], xmm0
+	
+	popaq
+	mov	rsp, rbp	; ripristina lo Stack Pointer 
+ 	pop rbp
+	ret
+
+
 
 ; ; ------------------------------------------------------------
 ; ; Funzione hydro_energy
