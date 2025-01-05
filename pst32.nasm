@@ -31,8 +31,9 @@
 
 section .data			; Sezione contenente dati inizializzati
 	unroll equ 4
-	n 	   equ 256
 	dim    equ 4
+
+	n 	   dd 0.0
 	; Costanti di Ramachandran
 	alpha_phi	dd -57.8
 	alpha_psi	dd -47.0
@@ -226,7 +227,7 @@ distanza1:
 ; Funzione coordsca
 ; ------------------------------------------------------------
 ; void coordsca(MATRIX coords, MATRIX cacoords) {
-;     const int n = 256;
+;     const int n = n;
 ; 	for (int i = 0; i < n; i++) {
 ;         cacoords[i * 3] = coords[i * 9 + 3]; //X
 ;         cacoords[i* 3 + 1] = coords[i * 9 + 4]; //Y
@@ -241,9 +242,16 @@ coordsca:
 	push	edi  
 
 	mov ebx, [ebp+8]    ;coords
-	mov eax, [ebp+12]		;cacoords
+	mov edx, [ebp+12]		;n
+	mov eax, [ebp+16]	;cacoords
 
-	xor esi, esi 		;ESI: i=0
+	movss xmm1, [edx]
+	movss [tmpStamp], xmm1
+	printss tmpStamp
+	; mov [n], edx
+	 xor edx, edx
+
+	xor esi, esi 		;ESI: i=0s
 	
     forCacoords:
 		cmp esi, 256
@@ -297,7 +305,7 @@ rama_energy:
 	xorps xmm0, xmm0        ;init energy = 0.0
 	
     forRamaEnergy:
-		cmp esi, 256
+		cmp esi, n
 		jge fineRamaEnergy
 		; uso xmm4 per salvare phi[i]
 		; uso xmm5 per salvare psi[i]
@@ -531,7 +539,7 @@ hydrofobic_energy:
 	pxor xmm3, xmm3 ;energy = 0
 
 	loopEsterno: 
-		cmp esi, 256
+		cmp esi, n
 		jge fineloopEsterno
 		xor edi, edi ;edi = j = 0
 		mov edi, esi ;edi = i
@@ -560,8 +568,8 @@ hydrofobic_energy:
 			ucomiss xmm0, [dieci]
 			ja incj
 			;dist<10
-			movss [tmpStamp], xmm0
-			printss tmpStamp
+			;movss [tmpStamp], xmm0
+			;printss tmpStamp
 
 			; mov edx, [ebx + esi  * dim]
 			; sub edx, [sessanta_cinque]
@@ -692,7 +700,7 @@ electrostatic_energy:
 ; ------------------------------------------------------------
 ; extern void packing_energy(char*s, MATRIX cacoords, type *pack); 
 ; /*{
-;     const int n = 256; 
+;     const int n = n; 
 ;     type energy = 0.0;
 ;     for (int i = 0; i < n; i++) {
 ; 		type  density = 0.0;

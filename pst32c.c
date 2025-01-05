@@ -484,7 +484,7 @@ extern void rama_energy(VECTOR phi, VECTOR psi, type *energy);
     return ;
 }*/
 
-extern void coordsca(MATRIX coords, MATRIX cacoords);
+extern void coordsca(MATRIX coords, type n, MATRIX cacoords);
 /*void coordsca(MATRIX coords, MATRIX cacoords) {
     const int n = 256;
 	for (int i = 0; i < n; i++) {
@@ -515,7 +515,7 @@ extern void hydrofobic_energy (char* sequenza, MATRIX cacoords, type *hydro)
 			distanza1(cacoords, i, j, &dist);
 			
 			if(dist < 10.0){
-				printf("distanza: %f\n", dist);
+				//printf("distanza: %f\n", dist);
 				energy += (hydrophobicity[(int)sequenza[i]-65] * hydrophobicity[(int)sequenza[j]-65] )/ dist;
 			}
 		}
@@ -573,12 +573,11 @@ extern void packing_energy(char*s, MATRIX cacoords, type *pack)
 
 
 
-extern type energy(char* seq, VECTOR phi, VECTOR psi){
+extern type energy(char* seq, VECTOR phi, VECTOR psi, int n){
 	MATRIX coords= backbone(seq, phi, psi);
-	int n= 256;
 	//for(int i=0; i<25; i++) printf("coords[%d]: %f\n", i, coords[i]);
 	MATRIX cacoords = alloc_matrix(n, 3);
-	coordsca(coords, cacoords);
+	coordsca(coords, n, cacoords);
 	type rama= 0.0;
 	rama_energy(phi, psi, &rama);
 	type hydro = 0.0;
@@ -614,7 +613,7 @@ void pst(params* input){
 	
 	VECTOR psi= input->psi;
 	
-	type E= energy(input->seq, phi, psi);
+	type E= energy(input->seq, phi, psi, n);
 	
 	type t=0.0;
 	
@@ -630,18 +629,18 @@ void pst(params* input){
 		phi[i] = phi[i] + theta_phi;
 		type theta_psi = (type) random() * (2 * M_PI) - M_PI;
 		psi[i] = psi[i] + theta_psi;
-		type deltaE= energy(input->seq, phi, psi) - E;
+		type deltaE= energy(input->seq, phi, psi, n) - E;
 		
 
 		if(deltaE<=0){
-			E= energy(input->seq, phi, psi);
+			E= energy(input->seq, phi, psi, n);
 		}
 		else{
 			type P = pow(M_E, (-deltaE/(input->k*T)));
 			type r = random();
 
 			if (r<=P)
-				E= energy(input->seq, phi, psi);
+				E= energy(input->seq, phi, psi, n);
 			else{
 				phi[i] = phi[i] - theta_phi;
 				psi[i] = psi[i] - theta_psi;
