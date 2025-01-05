@@ -39,6 +39,7 @@ section .data			; Sezione contenente dati inizializzati
 	beta_phi	dd -119.0
 	beta_psi	dd 113.0
 	un_mezzo    dd 0.5
+	align 4
 	dieci       dd 10.0
 	sessanta_cinque dd 65.0
 	zero 		dd 0.0
@@ -50,6 +51,7 @@ section .data			; Sezione contenente dati inizializzati
 	cento_venti dd 120.0
 	cinquemila_quaranta dd 5040.0
 	meno_uno    dd -1.0
+	tmpStamp 	dd 0.0
 
 	; Hydrophobicity
 	alignb 16
@@ -67,6 +69,9 @@ section .data			; Sezione contenente dati inizializzati
 section .bss			; Sezione contenente dati non inizializzati
 	alignb 16
 	e		resd		1
+
+	alignb 16
+	dist   resd        1
 
 section .text			; Sezione contenente il codice macchina
 
@@ -117,9 +122,9 @@ global rama_energy
 global approx_cos
 global prodottoScalare
 ;global approx_sin
-global hydrofobic_energy
-global electrostatic_energy
-global packing_energy
+;global hydrofobic_energy
+;global electrostatic_energy
+;global packing_energy
 
 
 N 		equ 	8
@@ -163,12 +168,15 @@ distanza1:
 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
 	push	ebx			; salva i registri da preservare
 	push	esi
-	push	edi                 
+	push	edi 
+	push 	ecx     
+	push 	eax           
 	
 	; Carica i parametri    
 	mov     esi, [ebp+8]               ; coordinateCa    
 	mov     eax, [ebp+12]              ; i    
 	mov     ebx, [ebp+16]              ; j    
+	mov     ecx, [ebp+20]              ; dist
 	
 	; Calcola 3*i e 3*j    
 	lea     eax, [eax + eax * 2]       ; eax = 3*i    
@@ -201,14 +209,16 @@ distanza1:
 	addss   xmm0, xmm4                  ; xmm0 += z_df^2    
 	; Radice quadrata    
 	sqrtss  xmm0, xmm0                  ; xmm0 = sqrt(x_df^2 + y_df^2 + z_df^2)    
-	mov 	eax, [ebp+20]				;[ebp+20] contiene l'indirizzo della variabile dist passata come parametro (&dist)
-	movss 	[eax], xmm0					;[eax] inserisce nell'indirizzo passato in eax il valore risultante in xmm0
+	;mov 	eax, [ebp+20]				;[ebp+20] contiene l'indirizzo della variabile dist passata come parametro (&dist)
+	movss 	[ecx], xmm0					;[eax] inserisce nell'indirizzo passato in eax il valore risultante in xmm0
 
-	
+	pop eax
+	pop ecx
 	pop edi
 	pop	esi
 	pop	ebx
 	mov	esp, ebp	; ripristina lo Stack Pointer 
+
 	pop ebp    
 	ret
 
@@ -532,7 +542,7 @@ hydrofobic_energy:
 			jge fineloopInterno
 
 			;Chiamata alla funzione distanza
-			push eax ; &dist
+			push dist ; &dist
 			push edi ;j
 			push esi ;i
 			push ecx ;cacoords
@@ -541,20 +551,25 @@ hydrofobic_energy:
 			;fase di svuotamento dello stack
 			add esp, 16
 			;pxor xmm0, xmm0
-			movss xmm0, [eax] ;xmm0 = dist
+			; ecx = distanza1
+			movss xmm0, [dist] ;xmm0 = dist
+			
 			
 			
 			;if (dist <10.0)
-			comiss xmm0, [dieci]
-			jge incj
+			ucomiss xmm0, [dieci]
+			ja incj
+			;dist<10
+			movss [tmpStamp], xmm0
+			printss tmpStamp
 
-			mov edx, [ebx + esi  * dim]
-			sub edx, [sessanta_cinque]
-			movss xmm1, [hydrophobicity1 + edx * dim]
+			; mov edx, [ebx + esi  * dim]
+			; sub edx, [sessanta_cinque]
+			; movss xmm1, [hydrophobicity1 + edx * dim]
 
-			mov edx, [ebx + edi  * dim]
-			sub edx, [sessanta_cinque]
-			movss xmm2, [hydrophobicity1 + edx *dim]
+			; mov edx, [ebx + edi  * dim]
+			; sub edx, [sessanta_cinque]
+			; movss xmm2, [hydrophobicity1 + edx *dim]
 			
 
 			;energy += (hydrophobicity[(int)s[i]-65]*hydrophobicity[(int)s[j]-65])/(dist);
@@ -740,8 +755,8 @@ packing_energy:
 			
 			;if (dist <10.0)
 			comiss xmm0, [dieci]
-			jge incremento_j
-
+			jl incremento_j
+			;dist<10
 			;if volume[s[i]-65] !=0			
 			xor edx, edx
 			mov edx, [ebx + edi  * dim]

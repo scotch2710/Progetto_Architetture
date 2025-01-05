@@ -503,7 +503,8 @@ extern void distanza1 (MATRIX coordinateCa, int i, int j, type* dist);
 		return sqrt(x_df * x_df + y_df * y_df + z_df * z_df);
 }*/
 
-extern void hydrofobic_energy (char* sequenza, MATRIX cacoords, type *hydro); /*{
+extern void hydrofobic_energy (char* sequenza, MATRIX cacoords, type *hydro)
+{
 	type energy = 0.0;
 	const int n = 256;
 	
@@ -512,8 +513,9 @@ extern void hydrofobic_energy (char* sequenza, MATRIX cacoords, type *hydro); /*
 			//type dist = distanza(cacoords, i, j);
 			type dist = 0.0;
 			distanza1(cacoords, i, j, &dist);
-			//printf("distanza: %f\n", dist);
+			
 			if(dist < 10.0){
+				printf("distanza: %f\n", dist);
 				energy += (hydrophobicity[(int)sequenza[i]-65] * hydrophobicity[(int)sequenza[j]-65] )/ dist;
 			}
 		}
@@ -521,10 +523,10 @@ extern void hydrofobic_energy (char* sequenza, MATRIX cacoords, type *hydro); /*
 	*hydro = energy;
 	//printf("energy hhydro: %f\n", energy);
 	return ;
-}*/
+}
 
-extern void electrostatic_energy(char* s, MATRIX cacoords, type *elec);
-/*{
+extern void electrostatic_energy(char* s, MATRIX cacoords, type *elec)
+{
 	type energy= 0.0;
 	const int n = 256;
 	for(int i=0; i < n; i++){
@@ -544,10 +546,10 @@ extern void electrostatic_energy(char* s, MATRIX cacoords, type *elec);
 	*elec = energy;
 	//printf("energy elec %f\n", energy);
 	return ; 
-}*/
+}
 
-extern void packing_energy(char*s, MATRIX cacoords, type *pack); 
-/*{
+extern void packing_energy(char*s, MATRIX cacoords, type *pack)
+{
     const int n = 256; 
     type energy = 0.0;
     for (int i = 0; i < n; i++) {
@@ -567,7 +569,7 @@ extern void packing_energy(char*s, MATRIX cacoords, type *pack);
 	//printf("energy pack %f\n", energy);
 	*pack = energy;
 	return ;
-}*/
+}
 
 
 
