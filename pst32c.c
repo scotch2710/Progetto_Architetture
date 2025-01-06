@@ -65,7 +65,7 @@
 #endif
 
 
-
+int size ;
 type hydrophobicity[] = {1.8, -1, 2.5, -3.5, -3.5, 2.8, -0.4, -3.2, 4.5, -1, -3.9, 3.8, 1.9, -3.5, -1, -1.6, -3.5, -4.5, -0.8, -0.7, -1, 4.2, -0.9, -1, -1.3, -1};		// hydrophobicity
 type volume[] = {88.6, -1, 108.5, 111.1, 138.4, 189.9, 60.1, 153.2, 166.7, -1, 168.6, 166.7, 162.9, 114.1, -1, 112.7, 143.8, 173.4, 89.0, 116.1, -1, 140.0, 227.8, -1, 193.6, -1};		// volume
 type charge[] = {0, -1, 0, -1, -1, 0, 0, 0.5, 0, -1, 1, 0, 0, 0, -1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, -1};		// charge
@@ -349,7 +349,6 @@ extern MATRIX rotation(VECTOR axis, type theta){
 	}
 
 extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
-	const int n = 256;
 	type r_CaN = 1.46;
 	type r_CaC = 1.52;
 	type r_CN = 1.33;
@@ -357,14 +356,14 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 	type theta_CaCN = 2.028;
 	type theta_CNCa = 2.124;
 	type theta_NCaC = 1.940;
-	MATRIX coords= alloc_matrix(n*3,3);
+	MATRIX coords= alloc_matrix(size*3,3);
 	coords[0]=0;
 	coords[1]=0;
 	coords[2]=0;
 	coords[3]=r_CaN;
 	coords[4]=0;
 	coords[5]=0;
-	for(int i=0; i<n; i++){
+	for(int i=0; i<size; i++){
 		int idx = i*9;
 		VECTOR new_v = alloc_matrix(1, 3);
 		VECTOR res = alloc_matrix(1, 3);
@@ -484,7 +483,7 @@ extern void rama_energy(VECTOR phi, VECTOR psi, type *energy);
     return ;
 }*/
 
-extern void coordsca(MATRIX coords, type n, MATRIX cacoords);
+extern void coordsca(MATRIX coords, MATRIX cacoords);
 /*void coordsca(MATRIX coords, MATRIX cacoords) {
     const int n = 256;
 	for (int i = 0; i < n; i++) {
@@ -503,13 +502,13 @@ extern void distanza1 (MATRIX coordinateCa, int i, int j, type* dist);
 		return sqrt(x_df * x_df + y_df * y_df + z_df * z_df);
 }*/
 
-extern void hydrofobic_energy (char* sequenza, MATRIX cacoords, type *hydro)
-{
+extern void hydrofobic_energy (char* sequenza, MATRIX cacoords, type *hydro);
+/*{
 	type energy = 0.0;
-	const int n = 256;
+	//printf("size hydro %d\n", size);
 	
-	for(int i=0; i< n; i++){
-		for(int j= i+1; j<n; j++){
+	for(int i=0; i< size; i++){
+		for(int j= i+1; j<size; j++){
 			//type dist = distanza(cacoords, i, j);
 			type dist = 0.0;
 			distanza1(cacoords, i, j, &dist);
@@ -523,20 +522,20 @@ extern void hydrofobic_energy (char* sequenza, MATRIX cacoords, type *hydro)
 	*hydro = energy;
 	//printf("energy hhydro: %f\n", energy);
 	return ;
-}
+}*/
 
 extern void electrostatic_energy(char* s, MATRIX cacoords, type *elec)
 {
 	type energy= 0.0;
-	const int n = 256;
-	for(int i=0; i < n; i++){
-		for(int j= i+1; j < n; j++){
+	for(int i=0; i < size; i++){
+		for(int j= i+1; j < size; j++){
 			if(i!= j){
 				//type dist = distanza(cacoords, i, j);
 				type dist = 0.0;
 				distanza1(cacoords, i, j, &dist);
-				//printf("dist %f\n", dist);
+				//printf("iterazione %d: dist %f\n", i, dist);
 				if(dist < 10.0 && charge[(int)s[i]-65] !=0 && charge[(int)s[j]-65] != 0 ){
+					//printf("iterazione %d: dist %f\n", i, dist);
 					energy += (charge[(int)s[i]-65]*charge[(int)s[j]-65])/(dist*4.0);
 					//printf("energy: %f\n", energy);
 				}
@@ -550,11 +549,10 @@ extern void electrostatic_energy(char* s, MATRIX cacoords, type *elec)
 
 extern void packing_energy(char*s, MATRIX cacoords, type *pack)
 {
-    const int n = 256; 
     type energy = 0.0;
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < size; i++) {
 		type  density = 0.0;
-		for (int j = 0; j < n; j++) {
+		for (int j = 0; j < size; j++) {
 			if(i != j){
 				//type dist = distanza(cacoords, i, j);
 				type dist = 0.0;
@@ -573,11 +571,11 @@ extern void packing_energy(char*s, MATRIX cacoords, type *pack)
 
 
 
-extern type energy(char* seq, VECTOR phi, VECTOR psi, int n){
+extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	MATRIX coords= backbone(seq, phi, psi);
 	//for(int i=0; i<25; i++) printf("coords[%d]: %f\n", i, coords[i]);
-	MATRIX cacoords = alloc_matrix(n, 3);
-	coordsca(coords, n, cacoords);
+	MATRIX cacoords = alloc_matrix(size, 3);
+	coordsca(coords, cacoords);
 	type rama= 0.0;
 	rama_energy(phi, psi, &rama);
 	type hydro = 0.0;
@@ -606,14 +604,15 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi, int n){
 
 void pst(params* input){
 	
-	int n = input->N;
+	size = input->N; 
+	printf("size %d\n", size);
 	
 	type T = input->to;
 	VECTOR phi= input->phi;
 	
 	VECTOR psi= input->psi;
 	
-	type E= energy(input->seq, phi, psi, n);
+	type E= energy(input->seq, phi, psi);
 	
 	type t=0.0;
 	
@@ -623,24 +622,24 @@ void pst(params* input){
 
     	// Genera un numero casuale tra 0 e n
 		
-    	int i = (int)(random()*n);
+    	int i = (int)(random()*size);
 		
 		type theta_phi = (type) random() * (2 * M_PI) - M_PI;
 		phi[i] = phi[i] + theta_phi;
 		type theta_psi = (type) random() * (2 * M_PI) - M_PI;
 		psi[i] = psi[i] + theta_psi;
-		type deltaE= energy(input->seq, phi, psi, n) - E;
+		type deltaE= energy(input->seq, phi, psi) - E;
 		
 
 		if(deltaE<=0){
-			E= energy(input->seq, phi, psi, n);
+			E= energy(input->seq, phi, psi);
 		}
 		else{
 			type P = pow(M_E, (-deltaE/(input->k*T)));
 			type r = random();
 
 			if (r<=P)
-				E= energy(input->seq, phi, psi, n);
+				E= energy(input->seq, phi, psi);
 			else{
 				phi[i] = phi[i] - theta_phi;
 				psi[i] = psi[i] - theta_psi;

@@ -6,34 +6,33 @@
 ;
 
 ;
-; Software necessario per l'esecuzione:
+; Software[size]ecessario per l'esecuzione:
 ;
-;     NASM (www.nasm.us)
+;    [size]ASM (www.nasm.us)
 ;     GCC (gcc.gnu.org)
 ;
 ; entrambi sono disponibili come pacchetti software 
 ; installabili mediante il packaging tool del sistema 
 ; operativo; per esempio, su Ubuntu, mediante i comandi:
 ;
-;     sudo apt-get install nasm
+;     sudo apt-get install[size]asm
 ;     sudo apt-get install gcc
 ;
-; potrebbe essere necessario installare le seguenti librerie:
+; potrebbe essere[size]ecessario installare le seguenti librerie:
 ;
 ;     sudo apt-get install lib32gcc-4.8-dev (o altra versione)
 ;     sudo apt-get install libc6-dev-i386
 ;
 ; Per generare file oggetto:
 ;
-;     nasm -f elf32 fss32.nasm 
+;    [size]asm -f elf32 fss32.nasm 
 ;
 %include "sseutils32.nasm"
 
 section .data			; Sezione contenente dati inizializzati
 	unroll equ 4
 	dim    equ 4
-
-	n 	   dd 0.0
+	sessanta_cinque_int equ 65
 	; Costanti di Ramachandran
 	alpha_phi	dd -57.8
 	alpha_psi	dd -47.0
@@ -53,6 +52,9 @@ section .data			; Sezione contenente dati inizializzati
 	cinquemila_quaranta dd 5040.0
 	meno_uno    dd -1.0
 	tmpStamp 	dd 0.0
+	extern size 
+	msg db "distanza in assembly: "
+	msg1 db "sono nell'if distanza "
 
 	; Hydrophobicity
 	alignb 16
@@ -67,7 +69,7 @@ section .data			; Sezione contenente dati inizializzati
 	charge1 dd 0, -1, 0, -1, -1, 0, 0, 0.5, 0, -1, 1, 0, 0, 0, -1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, -1
 
 
-section .bss			; Sezione contenente dati non inizializzati
+section .bss			; Sezione contenente dati[size]on inizializzati
 	alignb 16
 	e		resd		1
 
@@ -80,9 +82,9 @@ section .text			; Sezione contenente il codice macchina
 ; ----------------------------------------------------------
 ; macro per l'allocazione dinamica della memoria
 ;
-;	getmem	<size>,<elements>
+;	getmem	<[size]>,<elements>
 ;
-; alloca un'area di memoria di <size>*<elements> bytes
+; alloca un'area di memoria di <[size]>*<elements> bytes
 ; (allineata a 16 bytes) e restituisce in EAX
 ; l'indirizzo del primo bytes del blocco allocato
 ; (funziona mediante chiamata a funzione C, per cui
@@ -123,7 +125,7 @@ global rama_energy
 global approx_cos
 global prodottoScalare
 ;global approx_sin
-;global hydrofobic_energy
+global hydrofobic_energy
 ;global electrostatic_energy
 ;global packing_energy
 
@@ -142,7 +144,7 @@ energy 	equ		44
 
 
 ;char* seq;		// sequenza di amminoacidi
-;	int N;			// lunghezza sequenza
+;	int[size];			// lunghezza sequenza
 ;	unsigned int sd; 	// seed per la generazione casuale
 ;	type to;		// temperatura INIZIALE
 ;	type alpha;		// tasso di raffredamento
@@ -211,7 +213,7 @@ distanza1:
 	; Radice quadrata    
 	sqrtss  xmm0, xmm0                  ; xmm0 = sqrt(x_df^2 + y_df^2 + z_df^2)    
 	;mov 	eax, [ebp+20]				;[ebp+20] contiene l'indirizzo della variabile dist passata come parametro (&dist)
-	movss 	[ecx], xmm0					;[eax] inserisce nell'indirizzo passato in eax il valore risultante in xmm0
+	movss 	[ecx], xmm0					;[eax] inserisce[size]ell'indirizzo passato in eax il valore risultante in xmm0
 
 	pop eax
 	pop ecx
@@ -227,8 +229,8 @@ distanza1:
 ; Funzione coordsca
 ; ------------------------------------------------------------
 ; void coordsca(MATRIX coords, MATRIX cacoords) {
-;     const int n = n;
-; 	for (int i = 0; i < n; i++) {
+;     const int[size] =[size];
+; 	for (int i = 0; i <[size]; i++) {
 ;         cacoords[i * 3] = coords[i * 9 + 3]; //X
 ;         cacoords[i* 3 + 1] = coords[i * 9 + 4]; //Y
 ;         cacoords[i * 3 + 2] = coords[i * 9 + 5]; //Z
@@ -240,22 +242,30 @@ coordsca:
 	push	ebx			; salva i registri da preservare
 	push	esi
 	push	edi  
+	push 	eax
+	push	edx
+	push 	ecx
 
 	mov ebx, [ebp+8]    ;coords
-	mov edx, [ebp+12]		;n
-	mov eax, [ebp+16]	;cacoords
+	mov eax, [ebp+12]	;cacoords
 
-	movss xmm1, [edx]
-	movss [tmpStamp], xmm1
-	printss tmpStamp
-	; mov [n], edx
-	 xor edx, edx
+		 
+		; ;Stampa del valore intero size convertito in valore float
+		; mov edx, [size]    ; Carica il valore di 'size' in eax
+		; cvtsi2ss xmm1, edx ; Converte 'size' (in eax) in float in xmm0
+		; movss [tmpStamp], xmm0
+		; printss tmpStamp
+		; xor edx, edx
 
+
+		 
 	xor esi, esi 		;ESI: i=0s
+
 	
     forCacoords:
-		cmp esi, 256
+		cmp esi,[size]
 		jge fineCacoords
+		
 		mov ecx, esi ;ecx contatore di coords
 		imul ecx, 9
 		
@@ -280,6 +290,9 @@ coordsca:
 
 	fineCacoords:
 	;--- fine logica ---
+	pop ecx
+	pop edx
+	pop eax
 	pop edi
 	pop	esi
 	pop	ebx
@@ -305,7 +318,7 @@ rama_energy:
 	xorps xmm0, xmm0        ;init energy = 0.0
 	
     forRamaEnergy:
-		cmp esi, n
+		cmp esi,[size]
 		jge fineRamaEnergy
 		; uso xmm4 per salvare phi[i]
 		; uso xmm5 per salvare psi[i]
@@ -431,7 +444,7 @@ prodottoScalare:
  
  
 	mov ebx, [ebp+8]    ;axis
-	mov eax, [ebp+12]		;axis Normalizzato
+	mov eax, [ebp+12]		;axis[size]ormalizzato
  
 		; Calcola il prodotto scalare
 	
@@ -461,9 +474,9 @@ prodottoScalare:
  
 	movss [eax], xmm0
 
-	;movss [eax], xmm1 ; new axis[0]
-	;movss [eax+dim], xmm2  ; new axis[1]
-	;movss [eax+2*dim], xmm3  ; new axis[2]
+	;movss [eax], xmm1 ;[size]ew axis[0]
+	;movss [eax+dim], xmm2  ;[size]ew axis[1]
+	;movss [eax+2*dim], xmm3  ;[size]ew axis[2]
  
 	pop edi
 	pop	esi
@@ -531,22 +544,26 @@ hydrofobic_energy:
 	push	esi
 	push	edi
 
-	;INPUT
+		;INPUT
 	mov ebx, [ebp + 8] ;ebx = s
 	mov ecx, [ebp + 12] ;ecx = cacoords
+
+	cvtsi2ss xmm7, ebx 
+	movups [tmpStamp], xmm7
+	printss tmpStamp
 
 	xor esi, esi 	; esi = i = 0
 	pxor xmm3, xmm3 ;energy = 0
 
 	loopEsterno: 
-		cmp esi, n
+		cmp esi,[size]
 		jge fineloopEsterno
 		xor edi, edi ;edi = j = 0
 		mov edi, esi ;edi = i
 		inc edi		 ;edi = i+1
 
 		loopInterno: 
-			cmp edi, 255
+			cmp edi, [size]
 			jge fineloopInterno
 
 			;Chiamata alla funzione distanza
@@ -565,7 +582,7 @@ hydrofobic_energy:
 			
 			
 			;if (dist <10.0)
-			ucomiss xmm0, [dieci]
+			comiss xmm0, [dieci]
 			ja incj
 			;dist<10
 			;movss [tmpStamp], xmm0
@@ -614,6 +631,8 @@ electrostatic_energy:
 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
 	push	ebx			; salva i registri da preservare
 	push 	edx
+	push 	ecx
+	push	eax
 	push	esi
 	push	edi
 
@@ -621,22 +640,37 @@ electrostatic_energy:
 	mov ebx, [ebp + 8] ;ebx = s
 	mov ecx, [ebp + 12] ;ecx = cacoords
 
+	cvtsi2ss xmm7, ebx 
+	movups [tmpStamp], xmm7
+	printss tmpStamp
+
 	xor esi, esi 	; esi = i = 0
 	pxor xmm3, xmm3 ;energy = 0
 
+	; cvtsi2ss xmm6, esi ; Converte 'size' (in eax) in float in xmm0
+	; 	movss [tmpStamp], xmm6
+	; 	printss tmpStamp
+
 	fori: 
-		cmp esi, n
+		cmp esi,[size]
 		jge finefori
 		xor edi, edi ;edi = j = 0
 		mov edi, esi ;edi = i
 		inc edi		 ;edi = i+1
 
+		; ;Stampa del valore intero size convertito in valore float
+		; mov edx, [size]    ; Carica il valore di 'size' in eax
+		; cvtsi2ss xmm7, edi ; Converte 'size' (in eax) in float in xmm0
+		; movss [tmpStamp], xmm7
+		; printss tmpStamp
+		; xor edx, edx
+
 		forj: 
-			cmp edi, n
+			cmp edi,[size]
 			jge fineforj
 
 			;Chiamata alla funzione distanza
-			push eax ; &dist
+			push dist ; &dist
 			push edi ;j
 			push esi ;i
 			push ecx ;cacoords
@@ -645,28 +679,69 @@ electrostatic_energy:
 			;fase di svuotamento dello stack
 			add esp, 16
 			;pxor xmm0, xmm0
-			movss xmm0, [eax] ;xmm0 = dist
+			movss xmm0, [dist] ;xmm0 = dist
+			; stampa:
+			; cmp edi, 20
+			; jge nostampa
+			; prints msg
+			; movss [tmpStamp], xmm0
+			; printss tmpStamp
+			; nostampa:
+			
+		; cvtsi2ss xmm7, edi ; Converte 'size' (in eax) in float in xmm0
 			
 			
+		
 			;if (dist <10.0)
 			comiss xmm0, [dieci]
-			jge incrementoj
+			jae incrementoj
 
-			;if charge[s[i]-65] !=0			
+			
+			
+			; cvtsi2ss xmm7, edi 
+			; movss [tmpStamp], xmm7
+			; printss tmpStamp
+				
+
+			;charge[s[i]-65]			
 			mov edx, [ebx + esi  * dim]
-			sub edx, [sessanta_cinque]
+
+			; cvtsi2ss xmm7, edx 
+			; movss [tmpStamp], xmm7
+			; printss tmpStamp
+			sub edx, 65
+			; cvtsi2ss xmm7, edx 
+			; movss [tmpStamp], xmm7
+			; printss tmpStamp
+		
+			
+			; movss xmm4, [ebx + esi  * dim]
+			; subss xmm4, [sessanta_cinque]
+			; cvtss2si edx, xmm4
+			; prints msg1
+			; cvtsi2ss xmm5, edx 
+			; movss [tmpStamp], xmm5
+			; printss tmpStamp
 			movss xmm1, [charge1 + edx * dim]
+			; movss [tmpStamp], xmm0
+			; printss tmpStamp
+			
 			
 
+			;if charge[s[i]-65] != 0
 			comiss xmm1, [zero]
 			je incrementoj 
 
-			;if charge[s[j]-65] !=0
+			;charge[s[j]-65]
 			mov edx, [ebx + edi  * dim]
 			sub edx, [sessanta_cinque]
+			; cvtss2si edx, xmm6
+			; cvtsi2ss xmm5, edx 
+			; movss [tmpStamp], xmm5
+			; printss tmpStamp
 			movss xmm2, [charge1 + edx *dim]
 			
-
+			;if charge[s[j]-65] !=0
 			comiss xmm2, [zero]
 			je incrementoj 
 
@@ -689,6 +764,8 @@ electrostatic_energy:
 
 	pop edi
 	pop	esi
+	pop eax
+	pop ecx
 	pop edx
 	pop	ebx
 	mov	esp, ebp	; ripristina lo Stack Pointer 
@@ -700,11 +777,11 @@ electrostatic_energy:
 ; ------------------------------------------------------------
 ; extern void packing_energy(char*s, MATRIX cacoords, type *pack); 
 ; /*{
-;     const int n = n; 
+;     const int[size] =[size]; 
 ;     type energy = 0.0;
-;     for (int i = 0; i < n; i++) {
+;     for (int i = 0; i <[size]; i++) {
 ; 		type  density = 0.0;
-; 		for (int j = 0; j < n; j++) {
+; 		for (int j = 0; j <[size]; j++) {
 ; 			if(i != j){
 ; 				//type dist = distanza(cacoords, i, j);
 ; 				type dist = 0.0;
@@ -737,14 +814,14 @@ packing_energy:
 	pxor xmm3, xmm3 ;energy = 0
 
 	for_i: 
-		cmp esi, n
+		cmp esi,[size]
 		jge fine_fori
 		pxor xmm4, xmm4 ; densità
 		xor edi, edi ;edi = j = 0
 		
 
 		for_j: 
-			cmp edi, n
+			cmp edi,[size]
 			jge fine_forj
 			cmp edi, esi ; if j==i
 			je incremento_j
@@ -763,7 +840,7 @@ packing_energy:
 			
 			;if (dist <10.0)
 			comiss xmm0, [dieci]
-			jl incremento_j
+			jge incremento_j
 			;dist<10
 			;if volume[s[i]-65] !=0			
 			xor edx, edx
