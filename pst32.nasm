@@ -53,8 +53,8 @@ section .data			; Sezione contenente dati inizializzati
 	meno_uno    dd -1.0
 	tmpStamp 	dd 0.0
 	extern size 
-	msg db "distanza in assembly: "
-	msg1 db "sono nell'if distanza "
+	msg db "pack: "
+	
 
 	; Hydrophobicity
 	alignb 16
@@ -68,6 +68,8 @@ section .data			; Sezione contenente dati inizializzati
 	; Charge
 	charge1 dd 0, -1, 0, -1, -1, 0, 0, 0.5, 0, -1, 1, 0, 0, 0, -1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, -1
 
+	align 16
+	intArray dd 19, 21, 2, 15, 24, 5, 4, 15, 12, 7, 0, 11, 13, 24, 5, 13, 3, 5, 2, 7, 0, 15, 8, 15, 18, 17, 3, 3, 22, 5, 17, 18, 18, 17, 3, 22, 5, 13, 13, 22, 3, 17, 21, 13, 15, 2, 11, 3, 17, 19, 15, 10, 19, 8, 24, 0, 11, 0, 6, 24, 17, 0, 0, 10, 7, 11, 13, 7, 24, 6, 24, 7, 18, 12, 11, 22, 2, 11, 21, 12, 3, 7, 12, 18, 0, 18, 11, 22, 17, 11, 2, 5, 22, 21, 7, 19, 8, 4, 13, 11, 0, 3, 11, 12, 17, 12, 24, 10, 17, 4, 16, 5, 5, 21, 15, 22, 5, 24, 13, 13, 21, 0, 13, 24, 18, 22, 24, 2, 15, 16, 5, 22, 24, 7, 16, 13, 7, 22, 6, 0, 17, 15, 24, 16, 10, 0, 22, 6, 3, 2, 0, 16, 12, 19, 7, 24, 12, 22, 19, 21, 2, 6, 21, 7, 5, 16, 12, 13, 21, 11, 4, 6, 10, 2, 12, 5, 4, 5, 0, 11, 24, 19, 21, 24, 6, 6, 22, 19, 18, 19, 3, 11, 11, 0, 7, 19, 15, 24, 4, 19, 18, 4, 22, 4, 4, 3, 17, 7, 4, 19, 21, 3, 2, 21, 7, 11, 2, 22, 11, 7, 4, 13, 24, 12, 7, 2, 2, 8, 5, 16, 12, 0, 3, 12, 4, 22, 3, 0, 4, 18, 6, 4, 17, 10, 19, 3, 24, 6, 10, 15, 11, 10, 21, 11, 16, 16
 
 section .bss			; Sezione contenente dati[size]on inizializzati
 	alignb 16
@@ -125,9 +127,9 @@ global rama_energy
 global approx_cos
 global prodottoScalare
 ;global approx_sin
-global hydrofobic_energy
+;global hydrofobic_energy
 ;global electrostatic_energy
-;global packing_energy
+global packing_energy
 
 
 N 		equ 	8
@@ -181,6 +183,27 @@ distanza1:
 	mov     ebx, [ebp+16]              ; j    
 	mov     ecx, [ebp+20]              ; dist
 	
+
+	; xor edi, edi
+	; xor edx, edx
+	; stampa:
+	; 	mov edx, edi
+	; 	imul edx, 3
+	; 	cmp edx, size
+	; 	jge nostampa
+	; 	mov edx, esi
+	; 	add edx, edi
+	; 	movss xmm0, dword [edx] ; mette in xmm0 coords[i*9+5] salvando z
+	; 	movss [tmpStamp], xmm0
+	; 	printss tmpStamp
+	; 	inc edi
+	; 	jmp stampa
+	; 	nostampa:
+	; 	xor edi, edi
+	; 	xor edx, edx
+	
+
+
 	; Calcola 3*i e 3*j    
 	lea     eax, [eax + eax * 2]       ; eax = 3*i    
 	lea     ebx, [ebx + ebx * 2]       ; ebx = 3*j    
@@ -197,6 +220,7 @@ distanza1:
 	movss   xmm3, dword [esi + ebx * 4]    
 	subss   xmm2, xmm3                  ; edx = y_df    
 	
+	; eax = i, ebx = j, esi = cacoords
 	; Z_df    
 	add     eax, 1    
 	add     ebx, 1    
@@ -259,7 +283,7 @@ coordsca:
 
 
 		 
-	xor esi, esi 		;ESI: i=0s
+	xor esi, esi 		;ESI: i=0
 
 	
     forCacoords:
@@ -267,23 +291,28 @@ coordsca:
 		jge fineCacoords
 		
 		mov ecx, esi ;ecx contatore di coords
-		imul ecx, 9
+		imul ecx, 9	;i*9
 		
 
 		mov edx, esi ; edx contatore di cacords
 		shl edx, 1
 		add edx, esi 
-		
+		;ebx = coords, ecx= i
 		movss xmm0, [ebx + ecx*dim + 3*dim] ; mette in xmm0 coords[i*9+3] salvando x
 		movss [eax + edx*dim], xmm0
+		;cvtsi2ss xmm6, esi ; Converte 'size' (in eax) in float in xmm0
+		
 
         inc edx
 		movss xmm0, [ebx + ecx*dim + 4*dim] ; mette in xmm0 coords[i*9+4] salvando y
 		movss [eax + edx*dim], xmm0
+		
 
 		inc edx
 		movss xmm0, [ebx + ecx*dim + 5*dim] ; mette in xmm0 coords[i*9+5] salvando z
 		movss [eax + edx*dim], xmm0
+		; movss [tmpStamp], xmm0
+		; printss tmpStamp
 		inc esi
 		jmp forCacoords
 		;--------fine ciclo for--------
@@ -446,6 +475,8 @@ prodottoScalare:
 	mov ebx, [ebp+8]    ;axis
 	mov eax, [ebp+12]		;axis[size]ormalizzato
  
+
+ 
 		; Calcola il prodotto scalare
 	
 	movss xmm0, [ebx] ; axis[0]
@@ -460,7 +491,7 @@ prodottoScalare:
 	mulss xmm2, xmm2
 	addss xmm0, xmm2
 
-	sqrtss xmm0, xmm0
+	;sqrtss xmm0, xmm0
  
 	; xmm0 ha il prodotto scalare
  
@@ -548,9 +579,32 @@ hydrofobic_energy:
 	mov ebx, [ebp + 8] ;ebx = s
 	mov ecx, [ebp + 12] ;ecx = cacoords
 
-	cvtsi2ss xmm7, ebx 
-	movups [tmpStamp], xmm7
-	printss tmpStamp
+;Stampa del valore intero size convertito in valore float
+
+	; xor esi, esi
+	; mov esi, 21
+	; imul esi, 4
+	; movss xmm6, [charge1]
+	; cvtsi2ss xmm7, esi
+	; addss xmm7, xmm6
+	; 	;movss xmm7, [edx]
+	; 	movss [tmpStamp], xmm7
+	; 	printss tmpStamp
+	; stampa:
+	; 	cmp esi, size
+	; 	jge nostampa
+	; 	movzx edx, byte [charge1 + esi*4]    ; Carica il valore di 'size' in eax
+	; 	cvtsi2ss xmm7, edx ; Converte 'size' (in eax) in float in xmm0
+	; 	;movss xmm7, [edx]
+	; 	movss [tmpStamp], xmm7
+	; 	printss tmpStamp
+	; 	nostampa:
+	; 		xor edx, edx
+			; xor esi, esi
+
+	; cvtsi2ss xmm7, ebx 
+	; movups [tmpStamp], xmm7
+	; printss tmpStamp
 
 	xor esi, esi 	; esi = i = 0
 	pxor xmm3, xmm3 ;energy = 0
@@ -588,13 +642,21 @@ hydrofobic_energy:
 			;movss [tmpStamp], xmm0
 			;printss tmpStamp
 
-			; mov edx, [ebx + esi  * dim]
-			; sub edx, [sessanta_cinque]
-			; movss xmm1, [hydrophobicity1 + edx * dim]
+			mov edx, [intArray + esi  * dim]
+			;sub edx, [sessanta_cinque]
+			; cvtsi2ss xmm6, [hydrophobicity1+4]
+			; movups [tmpStamp], xmm6
+			; printss tmpStamp
+			movss xmm1, [hydrophobicity1 + edx * dim]
+			; movups [tmpStamp], xmm1
+			; printss tmpStamp
 
-			; mov edx, [ebx + edi  * dim]
+
+			
+
+			 mov edx, [intArray + edi  * dim]
 			; sub edx, [sessanta_cinque]
-			; movss xmm2, [hydrophobicity1 + edx *dim]
+			 movss xmm2, [hydrophobicity1 + edx *dim]
 			
 
 			;energy += (hydrophobicity[(int)s[i]-65]*hydrophobicity[(int)s[j]-65])/(dist);
@@ -640,9 +702,9 @@ electrostatic_energy:
 	mov ebx, [ebp + 8] ;ebx = s
 	mov ecx, [ebp + 12] ;ecx = cacoords
 
-	cvtsi2ss xmm7, ebx 
-	movups [tmpStamp], xmm7
-	printss tmpStamp
+	; cvtsi2ss xmm7, ebx 
+	; movups [tmpStamp], xmm7
+	; printss tmpStamp
 
 	xor esi, esi 	; esi = i = 0
 	pxor xmm3, xmm3 ;energy = 0
@@ -709,7 +771,7 @@ electrostatic_energy:
 			; cvtsi2ss xmm7, edx 
 			; movss [tmpStamp], xmm7
 			; printss tmpStamp
-			sub edx, 65
+			;sub edx, 65
 			; cvtsi2ss xmm7, edx 
 			; movss [tmpStamp], xmm7
 			; printss tmpStamp
@@ -734,7 +796,7 @@ electrostatic_energy:
 
 			;charge[s[j]-65]
 			mov edx, [ebx + edi  * dim]
-			sub edx, [sessanta_cinque]
+			;sub edx, [sessanta_cinque]
 			; cvtss2si edx, xmm6
 			; cvtsi2ss xmm5, edx 
 			; movss [tmpStamp], xmm5
@@ -810,6 +872,18 @@ packing_energy:
 	mov ebx, [ebp + 8] ;ebx = s
 	mov ecx, [ebp + 12] ;ecx = cacoords
 
+		; movss  xmm4, dword [ecx]    
+		; movss [tmpStamp], xmm4
+		; printss tmpStamp
+
+	;stampa il primo valore di ebx, cioé della sequenza
+	; movzx eax, byte [ebx]
+	; sub eax, 65
+	; cvtsi2ss xmm5, eax 
+	; movss [tmpStamp], xmm5
+	; printss tmpStamp
+	; xor eax, eax
+
 	xor esi, esi 	; esi = i = 0
 	pxor xmm3, xmm3 ;energy = 0
 
@@ -840,38 +914,62 @@ packing_energy:
 			
 			;if (dist <10.0)
 			comiss xmm0, [dieci]
-			jge incremento_j
+			jae incremento_j
 			;dist<10
-			;if volume[s[i]-65] !=0			
+			
+			;Stampa distanze minori di dieci (corrette)
+			; movss [tmpStamp], xmm0
+			; printss tmpStamp
+
+
+			;volume[s[j]]
 			xor edx, edx
-			mov edx, [ebx + edi  * dim]
-			sub edx, [sessanta_cinque]
-			movss xmm1, [volume1 + edx * dim]
-			movss xmm7, xmm0 
+			movzx edx, byte [ebx + edi]
+			;mov edx, [ebx + esi  * dim]
+			sub edx, 65
+			 cvtsi2ss xmm5, edx 			;xmm5 = s[j]
+			; movss [tmpStamp], xmm5
+			; printss tmpStamp
+			movss xmm1, [volume1 + edx * 4]  ;xmm1 = volume[s[j]]
+			; movss [tmpStamp], xmm1
+			; printss tmpStamp
+			movss xmm7, xmm0
 			mulss xmm7, xmm0
+
 			
 			mulss xmm7, xmm0 ; xmm0= dist^3
+			; movss [tmpStamp], xmm7
+			; printss tmpStamp
+			movss xmm7, xmm7
 			divss xmm1, xmm7 
 			addss xmm4, xmm1 ; densità +=
+			; movss [tmpStamp], xmm4
+			; printss tmpStamp
 			
 			incremento_j: 
 				inc edi
 				jmp for_j
 				fine_forj:
 					xor edx, edx
-					mov edx, [ebx + esi  * dim]
-					sub edx, [sessanta_cinque]
-					movss xmm1, [volume1 + edx * dim]
+					movzx edx, byte [ebx + esi]
+					; ;mov edx, [ebx + esi  * dim]
+					 sub edx, 65
+					; cvtsi2ss xmm5, edx 
+					; movss [tmpStamp], xmm5
+					; printss tmpStamp
+					
+					movss xmm1, [volume1 + edx * 4]
 					subss xmm1, xmm4; volume-densità
 					mulss xmm1, xmm1
 					addss xmm3, xmm1; energia+=
-					
 					inc esi
 
 					jmp for_i
 					fine_fori:
 						mov eax, [ebp+16]
 						movss [eax], xmm3
+						;prints msg
+						
 
 	pop edi
 	pop	esi

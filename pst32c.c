@@ -66,6 +66,7 @@
 
 
 int size ;
+int* intArray;
 type hydrophobicity[] = {1.8, -1, 2.5, -3.5, -3.5, 2.8, -0.4, -3.2, 4.5, -1, -3.9, 3.8, 1.9, -3.5, -1, -1.6, -3.5, -4.5, -0.8, -0.7, -1, 4.2, -0.9, -1, -1.3, -1};		// hydrophobicity
 type volume[] = {88.6, -1, 108.5, 111.1, 138.4, 189.9, 60.1, 153.2, 166.7, -1, 168.6, 166.7, 162.9, 114.1, -1, 112.7, 143.8, 173.4, 89.0, 116.1, -1, 140.0, 227.8, -1, 193.6, -1};		// volume
 type charge[] = {0, -1, 0, -1, -1, 0, 0, 0.5, 0, -1, 1, 0, 0, 0, -1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, -1};		// charge
@@ -466,7 +467,7 @@ extern void rama_energy(VECTOR phi, VECTOR psi, type *energy);
     
 	
     // Itera su tutti gli elementi
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++)  
         // Calcola la distanza alpha
         type alpha_dist = sqrt((phi[i] - alpha_phi) * (phi[i] - alpha_phi) + (psi[i] - alpha_psi) * (psi[i] - alpha_psi));
 
@@ -483,13 +484,13 @@ extern void rama_energy(VECTOR phi, VECTOR psi, type *energy);
     return ;
 }*/
 
-extern void coordsca(MATRIX coords, MATRIX cacoords);
-/*void coordsca(MATRIX coords, MATRIX cacoords) {
+extern void coordsca(MATRIX coords, MATRIX cacoords);/*{
     const int n = 256;
 	for (int i = 0; i < n; i++) {
         cacoords[i * 3] = coords[i * 9 + 3]; //X
         cacoords[i* 3 + 1] = coords[i * 9 + 4]; //Y
         cacoords[i * 3 + 2] = coords[i * 9 + 5]; //Z
+		printf("coordsca in C: %f\n", coords[i * 9 + 5]);
     }
 }*/
 
@@ -502,8 +503,11 @@ extern void distanza1 (MATRIX coordinateCa, int i, int j, type* dist);
 		return sqrt(x_df * x_df + y_df * y_df + z_df * z_df);
 }*/
 
-extern void hydrofobic_energy (char* sequenza, MATRIX cacoords, type *hydro);
-/*{
+extern void hydrofobic_energy (char* sequenza, MATRIX cacoords, type *hydro)
+{
+	// for(int i = 0 ; i < size; i++){
+	// 	printf("Posizione %d: %d\n", i, (int)sequenza);
+	// }
 	type energy = 0.0;
 	//printf("size hydro %d\n", size);
 	
@@ -522,7 +526,7 @@ extern void hydrofobic_energy (char* sequenza, MATRIX cacoords, type *hydro);
 	*hydro = energy;
 	//printf("energy hhydro: %f\n", energy);
 	return ;
-}*/
+}
 
 extern void electrostatic_energy(char* s, MATRIX cacoords, type *elec)
 {
@@ -547,8 +551,8 @@ extern void electrostatic_energy(char* s, MATRIX cacoords, type *elec)
 	return ; 
 }
 
-extern void packing_energy(char*s, MATRIX cacoords, type *pack)
-{
+extern void packing_energy(char*s, MATRIX cacoords, type *pack);
+/*{
     type energy = 0.0;
     for (int i = 0; i < size; i++) {
 		type  density = 0.0;
@@ -558,16 +562,19 @@ extern void packing_energy(char*s, MATRIX cacoords, type *pack)
 				type dist = 0.0;
 				distanza1(cacoords, i, j, &dist);
 				if (dist < 10.0) {
-					density = density + volume[(int)s[j]-65] / (dist * dist * dist); 
+					float distanza3 = dist * dist * dist;
+					density = density + volume[(int)s[j]-65] / (distanza3); 
+					printf("distanza^3 in C: %f\n", distanza3);
 				}
 			}
 		}
 		energy  += ((volume[(int)s[i]-65] - density) * (volume[(int)s[i]-65] - density));
+		
     }
 	//printf("energy pack %f\n", energy);
 	*pack = energy;
 	return ;
-}
+}*/
 
 
 
@@ -579,6 +586,8 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	type rama= 0.0;
 	rama_energy(phi, psi, &rama);
 	type hydro = 0.0;
+	// for (int i = 0; i< size;i++)
+	//printf("Posizione %d: %d\n", 1, intArray[1]);
 	hydrofobic_energy(seq, cacoords, &hydro);
 	type elec = 0.0;
 	electrostatic_energy(seq, cacoords, &elec);
@@ -591,6 +600,7 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 
 	type tot= (w_rama*rama) + (w_elec*elec) + (w_hydro*hydro) + (w_pack*pack);
 
+	//printf("pack: %f\n", pack);
 	//printf("elec: %f, hydro: %f, pack: %f, rama: %f, tot: %f\n", elec, hydro, pack, rama, tot);
 
 	//for(int i=0; i<25; i++) printf("it %d: energia %f:\n", i, tot);
@@ -600,13 +610,26 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	return tot;
 }
 
+extern void convertSeqToIntArray(char* seq, int* arrayInteri) {
+	int length = 256;
+    arrayInteri = (int*)malloc(length * sizeof(int));
+    if (arrayInteri == NULL) {
+        printf("Errore: allocazione memoria fallita.\n");
+        return;
+    }
+    for (int i = 0; i < length; i++) {
+        arrayInteri[i] = (int)seq[i] - 65;
+		//printf ("%d, ",arrayInteri[i]);
+    }
+	return;
+}
 
 
 void pst(params* input){
 	
 	size = input->N; 
 	printf("size %d\n", size);
-	
+	convertSeqToIntArray(input->seq, intArray);
 	type T = input->to;
 	VECTOR phi= input->phi;
 	
@@ -647,7 +670,8 @@ void pst(params* input){
 		}
 		t=t+1;
 		T= input->to - sqrt(input->alpha*t);
-		printf("it: %d pos: %d energia: %f\n", j, i, E);
+		//printf("it: %d pos: %d energia: %f\n", j, i, E);
+		//printf("it: %d pos: %d\n", j, i);
 		j++;
 	}
 }
