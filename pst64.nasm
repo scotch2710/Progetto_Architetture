@@ -93,7 +93,9 @@ section .data			; Sezione contenente dati inizializzati
 	cento_venti dq 120.0
 	cinquemila_quaranta dq 5040.0
 	meno_uno    dq -1.0
-	tmp         dd  0.0
+	tmp         dq  0.0
+	distanza   	dq  0.0
+	 
 	; Hydrophobicity
 	alignb 32
 	hydrophobicity1 dq 1.8, -1, 2.5, -3.5, -3.5, 2.8, -0.4, -3.2, 4.5, -1, -3.9, 3.8, 1.9, -3.5, -1, -1.6, -3.5, -4.5, -0.8, -0.7, -1, 4.2, -0.9, -1, -1.3, -1
@@ -118,9 +120,9 @@ global rama_energy
 global approx_cos
 global prodotto_scal
 global approx_sin
-; global hydrofobic_energy
-; global electrostatic_energy
-; global packing_energy
+;global hydrofobic_energy
+;global electrostatic_energy
+global packing_energy
 
 
 
@@ -167,8 +169,9 @@ distanza1:
 
     push	rbp			; salva il Base Pointer
 	mov		rbp, rsp	; il Base Pointer punta al Record di Attivazione corrente
-	pushaq  
-    
+	;pushaq  
+    ;push rax
+
 	mov     rax, rsi                ; rax = i
     lea     rax, [rax * 3]          ; rax = 3*i
     mov     rbx, rdx                ; rbx = j
@@ -177,7 +180,7 @@ distanza1:
     ; X_df    
     movsd   xmm0, qword [rdi + rax * dim]  ; xmm0 = coordinateCa[3*i]    
     movsd   xmm1, qword [rdi + rbx * dim]  ; xmm1 = coordinateCa[3*j]    
-    subsd   xmm0, xmm1                   ; xmm0 = x_df    
+    subsd   xmm0, xmm1                     ; xmm0 = x_df    
 
     ; Y_df    
     inc     rax                          ; incrementa 3*i
@@ -206,9 +209,11 @@ distanza1:
     ; Salva il risultato
     movsd   qword [rcx], xmm0             ; salva il risultato in dist
 
-    popaq
+    ;popaq
+	;pop rax
 	mov	rsp, rbp	; ripristina lo Stack Pointer 
  	pop rbp
+	
 	ret                                   ; ritorna
 
 
@@ -227,7 +232,7 @@ distanza1:
 coordsca:
 	push	rbp			; salva il Base Pointer
 	mov		rbp, rsp	; il Base Pointer punta al Record di Attivazione corrente
-	pushaq 
+	;pushaq 
 
 	;coords RDI
 	;cacoords RSI  
@@ -263,7 +268,7 @@ coordsca:
 
 	fineCacoords:
 	;--- fine logica ---
-	popaq
+	;popaq
 	mov	rsp, rbp	; ripristina lo Stack Pointer 
  	pop rbp
 	ret
@@ -274,7 +279,7 @@ coordsca:
 rama_energy: 
 	push	rbp			; salva il Base Pointer
 	mov		rbp, rsp	; il Base Pointer punta al Record di Attivazione corrente
-	pushaq  
+	;pushaq  
 
     ;mov ebx, [ebp+8]    	;phi  RDI
 	;mov ecx, [ebp+12]		;psi  RSI
@@ -339,7 +344,7 @@ rama_energy:
 		vmovsd   qword [rdx], xmm0
 	;--- fine logica ---
 
-	popaq
+	;popaq
 	mov	rsp, rbp	; ripristina lo Stack Pointer 
  	pop rbp
 	ret
@@ -352,7 +357,7 @@ rama_energy:
 approx_cos:    
 	push	rbp			; salva il Base Pointer
 	mov		rbp, rsp	; il Base Pointer punta al Record di Attivazione corrente
-	pushaq  
+	;pushaq  
 	
 	; theta   XMM0
 	; Recupero parametro theta    
@@ -384,7 +389,7 @@ approx_cos:
 	; result 
 	movsd qword[rdi], xmm6    
 	    
-	popaq
+	;popaq
 	mov	rsp, rbp	; ripristina lo Stack Pointer 
  	pop rbp
 	   
@@ -397,7 +402,7 @@ approx_cos:
 approx_sin:
 	push	rbp			; salva il Base Pointer
 	mov		rbp, rsp	; il Base Pointer punta al Record di Attivazione corrente
-	pushaq  
+	;pushaq  
 
 	; Calcolo del seno
 	movsd xmm7, xmm0 ; theta
@@ -426,7 +431,7 @@ approx_sin:
 	
 	movsd qword[rdi], xmm7
 
-	popaq
+	;popaq
 	mov	rsp, rbp	; ripristina lo Stack Pointer 
  	pop rbp
 	ret
@@ -439,7 +444,7 @@ prodotto_scal:
 
 	push	rbp			; salva il Base Pointer
 	mov		rbp, rsp	; il Base Pointer punta al Record di Attivazione corrente
-	pushaq 
+	;pushaq 
  
 	movsd xmm0, [rdi]    ;axis 0                 ;axis rdi
 	movsd xmm1, [rdi+8]	 ;axis 1
@@ -457,13 +462,187 @@ prodotto_scal:
 	; xmm0 ha il prodotto scalare
  	movsd [rsi], xmm0
 	
-	popaq
+	;popaq
 	mov	rsp, rbp	; ripristina lo Stack Pointer 
  	pop rbp
 	ret
 
 
+; ; ------------------------------------------------------------
+; ; Funzione packing_energy
+; ; ------------------------------------------------------------
+; ; extern void packing_energy(char*s, MATRIX cacoords, type *pack); 
+; ; /*{
+; ;     const int n = 256; 
+; ;     type energy = 0.0;
+; ;     for (int i = 0; i < n; i++) {
+; ; 		type  density = 0.0;
+; ; 		for (int j = 0; j < n; j++) {
+; ; 			if(i != j){
+; ; 				//type dist = distanza(cacoords, i, j);
+; ; 				type dist = 0.0;
+; ; 				distanza1(cacoords, i, j, &dist);
+; ; 				if (dist < 10.0) {
+; ; 					density  += volume[(int)s[j]-65] / (dist * dist * dist); 
+; ; 				}
+; ; 			}
+; ; 		}
+; ; 		energy  += ((volume[(int)s[i]-65] - density) * (volume[(int)s[i]-65] - density));
+; ;     }
+; ; 	//printf("energy pack %f\n", energy);
+; ; 	*pack = energy;
+; ; 	return ;
+; ; }*/
 
+packing_energy:
+	push	rbp			; salva il Base Pointer
+	mov		rbp, rsp	; il Base Pointer punta al Record di Attivazione corrente
+	;pushaq 
+
+	;INPUT
+	mov r13, rdi  ;rdi = s
+	mov r8,  rsi   ;rsi = cacoords
+	mov r12, rdx              ;rdx= risultato
+	
+	xor r10, r10 	; r10 = i = 0
+	pxor xmm7, xmm7 ;energy = 0
+
+	;CVTSI2SD xmm6,rax
+	;movsd [tmp], xmm6
+	;printsd tmp
+	;CVTSI2SS da intero a float
+	;CVTTSS2SI da float a intero
+
+	for_i: 
+		cmp r10, [size]
+		jge fine_fori
+		pxor xmm8, xmm8 ; densità
+		xor r11, r11 ;r11 = j = 0
+		
+
+	 	for_j:
+			cmp r11, [size] ;j<256
+			jge fine_forj
+
+			cmp r11, r10 ; i==j
+			je incremento_j
+			
+			;call distanza
+			mov rdi, r8         ;cacoords
+			mov rsi, r10		;i
+			mov rdx, r11		;j
+			lea rcx, distanza	;res
+
+			call distanza1
+			movsd xmm9, qword[distanza] ;sposto distanza in xmm9
+			
+			comisd xmm9, [dieci]	 ; dist<10
+			ja incremento_j
+			
+			movsd xmm3, xmm9        ; xmm3=dist
+			mulsd xmm9, xmm9        ; dist^2
+			mulsd xmm9, xmm3        ; xmm9= dist^3
+
+			movzx r14, byte[r13 + r11] ; r14 contiene valore lettera (int)
+	 	    sub r14, 65                
+			movsd xmm1, [volume1 + r14 * dim]   ; xmm1 contiene il valore di volume
+			divsd xmm1, xmm9                  ;xmm1=volume/dist^3
+			addsd xmm8, xmm1                  ; densità+=
+			
+
+
+			
+		incremento_j:
+
+			inc r11						;j++			
+			jmp for_j
+		
+		fine_forj:
+			movzx r14, byte[r13 + r10]          ; r14 contiene valore lettera (int)
+	 	    sub r14, 65         		        ; valore lettera - 65
+			movsd xmm1, [volume1 + r14 * dim]   ; valore volume
+			subsd xmm1, xmm8				    ; volume - densità
+			mulsd xmm1, xmm1					; (volume-densità)^2
+			addsd xmm7, xmm1					; energia+=
+			
+			inc r10 							; i++
+			jmp for_i
+	
+	fine_fori:
+		;movsd [tmp], xmm7
+	    ;printsd tmp
+			
+		movsd [r12], xmm7
+
+	
+	
+	mov	rsp, rbp	; ripristina lo Stack Pointer 
+ 	pop rbp
+	ret
+	
+	
+	
+	
+	
+	
+	
+	; 		cmp r11, 255
+	; 		jge fine_forj
+	; 		cmp r11, r10 ; if j==i
+	; 		je incremento_j
+	; 		;Chiamata alla funzione distanza
+			
+	; 		;lea rdi, [r8]
+	; 		;mov rsi, r10
+	; 		;mov rdx, r11
+	; 		;lea rcx, [distanza]
+
+	; 		;call distanza1
+			
+			
+			
+	; 		;movsd xmm0, [distanza] ;xmm0 = dist
+			
+	; 		movsd xmm0, [dim]
+	; 		;if (dist <10.0)
+	; 		comisd xmm0, [dieci]
+	; 		jge incremento_j
+
+				
+			
+	; 		;mov r12, [rax + r11]
+	; 		mov r12, [sessanta_cinque]
+	; 		sub r12, [dim]
+	; 		;movsd xmm1, [volume1 + r12 * dim]
+	; 		movsd xmm1, [sessanta_cinque]
+	; 		movsd xmm7, xmm0 
+	; 		mulsd xmm7, xmm0
+			
+	; 		mulsd xmm7, xmm0 ; xmm0= dist^3
+	; 		divsd xmm1, xmm7 
+	; 		addsd xmm4, xmm1 ; densità +=
+			
+	; incremento_j: 
+	; 			inc r11
+	; 			jmp for_j
+	; fine_forj:
+					
+	; 		;mov r12, [rax + r10]
+	; 		mov r12, [sessanta_cinque]
+	; 		sub r12, [sessanta_cinque]
+	; 		;movsd xmm1, [volume1 + r12 * dim]
+	; 		subsd xmm1, xmm4; volume-densità
+	; 		mulsd xmm1, xmm1
+	; 		addsd xmm3, xmm1; energia+=
+					
+	; 		inc r10
+
+	; 		jmp for_i
+	
+	
+	;popaq
+	
+	
 ; ; ------------------------------------------------------------
 ; ; Funzione hydro_energy
 ; ; ------------------------------------------------------------
@@ -635,111 +814,3 @@ prodotto_scal:
 ; 	pop ebp    
 ; 	ret
 
-; ; ------------------------------------------------------------
-; ; Funzione packing_energy
-; ; ------------------------------------------------------------
-; ; extern void packing_energy(char*s, MATRIX cacoords, type *pack); 
-; ; /*{
-; ;     const int n = 256; 
-; ;     type energy = 0.0;
-; ;     for (int i = 0; i < n; i++) {
-; ; 		type  density = 0.0;
-; ; 		for (int j = 0; j < n; j++) {
-; ; 			if(i != j){
-; ; 				//type dist = distanza(cacoords, i, j);
-; ; 				type dist = 0.0;
-; ; 				distanza1(cacoords, i, j, &dist);
-; ; 				if (dist < 10.0) {
-; ; 					density  += volume[(int)s[j]-65] / (dist * dist * dist); 
-; ; 				}
-; ; 			}
-; ; 		}
-; ; 		energy  += ((volume[(int)s[i]-65] - density) * (volume[(int)s[i]-65] - density));
-; ;     }
-; ; 	//printf("energy pack %f\n", energy);
-; ; 	*pack = energy;
-; ; 	return ;
-; ; }*/
-
-; packing_energy:
-; 	push	ebp			; salva il Base Pointer
-; 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
-; 	push	ebx			; salva i registri da preservare
-; 	push 	edx
-; 	push	esi
-; 	push	edi
-
-; 	;INPUT
-; 	mov ebx, [ebp + 8] ;ebx = s
-; 	mov ecx, [ebp + 12] ;ecx = cacoords
-
-; 	xor esi, esi 	; esi = i = 0
-; 	pxor xmm3, xmm3 ;energy = 0
-
-; 	for_i: 
-; 		cmp esi, n
-; 		jge fine_fori
-; 		pxor xmm4, xmm4 ; densità
-; 		xor edi, edi ;edi = j = 0
-		
-
-; 		for_j: 
-; 			cmp edi, n
-; 			jge fine_forj
-; 			cmp edi, esi ; if j==i
-; 			je incremento_j
-; 			;Chiamata alla funzione distanza
-; 			push eax ; &dist
-; 			push edi ;j
-; 			push esi ;i
-; 			push ecx ;cacoords
-
-; 			call distanza1
-; 			;fase di svuotamento dello stack
-; 			add esp, 16
-; 			;pxor xmm0, xmm0
-; 			movsd xmm0, [eax] ;xmm0 = dist
-			
-			
-; 			;if (dist <10.0)
-; 			comiss xmm0, [dieci]
-; 			jge incremento_j
-
-; 			;if volume[s[i]-65] !=0			
-; 			xor edx, edx
-; 			mov edx, [ebx + edi  * dim]
-; 			sub edx, [sessanta_cinque]
-; 			movsd xmm1, [volume1 + edx * dim]
-; 			movsd xmm7, xmm0 
-; 			mulss xmm7, xmm0
-			
-; 			mulss xmm7, xmm0 ; xmm0= dist^3
-; 			divss xmm1, xmm7 
-; 			addss xmm4, xmm1 ; densità +=
-			
-; 			incremento_j: 
-; 				inc edi
-; 				jmp for_j
-; 				fine_forj:
-; 					xor edx, edx
-; 					mov edx, [ebx + esi  * dim]
-; 					sub edx, [sessanta_cinque]
-; 					movsd xmm1, [volume1 + edx * dim]
-; 					subss xmm1, xmm4; volume-densità
-; 					mulss xmm1, xmm1
-; 					addss xmm3, xmm1; energia+=
-					
-; 					inc esi
-
-; 					jmp for_i
-; 					fine_fori:
-; 						mov eax, [ebp+16]
-; 						movsd [eax], xmm3
-
-; 	pop edi
-; 	pop	esi
-; 	pop edx
-; 	pop	ebx
-; 	mov	esp, ebp	; ripristina lo Stack Pointer 
-; 	pop ebp    
-; 	ret
