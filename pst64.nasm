@@ -120,7 +120,7 @@ global rama_energy
 global approx_cos
 global prodotto_scal
 global approx_sin
-;global hydrofobic_energy
+global hydrofobic_energy
 ;global electrostatic_energy
 global packing_energy
 
@@ -582,7 +582,75 @@ packing_energy:
 	
 	
 
+
+hydrofobic_energy:
+	push	rbp			; salva il Base Pointer
+	mov		rbp, rsp	; il Base Pointer punta al Record di Attivazione corrente
+ 
+
+	mov r13, rdi  ;rdi = s
+	mov r8,  rsi   ;rsi = cacoords
+	mov r12, rdx              ;rdx= risultato
+
+	xor r10, r10 			;r10: i=0
+	xorps xmm6, xmm6        ;init energy = 0.0
 	
+
+	
+	externalLoop:
+		cmp r10, [size]
+		jge fineHydrofobicEnergy
+
+		xor r11, r11	
+
+		mov r11, r10			; r11 = j = i
+		inc r11
+		internaloop:
+			cmp r11, [size]
+			jge fine_internal_loop
+
+			;--------calcolo distanza--------
+			mov rdi, r8         ;cacoords
+			mov rsi, r10		;i
+			mov rdx, r11		;j
+			lea rcx, distanza	;res
+
+			call distanza1
+
+			movsd xmm1, [distanza] ;sposto distanza in xmm1
+
+			comisd xmm1,  [dieci]
+			ja distanza_maggiore
+
+			;--------calcolo energia--------
+			
+
+			movzx rax, byte [r13+r10] ; sequenza[i]
+			sub rax, 65				  ; sequenza[i] - 65
+			movsd xmm0, [hydrophobicity1 + rax*dim] ; hydrophobicity[sequenza[i]-65]
+			
+			movzx rax, byte [r13+r11] ; sequenza[i]
+			sub rax, 65				  ; sequenza[i] - 65
+			movsd xmm5, [hydrophobicity1 + rax*dim] ; hydrophobicity[sequenza[j]-65]
+			
+			mulsd xmm0, xmm5
+			divsd xmm0, xmm1
+			addsd xmm6, xmm0
+			
+		distanza_maggiore:
+			inc r11
+			jmp internaloop
+		
+		fine_internal_loop:
+			inc r10
+			jmp externalLoop
+	fineHydrofobicEnergy:
+
+	movsd [r12], xmm6
+
+	mov	rsp, rbp	; ripristina lo Stack Pointer 
+	pop rbp    
+	ret
 ; ; ------------------------------------------------------------
 ; ; Funzione hydro_energy
 ; ; ------------------------------------------------------------

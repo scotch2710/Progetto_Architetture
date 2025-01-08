@@ -511,7 +511,8 @@ extern void distanza1 (MATRIX coordinateCa, int i, int j, type *dist);
 		return sqrt(pow(x_df,2) + pow(y_df,2 ) + pow(z_df,2));
 }*/
 
-extern type hydrofobic_energy (char* sequenza, MATRIX coordinateCa){
+extern void hydrofobic_energy (char* sequenza, MATRIX coordinateCa, type* hydro);
+/*{
 	type energy = 0.0;
 	
 	
@@ -529,7 +530,7 @@ extern type hydrofobic_energy (char* sequenza, MATRIX coordinateCa){
 	
 	//printf("energy hhydro: %f\n", energy);
 	return energy;
-}
+}*/
 
 extern type electrostatic_energy(char* s, MATRIX coordinateCa){
 	
@@ -591,7 +592,8 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	type rama= 0;
 	rama_energy(phi, psi, &rama);
 	
-	type hydro = hydrofobic_energy(seq, coordinateCa);
+	type hydro = 0;
+	hydrofobic_energy(seq, coordinateCa, &hydro);
 	type elec = electrostatic_energy(seq, coordinateCa);
 	
 	type pack = 0;
@@ -603,10 +605,9 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	type w_elec= 0.2;
 	type w_pack= 0.3;
 
+	printf("hydro: %f\n",hydro);
 	type tot= (w_rama*rama) + (w_elec*elec) + (w_hydro*hydro) + (w_pack*pack);
-	//printf("%d",size);
-	//printf("elec: %f, hydro: %f, pack: %f, rama: %f, tot: %f\n", elec, hydro, pack, rama, tot);
-	//dealloc_matrix(coords);
+
 
 	return tot;
 }
