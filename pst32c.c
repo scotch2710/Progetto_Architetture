@@ -32,7 +32,7 @@
 * Per generare il file eseguibile:
 * 
 * nasm -f elf32 pst32.nasm && gcc -m32 -msse -O0 -no-pie sseutils32.o pst32.o pst32c.c -o pst32c -lm && ./pst32c $pars
-* 
+* nasm -f elf32 pst32.nasm && gcc -m32 -msse -O0 -no-pie pst32.o pst32c.c -o pst32c -lm && ./pst32c -seq seq_256.ds2 -to 20 -k 1 -alpha 1 -sd 3
 * oppure
 * 
 * ./runpst32
@@ -503,7 +503,8 @@ extern void distanza1 (MATRIX coordinateCa, int i, int j, type* dist);
 		return sqrt(x_df * x_df + y_df * y_df + z_df * z_df);
 }*/
 
-extern void hydrofobic_energy (char* sequenza, MATRIX cacoords, type *hydro); /*{
+extern void hydrofobic_energy (char* sequenza, MATRIX cacoords, type *hydro);
+/*{
 	type energy = 0.0;
 	const int n = 256;
 	
@@ -523,8 +524,7 @@ extern void hydrofobic_energy (char* sequenza, MATRIX cacoords, type *hydro); /*
 	return ;
 }*/
 
-extern void electrostatic_energy(char* s, MATRIX cacoords, type *elec);
-/*{
+extern void electrostatic_energy(char* s, MATRIX cacoords, type *elec){
 	type energy= 0.0;
 	const int n = 256;
 	for(int i=0; i < n; i++){
@@ -544,10 +544,9 @@ extern void electrostatic_energy(char* s, MATRIX cacoords, type *elec);
 	*elec = energy;
 	//printf("energy elec %f\n", energy);
 	return ; 
-}*/
+}
 
-extern void packing_energy(char*s, MATRIX cacoords, type *pack); 
-/*{
+extern void packing_energy(char*s, MATRIX cacoords, type *pack){
     const int n = 256; 
     type energy = 0.0;
     for (int i = 0; i < n; i++) {
@@ -567,7 +566,7 @@ extern void packing_energy(char*s, MATRIX cacoords, type *pack);
 	//printf("energy pack %f\n", energy);
 	*pack = energy;
 	return ;
-}*/
+}
 
 
 
@@ -589,7 +588,7 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	type w_hydro= 0.5;
 	type w_elec= 0.2;
 	type w_pack= 0.3;
-
+	printf("hydro: %f\n",hydro);
 	type tot= (w_rama*rama) + (w_elec*elec) + (w_hydro*hydro) + (w_pack*pack);
 
 	//printf("elec: %f, hydro: %f, pack: %f, rama: %f, tot: %f\n", elec, hydro, pack, rama, tot);
@@ -647,7 +646,7 @@ void pst(params* input){
 		}
 		t=t+1;
 		T= input->to - sqrt(input->alpha*t);
-		printf("it: %d pos: %d energia: %f\n", j, i, E);
+		//printf("it: %d pos: %d energia: %f\n", j, i, E);
 		j++;
 	}
 }

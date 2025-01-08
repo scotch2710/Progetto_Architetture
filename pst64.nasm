@@ -527,14 +527,14 @@ packing_energy:
 			cmp r11, r10 ; i==j
 			je incremento_j
 			
-			;call distanza
+			;call distanza, passo i parametri di input
 			mov rdi, r8         ;cacoords
 			mov rsi, r10		;i
 			mov rdx, r11		;j
 			lea rcx, distanza	;res
 
 			call distanza1
-			movsd xmm9, qword[distanza] ;sposto distanza in xmm9
+			movsd xmm9, [distanza] ;sposto distanza in xmm9
 			
 			comisd xmm9, [dieci]	 ; dist<10
 			ja incremento_j

@@ -50,6 +50,8 @@ section .data			; Sezione contenente dati inizializzati
 	cento_venti dd 120.0
 	cinquemila_quaranta dd 5040.0
 	meno_uno    dd -1.0
+	tmp         dd 0.0
+	distanza    dd 0.0
 
 	; Hydrophobicity
 	alignb 16
@@ -118,8 +120,8 @@ global approx_cos
 global prodottoScalare
 ;global approx_sin
 global hydrofobic_energy
-global electrostatic_energy
-global packing_energy
+; global electrostatic_energy
+; global packing_energy
 
 
 N 		equ 	8
@@ -505,172 +507,172 @@ prodottoScalare:
 ; Funzione hydro_energy
 ; ------------------------------------------------------------
 
-hydrofobic_energy:
-	push	ebp			; salva il Base Pointer
-	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
-	push	ebx			; salva i registri da preservare
-	push 	edx
-	push	esi
-	push	edi
+; hydrofobic_energy:
+; 	push	ebp			; salva il Base Pointer
+; 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+; 	push	ebx			; salva i registri da preservare
+; 	push 	edx
+; 	push	esi
+; 	push	edi
 
-	;INPUT
-	mov ebx, [ebp + 8] ;ebx = s
-	mov ecx, [ebp + 12] ;ecx = cacoords
+; 	;INPUT
+; 	mov ebx, [ebp + 8] ;ebx = s
+; 	mov ecx, [ebp + 12] ;ecx = cacoords
 
-	xor esi, esi 	; esi = i = 0
-	pxor xmm3, xmm3 ;energy = 0
+; 	xor esi, esi 	; esi = i = 0
+; 	pxor xmm3, xmm3 ;energy = 0
 
-	loopEsterno: 
-		cmp esi, 256
-		jge fineloopEsterno
-		xor edi, edi ;edi = j = 0
-		mov edi, esi ;edi = i
-		inc edi		 ;edi = i+1
+; 	loopEsterno: 
+; 		cmp esi, 256
+; 		jge fineloopEsterno
+; 		xor edi, edi ;edi = j = 0
+; 		mov edi, esi ;edi = i
+; 		inc edi		 ;edi = i+1
 
-		loopInterno: 
-			cmp edi, 255
-			jge fineloopInterno
+; 		loopInterno: 
+; 			cmp edi, 255
+; 			jge fineloopInterno
 
-			;Chiamata alla funzione distanza
-			push eax ; &dist
-			push edi ;j
-			push esi ;i
-			push ecx ;cacoords
+; 			;Chiamata alla funzione distanza
+; 			push eax ; &dist
+; 			push edi ;j
+; 			push esi ;i
+; 			push ecx ;cacoords
 
-			call distanza1
-			;fase di svuotamento dello stack
-			add esp, 16
-			;pxor xmm0, xmm0
-			movss xmm0, [eax] ;xmm0 = dist
+; 			call distanza1
+; 			;fase di svuotamento dello stack
+; 			add esp, 16
+; 			;pxor xmm0, xmm0
+; 			movss xmm0, [eax] ;xmm0 = dist
 			
 			
-			;if (dist <10.0)
-			comiss xmm0, [dieci]
-			jge incj
+; 			;if (dist <10.0)
+; 			comiss xmm0, [dieci]
+; 			jge incj
 
-			mov edx, [ebx + esi  * dim]
-			sub edx, [sessanta_cinque]
-			movss xmm1, [hydrophobicity1 + edx * dim]
+; 			mov edx, [ebx + esi  * dim]
+; 			sub edx, [sessanta_cinque]
+; 			movss xmm1, [hydrophobicity1 + edx * dim]
 
-			mov edx, [ebx + edi  * dim]
-			sub edx, [sessanta_cinque]
-			movss xmm2, [hydrophobicity1 + edx *dim]
+; 			mov edx, [ebx + edi  * dim]
+; 			sub edx, [sessanta_cinque]
+; 			movss xmm2, [hydrophobicity1 + edx *dim]
 			
 
-			;energy += (hydrophobicity[(int)s[i]-65]*hydrophobicity[(int)s[j]-65])/(dist);
-			mulss xmm2, xmm1
-			divss xmm2, xmm0
+; 			;energy += (hydrophobicity[(int)s[i]-65]*hydrophobicity[(int)s[j]-65])/(dist);
+; 			mulss xmm2, xmm1
+; 			divss xmm2, xmm0
 
-			addss xmm3, xmm2
+; 			addss xmm3, xmm2
 
-			incj: 
-				inc edi
-				jmp loopInterno
-				fineloopInterno:
-					inc esi
-					jmp loopEsterno
-					fineloopEsterno:
-						mov eax, [ebp+16]
-						movss [eax], xmm3
+; 			incj: 
+; 				inc edi
+; 				jmp loopInterno
+; 				fineloopInterno:
+; 					inc esi
+; 					jmp loopEsterno
+; 					fineloopEsterno:
+; 						mov eax, [ebp+16]
+; 						movss [eax], xmm3
 
-	pop edi
-	pop	esi
-	pop edx
-	pop	ebx
-	mov	esp, ebp	; ripristina lo Stack Pointer 
-	pop ebp    
-	ret
+; 	pop edi
+; 	pop	esi
+; 	pop edx
+; 	pop	ebx
+; 	mov	esp, ebp	; ripristina lo Stack Pointer 
+; 	pop ebp    
+; 	ret
 
 
-; ------------------------------------------------------------
-; Funzione elec_energy
-; ------------------------------------------------------------
+; ; ------------------------------------------------------------
+; ; Funzione elec_energy
+; ; ------------------------------------------------------------
 
-electrostatic_energy:
-	push	ebp			; salva il Base Pointer
-	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
-	push	ebx			; salva i registri da preservare
-	push 	edx
-	push	esi
-	push	edi
+; electrostatic_energy:
+; 	push	ebp			; salva il Base Pointer
+; 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+; 	push	ebx			; salva i registri da preservare
+; 	push 	edx
+; 	push	esi
+; 	push	edi
 
-	;INPUT
-	mov ebx, [ebp + 8] ;ebx = s
-	mov ecx, [ebp + 12] ;ecx = cacoords
+; 	;INPUT
+; 	mov ebx, [ebp + 8] ;ebx = s
+; 	mov ecx, [ebp + 12] ;ecx = cacoords
 
-	xor esi, esi 	; esi = i = 0
-	pxor xmm3, xmm3 ;energy = 0
+; 	xor esi, esi 	; esi = i = 0
+; 	pxor xmm3, xmm3 ;energy = 0
 
-	fori: 
-		cmp esi, n
-		jge finefori
-		xor edi, edi ;edi = j = 0
-		mov edi, esi ;edi = i
-		inc edi		 ;edi = i+1
+; 	fori: 
+; 		cmp esi, n
+; 		jge finefori
+; 		xor edi, edi ;edi = j = 0
+; 		mov edi, esi ;edi = i
+; 		inc edi		 ;edi = i+1
 
-		forj: 
-			cmp edi, n
-			jge fineforj
+; 		forj: 
+; 			cmp edi, n
+; 			jge fineforj
 
-			;Chiamata alla funzione distanza
-			push eax ; &dist
-			push edi ;j
-			push esi ;i
-			push ecx ;cacoords
+; 			;Chiamata alla funzione distanza
+; 			push eax ; &dist
+; 			push edi ;j
+; 			push esi ;i
+; 			push ecx ;cacoords
 
-			call distanza1
-			;fase di svuotamento dello stack
-			add esp, 16
-			;pxor xmm0, xmm0
-			movss xmm0, [eax] ;xmm0 = dist
+; 			call distanza1
+; 			;fase di svuotamento dello stack
+; 			add esp, 16
+; 			;pxor xmm0, xmm0
+; 			movss xmm0, [eax] ;xmm0 = dist
 			
 			
-			;if (dist <10.0)
-			comiss xmm0, [dieci]
-			jge incrementoj
+; 			;if (dist <10.0)
+; 			comiss xmm0, [dieci]
+; 			jge incrementoj
 
-			;if charge[s[i]-65] !=0			
-			mov edx, [ebx + esi  * dim]
-			sub edx, [sessanta_cinque]
-			movss xmm1, [charge1 + edx * dim]
+; 			;if charge[s[i]-65] !=0			
+; 			mov edx, [ebx + esi  * dim]
+; 			sub edx, [sessanta_cinque]
+; 			movss xmm1, [charge1 + edx * dim]
 			
 
-			comiss xmm1, [zero]
-			je incrementoj 
+; 			comiss xmm1, [zero]
+; 			je incrementoj 
 
-			;if charge[s[j]-65] !=0
-			mov edx, [ebx + edi  * dim]
-			sub edx, [sessanta_cinque]
-			movss xmm2, [charge1 + edx *dim]
+; 			;if charge[s[j]-65] !=0
+; 			mov edx, [ebx + edi  * dim]
+; 			sub edx, [sessanta_cinque]
+; 			movss xmm2, [charge1 + edx *dim]
 			
 
-			comiss xmm2, [zero]
-			je incrementoj 
+; 			comiss xmm2, [zero]
+; 			je incrementoj 
 
-			;energy += (charge[(int)s[i]-65]*charge[(int)s[j]-65])/(dist*4.0);
-			mulss xmm2, xmm1
-			mulss xmm0, [dim]
-			divss xmm2, xmm0
+; 			;energy += (charge[(int)s[i]-65]*charge[(int)s[j]-65])/(dist*4.0);
+; 			mulss xmm2, xmm1
+; 			mulss xmm0, [dim]
+; 			divss xmm2, xmm0
 
-			addss xmm3, xmm2
+; 			addss xmm3, xmm2
 
-			incrementoj: 
-				inc edi
-				jmp forj
-				fineforj:
-					inc esi
-					jmp fori
-					finefori:
-						mov eax, [ebp+16]
-						movss [eax], xmm3
+; 			incrementoj: 
+; 				inc edi
+; 				jmp forj
+; 				fineforj:
+; 					inc esi
+; 					jmp fori
+; 					finefori:
+; 						mov eax, [ebp+16]
+; 						movss [eax], xmm3
 
-	pop edi
-	pop	esi
-	pop edx
-	pop	ebx
-	mov	esp, ebp	; ripristina lo Stack Pointer 
-	pop ebp    
-	ret
+; 	pop edi
+; 	pop	esi
+; 	pop edx
+; 	pop	ebx
+; 	mov	esp, ebp	; ripristina lo Stack Pointer 
+; 	pop ebp    
+; 	ret
 
 ; ------------------------------------------------------------
 ; Funzione packing_energy
@@ -698,84 +700,134 @@ electrostatic_energy:
 ; 	return ;
 ; }*/
 
-packing_energy:
+; 
+
+hydrofobic_energy:
 	push	ebp			; salva il Base Pointer
 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
 	push	ebx			; salva i registri da preservare
-	push 	edx
 	push	esi
-	push	edi
+	push	edi  
 
-	;INPUT
-	mov ebx, [ebp + 8] ;ebx = s
-	mov ecx, [ebp + 12] ;ecx = cacoords
+	mov ebx, [ebp+8]    	;sequenza
+	mov ecx, [ebp+12]		;cacoords
+	;mov edx, [ebp+16]		;res
 
-	xor esi, esi 	; esi = i = 0
-	pxor xmm3, xmm3 ;energy = 0
+	xor esi, esi 			;esi: i=0
+	xorps xmm6, xmm6        ;init energy = 0.0
+	
 
-	for_i: 
-		cmp esi, n
-		jge fine_fori
-		pxor xmm4, xmm4 ; densità
-		xor edi, edi ;edi = j = 0
 		
 
-		for_j: 
-			cmp edi, n
-			jge fine_forj
-			cmp edi, esi ; if j==i
-			je incremento_j
-			;Chiamata alla funzione distanza
-			push eax ; &dist
-			push edi ;j
-			push esi ;i
-			push ecx ;cacoords
+	 
+	;CVTSI2SS xmm6, edi
+	;movss [tmp], xmm6
+	;printss tmp
+	
+	externalLoop:
+		cmp esi, 256
+		jge fineHydrofobicEnergy
 
+		xor edi, edi 			;edi: j=0
+		
+		;CVTSI2SS xmm6, edi
+		;movss [tmp], xmm6
+		;printss tmp
+		mov edi, esi			; edi = j = i
+		inc edi
+		internaloop:
+			; CVTSI2SS xmm6, edi
+			; movss [tmp], xmm6
+			; printss tmp
+			
+			cmp edi, 256
+			jge fine_internal_loop
+
+			;--------calcolo distanza--------
+			; CVTSI2SS xmm6, ecx
+			; movss [tmp], xmm6
+			; printss tmp
+			
+			;uso xmm4 per salvare dist
+			mov edx, distanza
+
+
+			push edx
+			push edi
+			push esi
+			push ecx
 			call distanza1
-			;fase di svuotamento dello stack
+
 			add esp, 16
-			;pxor xmm0, xmm0
-			movss xmm0, [eax] ;xmm0 = dist
 			
-			
-			;if (dist <10.0)
-			comiss xmm0, [dieci]
-			jge incremento_j
+			;CVTSI2SS xmm6, [ecx]
 
-			;if volume[s[i]-65] !=0			
-			xor edx, edx
-			mov edx, [ebx + edi  * dim]
-			sub edx, [sessanta_cinque]
-			movss xmm1, [volume1 + edx * dim]
-			movss xmm7, xmm0 
-			mulss xmm7, xmm0
 			
-			mulss xmm7, xmm0 ; xmm0= dist^3
-			divss xmm1, xmm7 
-			addss xmm4, xmm1 ; densità +=
+			movss xmm1, [distanza] ;sposto distanza in xmm1
+
+
+
+			;movss xmm4, [ebp+20] ; xmm4 = dist
 			
-			incremento_j: 
-				inc edi
-				jmp for_j
-				fine_forj:
-					xor edx, edx
-					mov edx, [ebx + esi  * dim]
-					sub edx, [sessanta_cinque]
-					movss xmm1, [volume1 + edx * dim]
-					subss xmm1, xmm4; volume-densità
-					mulss xmm1, xmm1
-					addss xmm3, xmm1; energia+=
-					
-					inc esi
+			comiss xmm1,  [dieci]
+			ja distanza_maggiore
 
-					jmp for_i
-					fine_fori:
-						mov eax, [ebp+16]
-						movss [eax], xmm3
+			;--------calcolo energia--------
+			
 
+			movzx eax, byte [ebx+esi] ; sequenza[i]
+			sub eax, 65				  ; sequenza[i] - 65
+			movss xmm0, [hydrophobicity1 + eax*dim] ; hydrophobicity[sequenza[i]-65]
+			
+			movzx eax, byte [ebx+edi] ; sequenza[i]
+			sub eax, 65				  ; sequenza[i] - 65
+			movss xmm5, [hydrophobicity1 + eax*dim] ; hydrophobicity[sequenza[j]-65]
+			
+			; CVTSI2SS xmm6, eax
+			; movss [tmp], xmm6
+			; printss tmp
+			
+			
+			
+			
+			
+			; movss [tmp], xmm0
+			; printss tmp
+			
+			mulss xmm0, xmm5
+			divss xmm0, xmm1
+			addss xmm6, xmm0
+			
+		distanza_maggiore:
+			inc edi
+			jmp internaloop
+		
+		fine_internal_loop:
+			inc esi
+			jmp externalLoop
+	fineHydrofobicEnergy:
+	;xor eax, eax 
+	;movss xmm6, [distanza] 
+	;CVTSI2SS xmm6, eax
+	;movss [tmp], xmm2
+	;printss tmp
+	
+	
+	
+	
+	mov eax, [ebp+16]
+	
+	movss [eax], xmm6
+	;movss xmm2, [tmp]
+	;movss [eax], xmm2
+	
+
+	
+	;CVTSI2SS da intero a float
+	;CVTTSS2SI da float a intero
+	
 	pop edi
 	pop	esi
-	pop edx
 	pop	ebx
 	mov	esp, ebp	; ripristina lo Stack Pointer 
 	pop ebp    
