@@ -581,67 +581,7 @@ packing_energy:
 	ret
 	
 	
-	
-	
-	
-	
-	
-	; 		cmp r11, 255
-	; 		jge fine_forj
-	; 		cmp r11, r10 ; if j==i
-	; 		je incremento_j
-	; 		;Chiamata alla funzione distanza
-			
-	; 		;lea rdi, [r8]
-	; 		;mov rsi, r10
-	; 		;mov rdx, r11
-	; 		;lea rcx, [distanza]
 
-	; 		;call distanza1
-			
-			
-			
-	; 		;movsd xmm0, [distanza] ;xmm0 = dist
-			
-	; 		movsd xmm0, [dim]
-	; 		;if (dist <10.0)
-	; 		comisd xmm0, [dieci]
-	; 		jge incremento_j
-
-				
-			
-	; 		;mov r12, [rax + r11]
-	; 		mov r12, [sessanta_cinque]
-	; 		sub r12, [dim]
-	; 		;movsd xmm1, [volume1 + r12 * dim]
-	; 		movsd xmm1, [sessanta_cinque]
-	; 		movsd xmm7, xmm0 
-	; 		mulsd xmm7, xmm0
-			
-	; 		mulsd xmm7, xmm0 ; xmm0= dist^3
-	; 		divsd xmm1, xmm7 
-	; 		addsd xmm4, xmm1 ; densità +=
-			
-	; incremento_j: 
-	; 			inc r11
-	; 			jmp for_j
-	; fine_forj:
-					
-	; 		;mov r12, [rax + r10]
-	; 		mov r12, [sessanta_cinque]
-	; 		sub r12, [sessanta_cinque]
-	; 		;movsd xmm1, [volume1 + r12 * dim]
-	; 		subsd xmm1, xmm4; volume-densità
-	; 		mulsd xmm1, xmm1
-	; 		addsd xmm3, xmm1; energia+=
-					
-	; 		inc r10
-
-	; 		jmp for_i
-	
-	
-	;popaq
-	
 	
 ; ; ------------------------------------------------------------
 ; ; Funzione hydro_energy
