@@ -78,6 +78,13 @@ section .bss			; Sezione contenente dati[size]on inizializzati
 	alignb 16
 	dist   resd        1
 
+	alignb 16
+	iVar   resd        1
+
+	alignb 16
+	jVar   resd        1
+
+
 section .text			; Sezione contenente il codice macchina
 
 
@@ -182,32 +189,11 @@ distanza1:
 	mov     eax, [ebp+12]              ; i    
 	mov     ebx, [ebp+16]              ; j    
 	mov     ecx, [ebp+20]              ; dist
-	
-
-	; xor edi, edi
-	; xor edx, edx
-	; stampa:
-	; 	mov edx, edi
-	; 	imul edx, 3
-	; 	cmp edx, size
-	; 	jge nostampa
-	; 	mov edx, esi
-	; 	add edx, edi
-	; 	movss xmm0, dword [edx] ; mette in xmm0 coords[i*9+5] salvando z
-	; 	movss [tmpStamp], xmm0
-	; 	printss tmpStamp
-	; 	inc edi
-	; 	jmp stampa
-	; 	nostampa:
-	; 	xor edi, edi
-	; 	xor edx, edx
-	
-
 
 	; Calcola 3*i e 3*j    
 	lea     eax, [eax + eax * 2]       ; eax = 3*i    
-	lea     ebx, [ebx + ebx * 2]       ; ebx = 3*j    
-	
+	lea     ebx, [ebx + ebx * 2]       ; ebx = 3*j  
+
 	; X_df    
 	movss   xmm0, dword [esi + eax * 4] ; xmm0 = coordinateCa[3*i]    
 	movss   xmm1, dword [esi + ebx * 4] ; xmm1 = coordinateCa[3*j]    
@@ -217,16 +203,16 @@ distanza1:
 	add     eax, 1    
 	add     ebx, 1    
 	movss   xmm2, dword [esi + eax * 4]    
-	movss   xmm3, dword [esi + ebx * 4]    
-	subss   xmm2, xmm3                  ; edx = y_df    
+	movss   xmm1, dword [esi + ebx * 4]    
+	subss   xmm2, xmm1                  ; edx = y_df    
 	
 	; eax = i, ebx = j, esi = cacoords
 	; Z_df    
 	add     eax, 1    
 	add     ebx, 1    
 	movss   xmm4, dword [esi + eax * 4]    
-	movss   xmm5, dword [esi + ebx * 4]    
-	subss   xmm4, xmm5                  ; xmm4 = z_df    
+	movss   xmm1, dword [esi + ebx * 4]    
+	subss   xmm4, xmm1                  ; xmm4 = z_df    
 	
 	; Calcola x_df^2, y_df^2, z_df^2 e somma    
 	mulss   xmm0, xmm0                  ; xmm0 = x_df^2    
@@ -239,6 +225,11 @@ distanza1:
 	;mov 	eax, [ebp+20]				;[ebp+20] contiene l'indirizzo della variabile dist passata come parametro (&dist)
 	movss 	[ecx], xmm0					;[eax] inserisce[size]ell'indirizzo passato in eax il valore risultante in xmm0
 
+	; movss [tmpStamp], xmm0
+	; comiss xmm0, [dieci]
+	; jae no_stampp
+	; printss tmpStamp
+	; no_stampp:
 	pop eax
 	pop ecx
 	pop edi
@@ -731,6 +722,8 @@ electrostatic_energy:
 			cmp edi,[size]
 			jge fineforj
 
+
+
 			;Chiamata alla funzione distanza
 			push dist ; &dist
 			push edi ;j
@@ -861,8 +854,10 @@ electrostatic_energy:
 ; }*/
 
 packing_energy:
+	; distanza usa xmm0 -> per il resultto, xmm1, xmm2,xmm4
 	push	ebp			; salva il Base Pointer
 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+
 	push	ebx			; salva i registri da preservare
 	push 	edx
 	push	esi
@@ -872,44 +867,34 @@ packing_energy:
 	mov ebx, [ebp + 8] ;ebx = s
 	mov ecx, [ebp + 12] ;ecx = cacoords
 
-		; movss  xmm4, dword [ecx]    
-		; movss [tmpStamp], xmm4
-		; printss tmpStamp
-
-	;stampa il primo valore di ebx, cioé della sequenza
-	; movzx eax, byte [ebx]
-	; sub eax, 65
-	; cvtsi2ss xmm5, eax 
-	; movss [tmpStamp], xmm5
-	; printss tmpStamp
-	; xor eax, eax
-
 	xor esi, esi 	; esi = i = 0
-	pxor xmm3, xmm3 ;energy = 0
+	xorps xmm3, xmm3 ;energy = 0
 
 	for_i: 
-		cmp esi,[size]
+		cmp esi, 256
 		jge fine_fori
-		pxor xmm4, xmm4 ; densità
+		xorps xmm7, xmm7 ; densità
 		xor edi, edi ;edi = j = 0
 		
 
 		for_j: 
-			cmp edi,[size]
+			cmp edi,256
 			jge fine_forj
 			cmp edi, esi ; if j==i
 			je incremento_j
-			;Chiamata alla funzione distanza
-			push eax ; &dist
-			push edi ;j
-			push esi ;i
-			push ecx ;cacoords
 
+			;chiamata a distanza
+		
+			mov eax, dist
+			push eax ; &dist
+			push esi ;i
+			push edi ;j
+			push ecx ;cacoords
 			call distanza1
 			;fase di svuotamento dello stack
 			add esp, 16
-			;pxor xmm0, xmm0
-			movss xmm0, [eax] ;xmm0 = dist
+			movss xmm0, [dist] ;xmm0 = dist
+			
 			
 			
 			;if (dist <10.0)
@@ -917,51 +902,33 @@ packing_energy:
 			jae incremento_j
 			;dist<10
 			
-			;Stampa distanze minori di dieci (corrette)
-			; movss [tmpStamp], xmm0
-			; printss tmpStamp
-
 
 			;volume[s[j]]
 			xor edx, edx
 			movzx edx, byte [ebx + edi]
-			;mov edx, [ebx + esi  * dim]
-			sub edx, 65
-			 cvtsi2ss xmm5, edx 			;xmm5 = s[j]
-			; movss [tmpStamp], xmm5
-			; printss tmpStamp
-			movss xmm1, [volume1 + edx * 4]  ;xmm1 = volume[s[j]]
-			; movss [tmpStamp], xmm1
-			; printss tmpStamp
-			movss xmm7, xmm0
-			mulss xmm7, xmm0
-
+			sub edx, 65 
 			
-			mulss xmm7, xmm0 ; xmm0= dist^3
-			; movss [tmpStamp], xmm7
-			; printss tmpStamp
-			movss xmm7, xmm7
-			divss xmm1, xmm7 
-			addss xmm4, xmm1 ; densità +=
-			; movss [tmpStamp], xmm4
-			; printss tmpStamp
+			movss xmm6, [volume1 + edx * 4]  ;xmm6 = volume[s[j]]
+		
+			movss xmm5, xmm0
+			mulss xmm0, xmm5     ; xmm0= dist^2
+			mulss xmm0, xmm5      ; xmm0 = dist^3
+			divss xmm6, xmm0
+			addss xmm7, xmm6 ; densità +=
 			
 			incremento_j: 
 				inc edi
 				jmp for_j
 				fine_forj:
-					xor edx, edx
+					
 					movzx edx, byte [ebx + esi]
 					; ;mov edx, [ebx + esi  * dim]
 					 sub edx, 65
-					; cvtsi2ss xmm5, edx 
-					; movss [tmpStamp], xmm5
-					; printss tmpStamp
-					
-					movss xmm1, [volume1 + edx * 4]
-					subss xmm1, xmm4; volume-densità
-					mulss xmm1, xmm1
-					addss xmm3, xmm1; energia+=
+				
+					movss xmm6, [volume1 + edx * 4]
+					subss xmm6, xmm7; volume-densità
+					mulss xmm6, xmm6
+					addss xmm3, xmm6; energia+=
 					inc esi
 
 					jmp for_i
@@ -970,7 +937,6 @@ packing_energy:
 						movss [eax], xmm3
 						;prints msg
 						
-
 	pop edi
 	pop	esi
 	pop edx
@@ -978,3 +944,5 @@ packing_energy:
 	mov	esp, ebp	; ripristina lo Stack Pointer 
 	pop ebp    
 	ret
+
+

@@ -496,12 +496,14 @@ extern void coordsca(MATRIX coords, MATRIX cacoords);/*{
 
 
 extern void distanza1 (MATRIX coordinateCa, int i, int j, type* dist);
-/*type distanza (MATRIX coordinateCa, int i, int j){
-		type x_df = coordinateCa[3*i] - coordinateCa[3*j];
-		type y_df = coordinateCa[3*i+1] - coordinateCa[3*j+1];
-		type z_df = coordinateCa[3*i+2] - coordinateCa[3*j+2];
-		return sqrt(x_df * x_df + y_df * y_df + z_df * z_df);
-}*/
+// {
+// // type distanza (MATRIX coordinateCa, int i, int j){
+// 		type x_df = coordinateCa[3*i] - coordinateCa[3*j];
+// 		type y_df = coordinateCa[3*i+1] - coordinateCa[3*j+1];
+// 		type z_df = coordinateCa[3*i+2] - coordinateCa[3*j+2];
+// 		*dist = sqrt(x_df * x_df + y_df * y_df + z_df * z_df);
+// 		if(*dist<10) printf("dist in C: %f\n", *dist);
+// }
 
 extern void hydrofobic_energy (char* sequenza, MATRIX cacoords, type *hydro)
 {
@@ -552,29 +554,33 @@ extern void electrostatic_energy(char* s, MATRIX cacoords, type *elec)
 }
 
 extern void packing_energy(char*s, MATRIX cacoords, type *pack);
-/*{
-    type energy = 0.0;
-    for (int i = 0; i < size; i++) {
-		type  density = 0.0;
-		for (int j = 0; j < size; j++) {
-			if(i != j){
-				//type dist = distanza(cacoords, i, j);
-				type dist = 0.0;
-				distanza1(cacoords, i, j, &dist);
-				if (dist < 10.0) {
-					float distanza3 = dist * dist * dist;
-					density = density + volume[(int)s[j]-65] / (distanza3); 
-					printf("distanza^3 in C: %f\n", distanza3);
-				}
-			}
-		}
-		energy  += ((volume[(int)s[i]-65] - density) * (volume[(int)s[i]-65] - density));
+// {
+//     type energy = 0.0;
+//     for (int i = 0; i < size; i++) {
+// 		type  density = 0.0;
+// 		for (int j = 0; j < size; j++) {
+// 			if(i != j){
+
+// 				//type dist = distanza(cacoords, i, j);
+// 				type dist = 0.0;
+// 				distanza1(cacoords, i, j, &dist);
+// 				if (dist < 10.0) {
+// 					//if( i==255) 
+// 					//printf("pos i : %d, pos j : %d distanza in C: %f\n", i, j, dist);
+// 					printf("seq %d\n", s[j]);
+// 					float distanza3 = dist * dist * dist;
+// 					density = density + volume[(int)s[j]-65] / (distanza3); 
+					
+// 				}
+// 			}
+// 		}
+// 		energy  += ((volume[(int)s[i]-65] - density) * (volume[(int)s[i]-65] - density));
 		
-    }
-	//printf("energy pack %f\n", energy);
-	*pack = energy;
-	return ;
-}*/
+//     }
+// 	//printf("energy pack %f\n", energy);
+// 	*pack = energy;
+// 	return ;
+// }
 
 
 
