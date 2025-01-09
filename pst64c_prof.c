@@ -532,7 +532,8 @@ extern void hydrofobic_energy (char* sequenza, MATRIX coordinateCa, type* hydro)
 	return energy;
 }*/
 
-extern type electrostatic_energy(char* s, MATRIX coordinateCa){
+extern type electrostatic_energy(char* s, MATRIX coordinateCa, type* elec);
+/*{
 	
 	
 	type energy= 0.0;
@@ -553,7 +554,7 @@ extern type electrostatic_energy(char* s, MATRIX coordinateCa){
 	
 	//printf("energy elec %f\n", energy);
 	return energy; 
-}
+}*/
 
 extern void packing_energy(char*s, MATRIX coordinateCa, type * pack);
 /*{
@@ -594,7 +595,8 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	
 	type hydro = 0;
 	hydrofobic_energy(seq, coordinateCa, &hydro);
-	type elec = electrostatic_energy(seq, coordinateCa);
+	type elec = 0;
+	electrostatic_energy(seq, coordinateCa, &elec);
 	
 	type pack = 0;
 	packing_energy(seq, coordinateCa,&pack);
@@ -605,7 +607,7 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	type w_elec= 0.2;
 	type w_pack= 0.3;
 
-	printf("hydro: %f\n",hydro);
+	printf("elec: %f\n",elec);
 	type tot= (w_rama*rama) + (w_elec*elec) + (w_hydro*hydro) + (w_pack*pack);
 
 
