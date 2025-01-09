@@ -607,7 +607,7 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	type w_elec= 0.2;
 	type w_pack= 0.3;
 
-	printf("elec: %f\n",elec);
+
 	type tot= (w_rama*rama) + (w_elec*elec) + (w_hydro*hydro) + (w_pack*pack);
 
 
