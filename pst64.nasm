@@ -115,14 +115,14 @@ section .data			; Sezione contenente dati inizializzati
 ; Funzioni
 ; ------------------------------------------------------------
 
-;global distanza1
-;global coordsca
-;global rama_energy
-;global approx_cos
-;global prodotto_scal
-;global approx_sin
-;global hydrofobic_energy
-;global electrostatic_energy
+global distanza1
+global coordsca
+global rama_energy
+global approx_cos
+global prodotto_scal
+global approx_sin
+global hydrofobic_energy
+global electrostatic_energy
 ;global packing_energy
 
 

@@ -298,26 +298,24 @@ extern void vector_matrix_product(VECTOR v, MATRIX R, VECTOR result) {
     }
 }
 
-extern void approx_cos(type theta, type* cos)
-{
+extern void approx_cos(type theta, type* cos); 
+/*{
     type x2 = theta * theta;
-    *cos = 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0);
-}
+    return 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0);
+}*/
 
-extern void approx_sin(type theta, type* sin)
-{
+extern void approx_sin(type theta, type* sin); 
+/*{
     type x2 = theta * theta;
-    *sin= theta - (x2 * theta / 6.0) + (x2 * x2 * theta / 120.0) - (x2 * x2 * x2 *theta/ 5040.0);
-	*sin = *sin * -1.0;
+    return theta - (x2 * theta / 6.0) + (x2 * x2 * theta / 120.0) - (x2 * x2 * x2 *theta/ 5040.0);
 
-}
-
-//extern void prodotto_scal(VECTOR v, type* res);
+}*/
+extern void prodotto_scal(VECTOR v, type* res);
 
 extern MATRIX rotation(VECTOR axis, type theta){
-	type prod_scal= (axis[0]*axis[0])+(axis[1]*axis[1])+(axis[2]*axis[2]);
-	//type prod_scal= 0; 
-	//prodotto_scal(axis, &prod_scal);
+	//type prod_scal= (axis[0]*axis[0])+(axis[1]*axis[1])+(axis[2]*axis[2]);
+	type prod_scal= 0; 
+	prodotto_scal(axis, &prod_scal);
 	
 	axis[0] = axis[0] / prod_scal;
 	axis[1] = axis[1] / prod_scal;
@@ -459,8 +457,8 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 }
 
 
-extern void rama_energy(VECTOR phi, VECTOR psi, type *rama) 
-{
+extern void rama_energy(VECTOR phi, VECTOR psi, type *rama); 
+/*{
     // Costanti di Ramachandran
     
     const type alpha_phi = -57.8;
@@ -487,13 +485,12 @@ extern void rama_energy(VECTOR phi, VECTOR psi, type *rama)
             energy += 0.5 * beta_dist;
         }
     }
-	*rama = energy;
 
-    return ;
-}
+    return energy;
+}*/
 
-extern void coordsca(MATRIX coords, MATRIX coordsca)
-{
+extern void coordsca(MATRIX coords, MATRIX coordsca); 
+/*{
     
 	MATRIX Cacoords = alloc_matrix(size, 3);
     
@@ -502,21 +499,20 @@ extern void coordsca(MATRIX coords, MATRIX coordsca)
         Cacoords[i* 3 + 1] = coords[i * 9 + 4]; //Y
         Cacoords[i * 3 + 2] = coords[i * 9 + 5]; //Z
     }
-	coordsca= Cacoords;
-    return ; 
-}
+    return Cacoords; 
+}*/
 
 
-extern void distanza1 (MATRIX coordinateCa, int i, int j, type *dist)
-{
+extern void distanza1 (MATRIX coordinateCa, int i, int j, type *dist);
+/*{
 		type x_df = coordinateCa[3*i] - coordinateCa[3*j];
 		type y_df = coordinateCa[3*i+1] - coordinateCa[3*j+1];
 		type z_df = coordinateCa[3*i+2] - coordinateCa[3*j+2];
-		*dist = sqrt(pow(x_df,2) + pow(y_df,2 ) + pow(z_df,2));
-}
+		return sqrt(pow(x_df,2) + pow(y_df,2 ) + pow(z_df,2));
+}*/
 
-extern void hydrofobic_energy (char* sequenza, MATRIX coordinateCa, type* hydro)
-{
+extern void hydrofobic_energy (char* sequenza, MATRIX coordinateCa, type* hydro);
+/*{
 	type energy = 0.0;
 	
 	
@@ -532,13 +528,12 @@ extern void hydrofobic_energy (char* sequenza, MATRIX coordinateCa, type* hydro)
 		}
 	}
 	
-	*hydro = energy;
 	//printf("energy hhydro: %f\n", energy);
-	return ;
-}
+	return energy;
+}*/
 
-extern void electrostatic_energy(char* s, MATRIX coordinateCa, type* elec)
-{
+extern void electrostatic_energy(char* s, MATRIX coordinateCa, type* elec);
+/*{
 	
 	
 	type energy= 0.0;
@@ -556,17 +551,22 @@ extern void electrostatic_energy(char* s, MATRIX coordinateCa, type* elec)
 			}
 		}
 	}
-	*elec = energy;
+	
 	//printf("energy elec %f\n", energy);
-	return ; 
-}
+	return energy; 
+}*/
 
-extern void packing_energy(char*s, MATRIX coordinateCa, type * pack)
-{
+extern type packing_energy(char*s, MATRIX coordinateCa){
+     
+    
+	//printf("Coordinate di CA:\n");
+	//for(int i = 0; i<n; i++){
+		//printf("%f %f %f\n", cacoords[i*3], cacoords[i*3+1], cacoords[i*3+2]);
+	//}
     type energy = 0.0;
     for (int i = 0; i < size; i++) {
 		type  density = 0.0;
-		for (int j = 0; j < size; j++) {
+		for (int j = 0; j < size; j+=4) {
 			if(i != j){
 				type dist = 0;
 				distanza1(coordinateCa, i, j, &dist);
@@ -574,13 +574,38 @@ extern void packing_energy(char*s, MATRIX coordinateCa, type * pack)
 					density = density + volume[(int)s[j]-65] / (pow(dist, 3)); 
 				}
 			}
+			if(i != j+1){
+				type dist = 0;
+				distanza1(coordinateCa, i, j+1, &dist);
+				if (dist < 10.0) {
+					density = density + volume[(int)s[j+1]-65] / (pow(dist, 3)); 
+				}
+			}
+			if(i != j+2){
+				type dist = 0;
+				distanza1(coordinateCa, i, j+2, &dist);
+				if (dist < 10.0) {
+					density = density + volume[(int)s[j+2]-65] / (pow(dist, 3)); 
+				}
+			}
+			if(i != j+3){
+				type dist = 0;
+				distanza1(coordinateCa, i, j+3, &dist);
+				if (dist < 10.0) {
+					density = density + volume[(int)s[j+3]-65] / (pow(dist, 3)); 
+				}
+			}
+		
+		
+		
+		
+		
 		}
 		energy = energy + pow((volume[(int)s[i]-65] - density), 2);
     }
-	*pack = energy;
-
+	
 	//printf("energy pack %f\n", energy);
-	return ;
+	return energy;
 }
 
 
@@ -598,8 +623,7 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	type elec = 0;
 	electrostatic_energy(seq, coordinateCa, &elec);
 	
-	type pack = 0;
-	packing_energy(seq, coordinateCa,&pack);
+	type pack = packing_energy(seq, coordinateCa);
 	
 	dealloc_matrix(coordinateCa);
 	type w_rama= 1.0;
