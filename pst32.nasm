@@ -134,7 +134,7 @@ global coordsca
 global rama_energy
 global approx_cos
 global prodottoScalare
-;global approx_sin
+global approx_sin
 global hydrofobic_energy
 global electrostatic_energy
 global packing_energy
@@ -512,48 +512,50 @@ prodottoScalare:
 ; ------------------------------------------------------------
 ; Funzione approx_sin
 ; ------------------------------------------------------------
-;approx_sin:
-	; push	ebp			; salva il Base Pointer
-	; mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
-	; push	ebx			; salva i registri da preservare
-	; push 	edx
-	; push	esi
-	; push	edi
-
-	; ; Calcolo del seno
-	; movss xmm7, [ebp+8] ; theta
-	; movss xmm1, xmm7
-	; movss xmm5, xmm7 ; theta
-	; mulss xmm1, xmm1 ; theta^2
-	; movss xmm2, xmm7
-	; mulss xmm2, xmm1 ; theta^3
-	; movss xmm3, xmm2
-	; divss xmm3, [sei]; theta^3 / 6.0
-	; subss xmm7, xmm3 ; risultato parziale theta - theta^3 / 6.0
-
-	; movss xmm6, xmm1 ; theta^2
-	; mulss xmm6, xmm1 ; theta^4
-	; mulss xmm6, xmm5 ; theta^5
-	; movss xmm5, xmm6 ; theta^5
-	; divss xmm6, [cento_venti] ; theta^5 / 120.0
-	; addss xmm7, xmm6 ; risultato parziale theta - theta^3 / 6.0 + theta^5 / 120.0
-
-	; mulss xmm5, xmm1 ; theta^7
-	; divss xmm5, [cinquemila_quaranta] ; theta^7 / 5040.0 
-	; subss xmm7, xmm5 ; risultato finale theta - theta^3 / 6.0 + theta^5 / 120.0 - theta^7 / 5040.0
-
-	; mulss xmm7, [meno_uno]
-
-	; mov eax, [ebp+12]
-	; movss [eax], xmm7
-
-	; pop edi
-	; pop	esi
-	; pop edx
-	; pop	ebx
-	; mov	esp, ebp	; ripristina lo Stack Pointer 
-	; pop ebp    
-	; ret
+approx_sin:
+    ; (type theta, type *a);
+	push	ebp			; salva il Base Pointer
+	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+	push	ebx			; salva i registri da preservare
+	push 	edx
+	push	esi
+	push	edi
+	
+	; Recupero parametro theta    
+	movss xmm1, [ebp+8] ; theta  
+	mov   edi,   [ebp+12]
+ 
+	; Calcolo del seno
+	movss xmm7, xmm1 ;  xmm7 = theta
+	movss xmm5, xmm7 ; theta
+	mulss xmm1, xmm7 ; theta^2
+	movss xmm2, xmm1 ; xmm2 = theta^2
+	mulss xmm2, xmm5 ; xmm2= theta^3
+	movss xmm3, xmm2 ; xmm3= theta^3
+	divss xmm3, [sei]; theta^3 / 6.0
+	subss xmm7, xmm3 ; risultato parziale theta - theta^3 / 6.0
+	movss xmm6, xmm1 ; theta^2
+	mulss xmm6, xmm1 ; theta^4
+	mulss xmm6, xmm5 ; theta^5
+	movss xmm5, xmm6 ; theta^5
+	divss xmm6, [cento_venti] ; theta^5 / 120.0
+	addss xmm7, xmm6 ; risultato parziale theta - theta^3 / 6.0 + theta^5 / 120.0
+ 
+	mulss xmm5, xmm1 ; theta^7
+	divss xmm5, [cinquemila_quaranta] ; theta^7 / 5040.0 
+	subss xmm7, xmm5 ; risultato finale theta - theta^3 / 6.0 + theta^5 / 120.0 - theta^7 / 5040.0
+ 
+	mulss xmm7, [meno_uno]
+ 
+	movss [edi], xmm7
+ 
+	pop edi
+	pop	esi
+	pop edx
+	pop	ebx
+	mov	esp, ebp	; ripristina lo Stack Pointer 
+	pop ebp    
+	ret
 
 ; ------------------------------------------------------------
 ; Funzione hydro_energy

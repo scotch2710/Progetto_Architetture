@@ -306,11 +306,14 @@ extern void approx_cos(type theta, type *a); /*{
     return 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0);
 }*/
 
-extern type approx_sin(type theta) {
-    type x2 = theta * theta;
-    return theta - (x2 * theta / 6.0) + (x2 * x2 * theta / 120.0) - (x2 * x2 * x2 * theta/ 5040.0);
+ extern void approx_sin(type theta, type *a);
+//   {
+//     type x2 = theta * theta;
+// 	printf("sin theta %f : \n", theta );
+//     *a=  theta - (x2 * theta / 6.0) + (x2 * x2 * theta / 120.0) - (x2 * x2 * x2 * theta/ 5040.0);
+// 	*a = *a * -1.0;
 
-}
+// }
 
 extern void prodottoScalare (VECTOR axis, type *prod);
 
@@ -324,8 +327,8 @@ extern MATRIX rotation(VECTOR axis, type theta){
 
 	type a = 0.0;
 	approx_cos(theta/2.0, &a);
-	type s1 = approx_sin(theta / 2.0);
-	type s = -1.0 * s1;
+	type s= 0.0;
+	approx_sin(theta / 2.0, &s);
     type b = s * axis[0];
     type c = s * axis[1];
     type d = s * axis[2];
