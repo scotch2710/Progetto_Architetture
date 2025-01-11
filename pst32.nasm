@@ -41,6 +41,7 @@ section .data			; Sezione contenente dati inizializzati
 	un_mezzo    dd 0.5
 	align 4
 	dieci       dd 10.0
+	quattro     dd 4.0
 	sessanta_cinque dd 65.0
 	zero 		dd 0.0
 	due         dd 2.0
@@ -53,7 +54,7 @@ section .data			; Sezione contenente dati inizializzati
 	meno_uno    dd -1.0
 	tmpStamp 	dd 0.0
 	extern size 
-	msg db "pack: "
+	msg db "sj: "
 	
 
 	; Hydrophobicity
@@ -66,7 +67,7 @@ section .data			; Sezione contenente dati inizializzati
 	
 	alignb 16
 	; Charge
-	charge1 dd 0, -1, 0, -1, -1, 0, 0, 0.5, 0, -1, 1, 0, 0, 0, -1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, -1
+	charge1 dd 0.0, -1.0, 0.0, -1.0, -1.0, 0.0, 0.0, 0.5, 0.0, -1.0, 1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 1.0, 0.0, 0.0, -1.0, 0.0, 0.0, -1.0, 0.0, -1.0
 
 	align 16
 	intArray dd 19, 21, 2, 15, 24, 5, 4, 15, 12, 7, 0, 11, 13, 24, 5, 13, 3, 5, 2, 7, 0, 15, 8, 15, 18, 17, 3, 3, 22, 5, 17, 18, 18, 17, 3, 22, 5, 13, 13, 22, 3, 17, 21, 13, 15, 2, 11, 3, 17, 19, 15, 10, 19, 8, 24, 0, 11, 0, 6, 24, 17, 0, 0, 10, 7, 11, 13, 7, 24, 6, 24, 7, 18, 12, 11, 22, 2, 11, 21, 12, 3, 7, 12, 18, 0, 18, 11, 22, 17, 11, 2, 5, 22, 21, 7, 19, 8, 4, 13, 11, 0, 3, 11, 12, 17, 12, 24, 10, 17, 4, 16, 5, 5, 21, 15, 22, 5, 24, 13, 13, 21, 0, 13, 24, 18, 22, 24, 2, 15, 16, 5, 22, 24, 7, 16, 13, 7, 22, 6, 0, 17, 15, 24, 16, 10, 0, 22, 6, 3, 2, 0, 16, 12, 19, 7, 24, 12, 22, 19, 21, 2, 6, 21, 7, 5, 16, 12, 13, 21, 11, 4, 6, 10, 2, 12, 5, 4, 5, 0, 11, 24, 19, 21, 24, 6, 6, 22, 19, 18, 19, 3, 11, 11, 0, 7, 19, 15, 24, 4, 19, 18, 4, 22, 4, 4, 3, 17, 7, 4, 19, 21, 3, 2, 21, 7, 11, 2, 22, 11, 7, 4, 13, 24, 12, 7, 2, 2, 8, 5, 16, 12, 0, 3, 12, 4, 22, 3, 0, 4, 18, 6, 4, 17, 10, 19, 3, 24, 6, 10, 15, 11, 10, 21, 11, 16, 16
@@ -134,8 +135,8 @@ global rama_energy
 global approx_cos
 global prodottoScalare
 ;global approx_sin
-;global hydrofobic_energy
-;global electrostatic_energy
+global hydrofobic_energy
+global electrostatic_energy
 global packing_energy
 
 
@@ -562,113 +563,128 @@ hydrofobic_energy:
 	push	ebp			; salva il Base Pointer
 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
 	push	ebx			; salva i registri da preservare
-	push 	edx
 	push	esi
-	push	edi
-
-		;INPUT
-	mov ebx, [ebp + 8] ;ebx = s
-	mov ecx, [ebp + 12] ;ecx = cacoords
-
-;Stampa del valore intero size convertito in valore float
-
-	; xor esi, esi
-	; mov esi, 21
-	; imul esi, 4
-	; movss xmm6, [charge1]
-	; cvtsi2ss xmm7, esi
-	; addss xmm7, xmm6
-	; 	;movss xmm7, [edx]
-	; 	movss [tmpStamp], xmm7
-	; 	printss tmpStamp
-	; stampa:
-	; 	cmp esi, size
-	; 	jge nostampa
-	; 	movzx edx, byte [charge1 + esi*4]    ; Carica il valore di 'size' in eax
-	; 	cvtsi2ss xmm7, edx ; Converte 'size' (in eax) in float in xmm0
-	; 	;movss xmm7, [edx]
-	; 	movss [tmpStamp], xmm7
-	; 	printss tmpStamp
-	; 	nostampa:
-	; 		xor edx, edx
-			; xor esi, esi
-
-	; cvtsi2ss xmm7, ebx 
-	; movups [tmpStamp], xmm7
-	; printss tmpStamp
-
-	xor esi, esi 	; esi = i = 0
-	pxor xmm3, xmm3 ;energy = 0
-
-	loopEsterno: 
-		cmp esi,[size]
-		jge fineloopEsterno
-		xor edi, edi ;edi = j = 0
-		mov edi, esi ;edi = i
-		inc edi		 ;edi = i+1
-
-		loopInterno: 
-			cmp edi, [size]
-			jge fineloopInterno
-
-			;Chiamata alla funzione distanza
-			push dist ; &dist
-			push edi ;j
-			push esi ;i
-			push ecx ;cacoords
-
+	push	edi  
+ 
+	mov ebx, [ebp+8]    	;sequenza
+	mov ecx, [ebp+12]		;cacoords
+	;mov edx, [ebp+16]		;res
+ 
+	xor esi, esi 			;esi: i=0
+	xorps xmm6, xmm6        ;init energy = 0.0
+ 
+ 
+ 
+ 
+ 
+	;CVTSI2SS xmm6, edi
+	;movss [tmp], xmm6
+	;printss tmp
+ 
+	externalLoop:
+		cmp esi, 256
+		jge fineHydrofobicEnergy
+ 
+		xor edi, edi 			;edi: j=0
+ 
+		;CVTSI2SS xmm6, edi
+		;movss [tmp], xmm6
+		;printss tmp
+		mov edi, esi			; edi = j = i
+		inc edi
+		internaloop:
+			; CVTSI2SS xmm6, edi
+			; movss [tmp], xmm6
+			; printss tmp
+ 
+			cmp edi, 256
+			jge fine_internal_loop
+ 
+			;--------calcolo distanza--------
+			; CVTSI2SS xmm6, ecx
+			; movss [tmp], xmm6
+			; printss tmp
+ 
+			;uso xmm4 per salvare dist
+			mov edx, dist
+ 
+ 
+			push edx
+			push edi
+			push esi
+			push ecx
 			call distanza1
-			;fase di svuotamento dello stack
+ 
 			add esp, 16
-			;pxor xmm0, xmm0
-			; ecx = distanza1
-			movss xmm0, [dist] ;xmm0 = dist
-			
-			
-			
-			;if (dist <10.0)
-			comiss xmm0, [dieci]
-			ja incj
-			;dist<10
-			;movss [tmpStamp], xmm0
-			;printss tmpStamp
-
-			mov edx, [intArray + esi  * dim]
-			;sub edx, [sessanta_cinque]
-			; cvtsi2ss xmm6, [hydrophobicity1+4]
-			; movups [tmpStamp], xmm6
-			; printss tmpStamp
-			movss xmm1, [hydrophobicity1 + edx * dim]
-			; movups [tmpStamp], xmm1
-			; printss tmpStamp
-
-
-			
-
-			 mov edx, [intArray + edi  * dim]
-			; sub edx, [sessanta_cinque]
-			 movss xmm2, [hydrophobicity1 + edx *dim]
-			
-
-			;energy += (hydrophobicity[(int)s[i]-65]*hydrophobicity[(int)s[j]-65])/(dist);
-			mulss xmm2, xmm1
-			divss xmm2, xmm0
-
-			addss xmm3, xmm2
-
-			incj: 
-				inc edi
-				jmp loopInterno
-				fineloopInterno:
-					inc esi
-					jmp loopEsterno
-					fineloopEsterno:
-						mov eax, [ebp+16]
-						movss [eax], xmm3
-
+ 
+			;CVTSI2SS xmm6, [ecx]
+ 
+ 
+			movss xmm1, [dist] ;sposto distanza in xmm1
+ 
+ 
+ 
+			;movss xmm4, [ebp+20] ; xmm4 = dist
+ 
+			comiss xmm1,  [dieci]
+			ja distanza_maggiore
+ 
+			;--------calcolo energia--------
+ 
+ 
+			movzx eax, byte [ebx+esi] ; sequenza[i]
+			sub eax, 65				  ; sequenza[i] - 65
+			movss xmm0, [hydrophobicity1 + eax*dim] ; hydrophobicity[sequenza[i]-65]
+ 
+			movzx eax, byte [ebx+edi] ; sequenza[i]
+			sub eax, 65				  ; sequenza[i] - 65
+			movss xmm5, [hydrophobicity1 + eax*dim] ; hydrophobicity[sequenza[j]-65]
+ 
+			; CVTSI2SS xmm6, eax
+			; movss [tmp], xmm6
+			; printss tmp
+ 
+ 
+ 
+ 
+ 
+			; movss [tmp], xmm0
+			; printss tmp
+ 
+			mulss xmm0, xmm5
+			divss xmm0, xmm1
+			addss xmm6, xmm0
+ 
+		distanza_maggiore:
+			inc edi
+			jmp internaloop
+ 
+		fine_internal_loop:
+			inc esi
+			jmp externalLoop
+	fineHydrofobicEnergy:
+	;xor eax, eax 
+	;movss xmm6, [distanza] 
+	;CVTSI2SS xmm6, eax
+	;movss [tmp], xmm2
+	;printss tmp
+ 
+ 
+ 
+ 
+	mov eax, [ebp+16]
+ 
+	movss [eax], xmm6
+	;movss xmm2, [tmp]
+	;movss [eax], xmm2
+ 
+ 
+ 
+	;CVTSI2SS da intero a float
+	;CVTTSS2SI da float a intero
+ 
 	pop edi
 	pop	esi
-	pop edx
 	pop	ebx
 	mov	esp, ebp	; ripristina lo Stack Pointer 
 	pop ebp    
@@ -680,11 +696,12 @@ hydrofobic_energy:
 ; ------------------------------------------------------------
 
 electrostatic_energy:
+	; distanza usa xmm0 -> per il resultto, xmm1, xmm2,xmm4
+
 	push	ebp			; salva il Base Pointer
 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
 	push	ebx			; salva i registri da preservare
 	push 	edx
-	push 	ecx
 	push	eax
 	push	esi
 	push	edi
@@ -700,9 +717,6 @@ electrostatic_energy:
 	xor esi, esi 	; esi = i = 0
 	pxor xmm3, xmm3 ;energy = 0
 
-	; cvtsi2ss xmm6, esi ; Converte 'size' (in eax) in float in xmm0
-	; 	movss [tmpStamp], xmm6
-	; 	printss tmpStamp
 
 	fori: 
 		cmp esi,[size]
@@ -710,13 +724,6 @@ electrostatic_energy:
 		xor edi, edi ;edi = j = 0
 		mov edi, esi ;edi = i
 		inc edi		 ;edi = i+1
-
-		; ;Stampa del valore intero size convertito in valore float
-		; mov edx, [size]    ; Carica il valore di 'size' in eax
-		; cvtsi2ss xmm7, edi ; Converte 'size' (in eax) in float in xmm0
-		; movss [tmpStamp], xmm7
-		; printss tmpStamp
-		; xor edx, edx
 
 		forj: 
 			cmp edi,[size]
@@ -735,13 +742,6 @@ electrostatic_energy:
 			add esp, 16
 			;pxor xmm0, xmm0
 			movss xmm0, [dist] ;xmm0 = dist
-			; stampa:
-			; cmp edi, 20
-			; jge nostampa
-			; prints msg
-			; movss [tmpStamp], xmm0
-			; printss tmpStamp
-			; nostampa:
 			
 		; cvtsi2ss xmm7, edi ; Converte 'size' (in eax) in float in xmm0
 			
@@ -750,62 +750,49 @@ electrostatic_energy:
 			;if (dist <10.0)
 			comiss xmm0, [dieci]
 			jae incrementoj
-
 			
-			
-			; cvtsi2ss xmm7, edi 
-			; movss [tmpStamp], xmm7
-			; printss tmpStamp
-				
 
 			;charge[s[i]-65]			
-			mov edx, [ebx + esi  * dim]
-
-			; cvtsi2ss xmm7, edx 
-			; movss [tmpStamp], xmm7
-			; printss tmpStamp
-			;sub edx, 65
-			; cvtsi2ss xmm7, edx 
-			; movss [tmpStamp], xmm7
-			; printss tmpStamp
-		
+			movzx edx, byte [ebx + esi ]
+			sub edx, 65
 			
-			; movss xmm4, [ebx + esi  * dim]
-			; subss xmm4, [sessanta_cinque]
-			; cvtss2si edx, xmm4
-			; prints msg1
-			; cvtsi2ss xmm5, edx 
-			; movss [tmpStamp], xmm5
-			; printss tmpStamp
-			movss xmm1, [charge1 + edx * dim]
-			; movss [tmpStamp], xmm0
-			; printss tmpStamp
+			movss xmm7, [charge1 + edx * dim]
 			
 			
 
 			;if charge[s[i]-65] != 0
-			comiss xmm1, [zero]
+			comiss xmm7, [zero]
 			je incrementoj 
 
 			;charge[s[j]-65]
-			mov edx, [ebx + edi  * dim]
-			;sub edx, [sessanta_cinque]
-			; cvtss2si edx, xmm6
-			; cvtsi2ss xmm5, edx 
-			; movss [tmpStamp], xmm5
-			; printss tmpStamp
-			movss xmm2, [charge1 + edx *dim]
+			movzx edx, byte [ebx + edi]
+			sub edx, 65
+			cvtsi2ss xmm6, edx 
+			movss [tmpStamp], xmm6
+			
+			
+			movss xmm6, [charge1 + edx *dim]
+			
+			
 			
 			;if charge[s[j]-65] !=0
-			comiss xmm2, [zero]
+			comiss xmm6, [zero]
 			je incrementoj 
-
+		
+			
 			;energy += (charge[(int)s[i]-65]*charge[(int)s[j]-65])/(dist*4.0);
-			mulss xmm2, xmm1
-			mulss xmm0, [dim]
-			divss xmm2, xmm0
+			mulss xmm6, xmm7
+			
+			mulss xmm0, [quattro]
+			
+			
+			divss xmm6, xmm0
 
-			addss xmm3, xmm2
+			addss xmm3, xmm6
+
+		
+			
+			
 
 			incrementoj: 
 				inc edi
@@ -816,11 +803,10 @@ electrostatic_energy:
 					finefori:
 						mov eax, [ebp+16]
 						movss [eax], xmm3
-
+	
 	pop edi
 	pop	esi
 	pop eax
-	pop ecx
 	pop edx
 	pop	ebx
 	mov	esp, ebp	; ripristina lo Stack Pointer 
@@ -854,7 +840,7 @@ electrostatic_energy:
 ; }*/
 
 packing_energy:
-	; distanza usa xmm0 -> per il resultto, xmm1, xmm2,xmm4
+	; distanza usa xmm0 -> per il resultto, xmm1, xmm2,xmm4 non devono essere usate ecccetto xmm0
 	push	ebp			; salva il Base Pointer
 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
 
@@ -936,7 +922,7 @@ packing_energy:
 						mov eax, [ebp+16]
 						movss [eax], xmm3
 						;prints msg
-						
+	movss [tmpStamp], xmm3			
 	pop edi
 	pop	esi
 	pop edx
