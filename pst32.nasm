@@ -129,15 +129,15 @@ extern free_block
 ; Funzioni
 ; ------------------------------------------------------------
 
-global distanza1
-global coordsca
-global rama_energy
-global approx_cos
-global prodottoScalare
-global approx_sin
-global hydrofobic_energy
-global electrostatic_energy
-global packing_energy
+;global distanza1
+;global coordsca
+;global rama_energy
+;global approx_cos
+;global prodottoScalare
+;global approx_sin
+;global hydrofobic_energy
+;global electrostatic_energy
+;global packing_energy
 
 
 N 		equ 	8
