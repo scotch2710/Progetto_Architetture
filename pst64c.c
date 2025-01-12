@@ -498,6 +498,10 @@ extern void coordsca(MATRIX coords, MATRIX coordsca);
         Cacoords[i * 3] = coords[i * 9 + 3]; //X
         Cacoords[i* 3 + 1] = coords[i * 9 + 4]; //Y
         Cacoords[i * 3 + 2] = coords[i * 9 + 5]; //Z
+		Cacoords[i * 3 + 3] = coords[i * 9 + 6]; //X
+        Cacoords[i* 3 + 4] = coords[i * 9 + 7]; //Y
+        Cacoords[i * 3 + 5] = coords[i * 9 + 8]; //Z
+
     }
     return Cacoords; 
 }*/
@@ -559,14 +563,11 @@ extern void electrostatic_energy(char* s, MATRIX coordinateCa, type* elec);
 extern type packing_energy(char*s, MATRIX coordinateCa){
      
     
-	//printf("Coordinate di CA:\n");
-	//for(int i = 0; i<n; i++){
-		//printf("%f %f %f\n", cacoords[i*3], cacoords[i*3+1], cacoords[i*3+2]);
-	//}
+
     type energy = 0.0;
     for (int i = 0; i < size; i++) {
 		type  density = 0.0;
-		for (int j = 0; j < size; j+=4) {
+		for (int j = 0; j < size; j++) {
 			if(i != j){
 				type dist = 0;
 				distanza1(coordinateCa, i, j, &dist);
@@ -574,27 +575,27 @@ extern type packing_energy(char*s, MATRIX coordinateCa){
 					density = density + volume[(int)s[j]-65] / (pow(dist, 3)); 
 				}
 			}
-			if(i != j+1){
-				type dist = 0;
-				distanza1(coordinateCa, i, j+1, &dist);
-				if (dist < 10.0) {
-					density = density + volume[(int)s[j+1]-65] / (pow(dist, 3)); 
-				}
-			}
-			if(i != j+2){
-				type dist = 0;
-				distanza1(coordinateCa, i, j+2, &dist);
-				if (dist < 10.0) {
-					density = density + volume[(int)s[j+2]-65] / (pow(dist, 3)); 
-				}
-			}
-			if(i != j+3){
-				type dist = 0;
-				distanza1(coordinateCa, i, j+3, &dist);
-				if (dist < 10.0) {
-					density = density + volume[(int)s[j+3]-65] / (pow(dist, 3)); 
-				}
-			}
+			// if(i != j+1){
+			// 	type dist = 0;
+			// 	distanza1(coordinateCa, i, j+1, &dist);
+			// 	if (dist < 10.0) {
+			// 		density = density + volume[(int)s[j+1]-65] / (pow(dist, 3)); 
+			// 	}
+			// }
+			// if(i != j+2){
+			// 	type dist = 0;
+			// 	distanza1(coordinateCa, i, j+2, &dist);
+			// 	if (dist < 10.0) {
+			// 		density = density + volume[(int)s[j+2]-65] / (pow(dist, 3)); 
+			// 	}
+			// }
+			// if(i != j+3){
+			// 	type dist = 0;
+			// 	distanza1(coordinateCa, i, j+3, &dist);
+			// 	if (dist < 10.0) {
+			// 		density = density + volume[(int)s[j+3]-65] / (pow(dist, 3)); 
+			// 	}
+			// }
 		
 		
 		

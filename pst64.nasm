@@ -162,6 +162,61 @@ extern size
 ; RDX: j
 ; R8:  pointer a dist (variabile di output)
 
+; distanza1:
+;     ; Carica i parametri    
+;     ; coordinateCa è passato in RDI
+;     ; i è passato in RSI
+;     ; j è passato in RDX
+
+;     push	rbp			; salva il Base Pointer
+; 	mov		rbp, rsp	; il Base Pointer punta al Record di Attivazione corrente
+; 	;pushaq  
+;     ;push rax
+
+; 	mov     rax, rsi                ; rax = i
+;     lea     rax, [rax * 3]          ; rax = 3*i
+;     mov     rbx, rdx                ; rbx = j
+;     lea     rbx, [rbx * 3]          ; rbx = 3*j
+
+;     ; X_df    
+;     movsd   xmm0, qword [rdi + rax * dim]  ; xmm0 = coordinateCa[3*i]    
+;     movsd   xmm1, qword [rdi + rbx * dim]  ; xmm1 = coordinateCa[3*j]    
+;     subsd   xmm0, xmm1                     ; xmm0 = x_df    
+
+;     ; Y_df    
+;     inc     rax                          ; incrementa 3*i
+;     inc     rbx                          ; incrementa 3*j
+;     movsd   xmm2, qword [rdi + rax * dim]  ; xmm2 = coordinateCa[3*i + 1]    
+;     movsd   xmm3, qword [rdi + rbx * dim]  ; xmm3 = coordinateCa[3*j + 1]    
+;     subsd   xmm2, xmm3                   ; xmm2 = y_df    
+
+;     ; Z_df    
+;     inc     rax                          ; incrementa 3*i
+;     inc     rbx                          ; incrementa 3*j
+;     movsd   xmm4, qword [rdi + rax * dim]  ; xmm4 = coordinateCa[3*i + 2]    
+;     movsd   xmm5, qword [rdi + rbx * dim]  ; xmm5 = coordinateCa[3*j + 2]    
+;     subsd   xmm4, xmm5                   ; xmm4 = z_df    
+
+;     ; Calcola x_df^2, y_df^2, z_df^2 e somma    
+;     mulsd   xmm0, xmm0                   ; xmm0 = x_df^2    
+;     mulsd   xmm2, xmm2                   ; xmm2 = y_df^2    
+;     mulsd   xmm4, xmm4                   ; xmm4 = z_df^2    
+;     addsd   xmm0, xmm2                   ; xmm0 += y_df^2    
+;     addsd   xmm0, xmm4                   ; xmm0 += z_df^2    
+
+;     ; Radice quadrata    
+;     sqrtsd  xmm0, xmm0                   ; xmm0 = sqrt(x_df^2 + y_df^2 + z_df^2)    
+
+;     ; Salva il risultato
+;     movsd   qword [rcx], xmm0             ; salva il risultato in dist
+
+;     ;popaq
+; 	;pop rax
+; 	mov	rsp, rbp	; ripristina lo Stack Pointer 
+;  	pop rbp
+	
+; 	ret                                   ; ritorna
+
 distanza1:
     ; Carica i parametri    
     ; coordinateCa è passato in RDI
@@ -178,6 +233,7 @@ distanza1:
     mov     rbx, rdx                ; rbx = j
     lea     rbx, [rbx * 3]          ; rbx = 3*j
 
+	
     ; X_df    
     movsd   xmm0, qword [rdi + rax * dim]  ; xmm0 = coordinateCa[3*i]    
     movsd   xmm1, qword [rdi + rbx * dim]  ; xmm1 = coordinateCa[3*j]    
@@ -239,10 +295,13 @@ coordsca:
 	;cacoords RSI  
 	; rcx= ecx  rbx= esi   
 	xor rbx, rbx 		;ESI: i=0
-	
-	
-    forCacoords:
-		
+
+	  
+
+	forCacoords:
+		 
+
+		mov r12, [size]
 		cmp rbx, [size]
 		jge fineCacoords
 		mov rcx, rbx ;ecx contatore di coords
@@ -253,25 +312,98 @@ coordsca:
 		shl rdx, 1
 		add rdx, rbx 
 		
-		movsd xmm0, qword[rdi + rcx*dim + 3*dim] ; mette in xmm0 coords[i*9+3] salvando x
-		movsd [rsi + rdx*dim], xmm0
+		
 
-        inc rdx
-		movsd xmm0, qword[rdi + rcx*dim + 4*dim] ; mette in xmm0 coords[i*9+4] salvando y
-		movsd [rsi + rdx*dim], xmm0
+		; movsd xmm0, qword[rdi + rcx*dim + 3*dim] ; mette in xmm0 coords[i*9+3] salvando x
+		; movsd [rsi + rdx*dim], xmm0
 
-		inc rdx
-		movsd xmm0, qword[rdi + rcx*dim + 5*dim] ; mette in xmm0 coords[i*9+5] salvando z
-		movsd [rsi + rdx*dim], xmm0
-		inc rbx
+        ; inc rdx
+		; movsd xmm0, qword[rdi + rcx*dim + 4*dim] ; mette in xmm0 coords[i*9+4] salvando y
+		; movsd [rsi + rdx*dim], xmm0
+
+		; inc rdx
+		; movsd xmm0, qword[rdi + rcx*dim + 5*dim] ; mette in xmm0 coords[i*9+5] salvando z
+		; movsd [rsi + rdx*dim], xmm0
+
+		vmovupd ymm0, [rdi + rcx*dim + 3*dim]
+		vmovupd [rsi + rdx*dim], ymm0
+		
+		sub r12, rbx
+		
+		;sub r12, rbx
+
+		
+		cmp r12, 1
+		je fineCacoords
+		
+		
+		add rdx, 3
+		
+		vmovupd ymm0, [rdi + rcx*dim + 12*dim]
+		vmovupd [rsi + rdx*dim], ymm0
+
+		; add rdx, 3
+
+		; vmovupd ymm0, [rdi + rcx*dim + 21*dim]
+		; vmovupd [rsi + rdx*dim], ymm0
+		
+		; add rdx, 3
+
+		; vmovupd ymm0, [rdi + rcx*dim + 30*dim]
+		; vmovupd [rsi + rdx*dim], ymm0
+		
+		
+		
+		; movsd xmm0, qword[rdi + rcx*dim + 12*dim] ; mette in xmm0 coords[i*9+3] salvando x
+		; movsd [rsi + rdx*dim], xmm0
+
+        ; inc rdx
+		; movsd xmm0, qword[rdi + rcx*dim + 13*dim] ; mette in xmm0 coords[i*9+4] salvando y
+		; movsd [rsi + rdx*dim], xmm0
+
+		; inc rdx
+		; movsd xmm0, qword[rdi + rcx*dim + 14*dim] ; mette in xmm0 coords[i*9+5] salvando z
+		; movsd [rsi + rdx*dim], xmm0
+
+		; inc rdx
+		; movsd xmm0, qword[rdi + rcx*dim + 21*dim] ; mette in xmm0 coords[i*9+3] salvando x
+		; movsd [rsi + rdx*dim], xmm0
+
+        ; inc rdx
+		; movsd xmm0, qword[rdi + rcx*dim + 22*dim] ; mette in xmm0 coords[i*9+4] salvando y
+		; movsd [rsi + rdx*dim], xmm0
+
+		; inc rdx
+		; movsd xmm0, qword[rdi + rcx*dim + 23*dim] ; mette in xmm0 coords[i*9+5] salvando z
+		; movsd [rsi + rdx*dim], xmm0
+
+		; inc rdx
+		; movsd xmm0, qword[rdi + rcx*dim + 30*dim] ; mette in xmm0 coords[i*9+3] salvando x
+		; movsd [rsi + rdx*dim], xmm0
+
+        ; inc rdx
+		; movsd xmm0, qword[rdi + rcx*dim + 31*dim] ; mette in xmm0 coords[i*9+4] salvando y
+		; movsd [rsi + rdx*dim], xmm0
+
+		; inc rdx
+		; movsd xmm0, qword[rdi + rcx*dim + 32*dim] ; mette in xmm0 coords[i*9+5] salvando z
+		; movsd [rsi + rdx*dim], xmm0
+		
+
+		add rbx, 2
 		jmp forCacoords
 		;--------fine ciclo for--------
 
 	fineCacoords:
 	;--- fine logica ---
 	;popaq
+	
+	printsd dieci
+	
 	mov	rsp, rbp	; ripristina lo Stack Pointer 
  	pop rbp
+
+	
 	ret
 
 ; ; ------------------------------------------------------------
@@ -296,27 +428,27 @@ rama_energy:
 		; uso xmm5 per salvare psi[i]
 
 		;--------calcolo alpha_dist--------
-		vmovsd xmm4, [rdi+rcx*dim]   ; recupero phi[i]
-		vmovsd xmm6, xmm4 			; salvo phi[i] in xmm6
-		vsubsd xmm6, [alpha_phi] 			; phi[i] - alpha_phi
-		vmulsd xmm6, xmm6			;(phi[i] - alpha_phi)^2
+		movsd xmm4, [rdi+rcx*dim]   ; recupero phi[i]
+		movsd xmm6, xmm4 			; salvo phi[i] in xmm6
+		subsd xmm6, [alpha_phi] 			; phi[i] - alpha_phi
+		mulsd xmm6, xmm6			;(phi[i] - alpha_phi)^2
 
-		vmovsd xmm5, [rsi+rcx*dim]   ; recupero psi[i]
-		vmovsd xmm7, xmm5 			; salvo psi[i] in xmm7
-		vsubsd xmm7, [alpha_psi]		; psi[i] - alpha_psi
-		vmulsd xmm7, xmm7  	        ; (psi[i] - alpha_psi)^2
+		movsd xmm5, [rsi+rcx*dim]   ; recupero psi[i]
+		movsd xmm7, xmm5 			; salvo psi[i] in xmm7
+		subsd xmm7, [alpha_psi]		; psi[i] - alpha_psi
+		mulsd xmm7, xmm7  	        ; (psi[i] - alpha_psi)^2
 
-		vaddsd xmm6, xmm7 			; (phi[i] - alpha_phi)^2 + (psi[i] - alpha_psi)^2
+		addsd xmm6, xmm7 			; (phi[i] - alpha_phi)^2 + (psi[i] - alpha_psi)^2
 		
 		; in xmm6 ho alpha_dist
    
 		;--------calcolo beta_dist--------
-		vsubsd xmm4, [beta_phi]		; phi[i] - beta_phi
-		vmulsd xmm4, xmm4			; (phi[i] - beta_phi)^2
+		subsd xmm4, [beta_phi]		; phi[i] - beta_phi
+		mulsd xmm4, xmm4			; (phi[i] - beta_phi)^2
 
-		vsubsd xmm5, [beta_psi]		; psi[i] - beta_psi
-		vmulsd xmm5, xmm5			; (psi[i] - beta_psi)^2
-		vaddsd xmm4, xmm5 			; (phi[i] - beta_phi)^2 + (psi[i] - beta_psi)^2
+		subsd xmm5, [beta_psi]		; psi[i] - beta_psi
+		mulsd xmm5, xmm5			; (psi[i] - beta_psi)^2
+		addsd xmm4, xmm5 			; (phi[i] - beta_phi)^2 + (psi[i] - beta_psi)^2
 		
 		; in xmm4 ho beta_dist
 
@@ -325,24 +457,24 @@ rama_energy:
 		jl alpha_dist_minore
 		; se distanza alpha maggiore
 		sqrtsd xmm6, xmm6 			; sqrt((phi[i] - alpha_phi)^2 + (psi[i] - alpha_psi)^2)
-		vmovsd xmm5, [un_mezzo]
-		vmulsd xmm6, xmm5	    	; 0.5 * alpha_dist
-		vaddsd xmm0, xmm6 			; energy += 0.5 * alpha_dist
+		movsd xmm5, [un_mezzo]
+		mulsd xmm6, xmm5	    	; 0.5 * alpha_dist
+		addsd xmm0, xmm6 			; energy += 0.5 * alpha_dist
 		jmp fine_if
 		
 
 		;--------alpha_dist < beta_dist--------
 		alpha_dist_minore:
 		sqrtsd xmm4, xmm4 			; sqrt((phi[i] - beta_phi)^2 + (psi[i] - beta_psi)^2)
-		vmulsd xmm4, xmm5			; 0.5 * beta_dist
-		vaddsd xmm0, xmm4 			; energy += 0.5 * beta_dist
+		mulsd xmm4, xmm5			; 0.5 * beta_dist
+		addsd xmm0, xmm4 			; energy += 0.5 * beta_dist
 	
 	fine_if:
 		inc rcx
 		jmp forRamaEnergy
 
     fineRamaEnergy:
-		vmovsd   qword [rdx], xmm0
+		movsd   qword [rdx], xmm0
 	;--- fine logica ---
 
 	;popaq
