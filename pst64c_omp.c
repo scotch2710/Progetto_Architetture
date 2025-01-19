@@ -458,7 +458,7 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 }
 
 
-type rama_energy(VECTOR phi, VECTOR psi){
+extern type rama_energy(VECTOR phi, VECTOR psi){
     // Costanti di Ramachandran
     
     const type alpha_phi = -57.8;
@@ -471,7 +471,7 @@ type rama_energy(VECTOR phi, VECTOR psi){
 	type energy = 0.0;
 
     // Itera su tutti gli elementi
-    #pragma omp parallel for reduction(+:energy) num_threads(2)
+    #pragma omp parallel for reduction(+:energy) num_threads(4)
 	for (int i = 0; i < size; i++) {
         // Calcola la distanza alpha
         type alpha_dist = sqrt(pow(phi[i] - alpha_phi, 2) + pow(psi[i] - alpha_psi, 2));
@@ -492,30 +492,31 @@ type rama_energy(VECTOR phi, VECTOR psi){
     return energy;
 }
 
-extern void coordsca(MATRIX coords, MATRIX coordsca);
-/*{
+extern void coordsca(MATRIX coords, MATRIX coordsca){
     
 	//MATRIX Cacoords = alloc_matrix(size, 3);
-    #pragma omp parallel for num_threads(2)
+    #pragma omp parallel for num_threads(4)
 	for (int i = 0; i < size; i++) {
         coordsca[i * 3] = coords[i * 9 + 3]; //X
         coordsca[i* 3 + 1] = coords[i * 9 + 4]; //Y
         coordsca[i * 3 + 2] = coords[i * 9 + 5]; //Z
     }
     return; 
-}*/
+}
 
 
-extern void distanza1 (MATRIX coordinateCa, int i, int j, type *dist){
+extern void distanza1 (MATRIX coordinateCa, int i, int j, type *dist);
+/*{
 		type x_df = coordinateCa[3*i] - coordinateCa[3*j];
 		type y_df = coordinateCa[3*i+1] - coordinateCa[3*j+1];
 		type z_df = coordinateCa[3*i+2] - coordinateCa[3*j+2];
 		
 		*dist=sqrt(pow(x_df,2) + pow(y_df,2 ) + pow(z_df,2));
 		return;
-}
+}*/
 
-extern type hydrofobic_energy (char* sequenza, MATRIX coordinateCa){
+extern void hydrofobic_energy (char* sequenza, MATRIX coordinateCa, type* hydro);
+/*{
 	type energy = 0.0;
 	
 	
@@ -534,7 +535,7 @@ extern type hydrofobic_energy (char* sequenza, MATRIX coordinateCa){
 	
 	//printf("energy hhydro: %f\n", energy);
 	return energy;
-}
+}*/
 
 extern void electrostatic_energy(char* s, MATRIX coordinateCa, type* elec);
 /*{
@@ -560,7 +561,8 @@ extern void electrostatic_energy(char* s, MATRIX coordinateCa, type* elec);
 	return energy; 
 }*/
 
-extern type packing_energy(char*s, MATRIX coordinateCa){
+extern void packing_energy(char*s, MATRIX coordinateCa, type* pack);
+/*{
      
     
 	//printf("Coordinate di CA:\n");
@@ -569,7 +571,7 @@ extern type packing_energy(char*s, MATRIX coordinateCa){
 	//}
     type energy = 0.0;
     
-	#pragma omp parallel for reduction(+:energy) num_threads(2)
+	#pragma omp parallel for reduction(+:energy) num_threads(4)
 	for (int i = 0; i < size; i++) {
 		type  density = 0.0;
 		
@@ -593,7 +595,7 @@ extern type packing_energy(char*s, MATRIX coordinateCa){
 	
 	//printf("energy pack %f\n", energy);
 	return energy;
-}
+}*/
 
 
 
@@ -602,13 +604,15 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	//for(int i=0; i<25; i++) printf("coords[%d]: %f\n", i, coords[i]);
 	MATRIX coordinateCa= alloc_matrix(size,3);
 	coordsca(coords, coordinateCa);
-	type rama= rama_energy(phi, psi);
+	type rama=rama_energy(phi, psi);
 	
-	type hydro = hydrofobic_energy(seq, coordinateCa);
+	type hydro = 0;
+	hydrofobic_energy(seq, coordinateCa, &hydro);
 	type elec = 0;
 	electrostatic_energy(seq, coordinateCa, &elec);
 	
-	type pack = packing_energy(seq, coordinateCa);
+	type pack = 0;
+	packing_energy(seq, coordinateCa, &pack);
 	
 	dealloc_matrix(coordinateCa);
 	type w_rama= 1.0;
@@ -830,10 +834,17 @@ int main(int argc, char** argv) {
 	//
 	// Predizione struttura terziaria
 	//
+	float start_omp, end_omp;
+	start_omp = omp_get_wtime();
 	t = clock();
 	pst(input);
+	end_omp = omp_get_wtime();
+	printf("OMP: %.3f s\n", end_omp - start_omp);
+	
 	t = clock() - t;
+	
 	time = ((float)t)/CLOCKS_PER_SEC;
+
 
 	if(!input->silent)
 		printf("PST time = %.3f secs\n", time);

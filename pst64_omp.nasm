@@ -115,15 +115,15 @@ section .data			; Sezione contenente dati inizializzati
 ; Funzioni
 ; ------------------------------------------------------------
 
-;global distanza1
-global coordsca
+global distanza1
+;global coordsca
 ;global rama_energy
 global approx_cos
 global prodotto_scal
 global approx_sin
-;global hydrofobic_energy
+global hydrofobic_energy
 global electrostatic_energy
-;global packing_energy
+global packing_energy
 
 
 
@@ -277,7 +277,7 @@ coordsca:
 ; ; ------------------------------------------------------------
 ; ; Funzione rama_energy
 ; ; ------------------------------------------------------------
-rama_energy7: 
+rama_energy: 
 	push	rbp			; salva il Base Pointer
 	mov		rbp, rsp	; il Base Pointer punta al Record di Attivazione corrente
 	;pushaq  
