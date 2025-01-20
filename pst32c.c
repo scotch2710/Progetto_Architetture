@@ -317,25 +317,24 @@ extern void approx_cos(type theta, type *a){
 
 //extern void prodottoScalare (VECTOR axis, type *prod);
 
-extern MATRIX rotation(VECTOR axis, type theta){
-	type prod_scal= (axis[0]*axis[0])+(axis[1]*axis[1])+(axis[2]*axis[2]);
-	//type prod_scal = 0.0;
-	//prodottoScalare(axis, &prod_scal);
+extern void rotation(VECTOR axis, type theta, MATRIX result){
+	//type prod_scal= (axis[0]*axis[0])+(axis[1]*axis[1])+(axis[2]*axis[2]);
+	type prod_scal= 0; 
+	prodotto_scal(axis, &prod_scal);
+	
 	axis[0] = axis[0] / prod_scal;
 	axis[1] = axis[1] / prod_scal;
 	axis[2] = axis[2] / prod_scal;
 
-	type a = 0.0;
+	type a = 0;
+	type sin =0.0;
 	approx_cos(theta/2.0, &a);
-	type s= 0.0;
-	approx_sin(theta / 2.0, &s);
+	approx_sin(theta / 2.0, &sin);
+	type s = -1.0 * sin;
     type b = s * axis[0];
     type c = s * axis[1];
     type d = s * axis[2];
-    
-	MATRIX result = alloc_matrix(3, 3);
-
-    
+      
     result[0] = a * a + b * b - c * c - d * d;
     result[1] = 2 * (b * c + a * d);
     result[2] = 2 * (b * d - a * c);
@@ -349,10 +348,11 @@ extern MATRIX rotation(VECTOR axis, type theta){
     result[8] = a * a + d * d - b * b - c * c;
 
 	
-    return result;
-	}
+    return;
+}
 
 extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
+	
 	type r_CaN = 1.46;
 	type r_CaC = 1.52;
 	type r_CN = 1.33;
@@ -361,19 +361,26 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 	type theta_CNCa = 2.124;
 	type theta_NCaC = 1.940;
 	MATRIX coords= alloc_matrix(size*3,3);
+	VECTOR v1 = alloc_matrix(1, 3); 
+	VECTOR new_v = alloc_matrix(1, 3);
+	VECTOR v3 = alloc_matrix(1, 3);
+	VECTOR res = alloc_matrix(1, 3);
+	VECTOR v2 = alloc_matrix(1, 3);
+	MATRIX rot = alloc_matrix(3, 3);
 	coords[0]=0;
 	coords[1]=0;
 	coords[2]=0;
 	coords[3]=r_CaN;
 	coords[4]=0;
 	coords[5]=0;
+	
 	for(int i=0; i<size; i++){
 		int idx = i*9;
-		VECTOR new_v = alloc_matrix(1, 3);
-		VECTOR res = alloc_matrix(1, 3);
+		
+		
 		if(i>0){
         	// Posizionamento di N
-        	VECTOR v1 = alloc_matrix(1, 3);  //forse si potrebbe allocare un solo vettore fuori dal for e riutilizzarlo
+        	 //forse si potrebbe allocare un solo vettore fuori dal for e riutilizzarlo
         	v1[0] = coords[idx - 3] - coords[idx - 6]; // C(i-1) - Ca(i-1)
         	v1[1] = coords[idx - 2] - coords[idx - 5];
         	v1[2] = coords[idx - 1] - coords[idx - 4];
@@ -382,7 +389,7 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 			v1[0]/=norm_v1;
 			v1[1]/=norm_v1;
 			v1[2]/=norm_v1;
-			MATRIX rot= rotation(v1, theta_CNCa);
+			rotation(v1, theta_CNCa, rot);
 			// Stampa della matrice coords
 			
         	new_v[0] = 0;
@@ -394,12 +401,12 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 			coords[idx] = coords[idx-3] + res[0];
 			coords[idx+1] = coords[idx-2] + res[1];
 			coords[idx+2] = coords[idx-1] + res[2];
-			dealloc_matrix(v1);
-			dealloc_matrix(rot);
+			
+			
 			
 
 			//Posizionamento Ca
-			VECTOR v2 = alloc_matrix(1, 3);
+			
 			v2[0] = coords[idx] - coords[idx - 3]; // N-C
         	v2[1] = coords[idx + 1] - coords[idx - 2];
         	v2[2] = coords[idx + 2] - coords[idx - 1];
@@ -412,7 +419,7 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 			//printf("vettore v2 %d: %f %f %f\n",i, v2[0],v2[1],v2[2]);
 			
 			
-			rot= rotation(v2, phi[i]);
+			rotation(v2, phi[i],rot);
 			new_v[0] = 0;
 			new_v[1] = r_CaN;
 			new_v[2] = 0;
@@ -420,11 +427,11 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 			coords[idx+3] = coords[idx] + res[0];
 			coords[idx+4] = coords[idx+1] + res[1];
 			coords[idx+5] = coords[idx+2] + res[2];
-			dealloc_matrix(v2);
-			dealloc_matrix(rot);
+			
+			
 		}
 
-		VECTOR v3 = alloc_matrix(1, 3);  //forse si potrebbe allocare un solo vettore fuori dal for e riutilizzarlo
+		  //forse si potrebbe allocare un solo vettore fuori dal for e riutilizzarlo
         v3[0] = coords[idx + 3] - coords[idx]; 
     	v3[1] = coords[idx + 4] - coords[idx + 1];
     	v3[2] = coords[idx + 5] - coords[idx + 2];
@@ -433,7 +440,7 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 		v3[0]/=norm_v3;
 		v3[1]/=norm_v3;
 		v3[2]/=norm_v3;
-		MATRIX rot= rotation(v3, psi[i]);
+		rotation(v3, psi[i],rot);
         new_v[0] = 0;
 		new_v[1] = r_CaC;
 		new_v[2] = 0;
@@ -441,19 +448,16 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 		coords[idx + 6] = coords[idx + 3] + res[0];
 		coords[idx + 7] = coords[idx + 4] + res[1];
 		coords[idx + 8] = coords[idx + 5] + res[2];
-
-		dealloc_matrix(rot);
-		dealloc_matrix(new_v);
-		dealloc_matrix(v3);
 		
-	
+
 	}
 
-	// Stampa della matrice coords
-    /*printf("Coordinate calcolate:\n");
-    for (int i = 0; i < n * 3; i++) {
-        printf("%f %f %f\n", coords[i * 3], coords[i * 3 + 1], coords[i * 3 + 2]);
-    }*/
+	
+	dealloc_matrix(new_v);
+	dealloc_matrix(v3);
+	dealloc_matrix(v1);
+	dealloc_matrix(v2);
+	dealloc_matrix(rot);
 	
 	return coords;
 }
@@ -645,18 +649,19 @@ void pst(params* input){
 		phi[i] = phi[i] + theta_phi;
 		type theta_psi = (type) random() * (2 * M_PI) - M_PI;
 		psi[i] = psi[i] + theta_psi;
-		type deltaE= energy(input->seq, phi, psi) - E;
+		type E1 = energy(input->seq, phi, psi);
+		type deltaE= E1 - E;
 		
 
 		if(deltaE<=0){
-			E= energy(input->seq, phi, psi);
+			E= E1;
 		}
 		else{
 			type P = pow(M_E, (-deltaE/(input->k*T)));
 			type r = random();
 
 			if (r<=P)
-				E= energy(input->seq, phi, psi);
+				E= E1;
 			else{
 				phi[i] = phi[i] - theta_phi;
 				psi[i] = psi[i] - theta_psi;
