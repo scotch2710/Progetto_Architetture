@@ -129,15 +129,15 @@ extern free_block
 ; Funzioni
 ; ------------------------------------------------------------
 
-;global distanza1
-;global coordsca
-;global rama_energy
-;global approx_cos
-;global prodottoScalare
-;global approx_sin
-;global hydrofobic_energy
-;global electrostatic_energy
-;global packing_energy
+global distanza1
+global coordsca
+global rama_energy
+global approx_cos
+global prodottoScalare
+global approx_sin
+global hydrofobic_energy
+global electrostatic_energy
+global packing_energy
 
 
 N 		equ 	8
@@ -252,6 +252,8 @@ distanza1:
 ;         cacoords[i * 3 + 2] = coords[i * 9 + 5]; //Z
 ;     }
 ; }
+
+
 coordsca:
 	push	ebp			; salva il Base Pointer
 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
@@ -261,10 +263,10 @@ coordsca:
 	push 	eax
 	push	edx
 	push 	ecx
-
+ 
 	mov ebx, [ebp+8]    ;coords
 	mov eax, [ebp+12]	;cacoords
-
+ 
 		 
 		; ;Stampa del valore intero size convertito in valore float
 		; mov edx, [size]    ; Carica il valore di 'size' in eax
@@ -272,43 +274,49 @@ coordsca:
 		; movss [tmpStamp], xmm0
 		; printss tmpStamp
 		; xor edx, edx
-
-
+ 
+ 
 		 
 	xor esi, esi 		;ESI: i=0
-
+ 
 	
     forCacoords:
-		cmp esi,[size]
+		movss xmm7, [size]
+		cmp esi, [size]
 		jge fineCacoords
-		
 		mov ecx, esi ;ecx contatore di coords
 		imul ecx, 9	;i*9
-		
 
+ 
 		mov edx, esi ; edx contatore di cacords
 		shl edx, 1
 		add edx, esi 
 		;ebx = coords, ecx= i
-		movss xmm0, [ebx + ecx*dim + 3*dim] ; mette in xmm0 coords[i*9+3] salvando x
-		movss [eax + edx*dim], xmm0
+		movups xmm0, [ebx + ecx*dim + 3*dim] ; mette in xmm0 coords[i*9+3] salvando x
+		movups [eax + edx*dim], xmm0
 		;cvtsi2ss xmm6, esi ; Converte 'size' (in eax) in float in xmm0
-		
+		cvtsi2ss xmm0, esi    ; Converti intero ESI in float e salva in XMM0
+		subss xmm7, xmm0      ; Sottrai il valore convertito da XMM7
+ 
+		;sub xmm7, esi
+ 
+		comiss xmm7, [uno]
+		ja fineCacoords
+ 
+        add edx, 3
+		movups xmm0, [ebx + ecx*dim + 12*dim] ; mette in xmm0 coords[i*9+4] salvando y
+		movups [eax + edx*dim], xmm0
 
-        inc edx
-		movss xmm0, [ebx + ecx*dim + 4*dim] ; mette in xmm0 coords[i*9+4] salvando y
-		movss [eax + edx*dim], xmm0
-		
-
-		inc edx
-		movss xmm0, [ebx + ecx*dim + 5*dim] ; mette in xmm0 coords[i*9+5] salvando z
-		movss [eax + edx*dim], xmm0
+ 
+		; inc edx
+		; movss xmm0, [ebx + ecx*dim + 5*dim] ; mette in xmm0 coords[i*9+5] salvando z
+		; movss [eax + edx*dim], xmm0
 		; movss [tmpStamp], xmm0
 		; printss tmpStamp
-		inc esi
+		add esi, 2
 		jmp forCacoords
 		;--------fine ciclo for--------
-
+ 
 	fineCacoords:
 	;--- fine logica ---
 	pop ecx

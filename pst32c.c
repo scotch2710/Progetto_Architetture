@@ -301,26 +301,27 @@ extern void vector_matrix_product(VECTOR v, MATRIX R, VECTOR result) {
     }
 }
 
-extern void approx_cos(type theta, type *a){
+extern void approx_cos(type theta, type *a);
+/*{
     type x2 = theta * theta;
     *a = 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0);
-}
+}*/
 
- extern void approx_sin(type theta, type *a)
-  {
+ extern void approx_sin(type theta, type *a);
+ /*{
     type x2 = theta * theta;
 	//printf("sin theta %f : \n", theta );
     *a=  theta - (x2 * theta / 6.0) + (x2 * x2 * theta / 120.0) - (x2 * x2 * x2 * theta/ 5040.0);
 	*a = *a * -1.0;
 
-}
+}*/
 
-//extern void prodottoScalare (VECTOR axis, type *prod);
+extern void prodottoScalare (VECTOR axis, type *prod);
 
 extern void rotation(VECTOR axis, type theta, MATRIX result){
-	//type prod_scal= (axis[0]*axis[0])+(axis[1]*axis[1])+(axis[2]*axis[2]);
+	
 	type prod_scal= 0; 
-	prodotto_scal(axis, &prod_scal);
+	prodottoScalare(axis, &prod_scal);
 	
 	axis[0] = axis[0] / prod_scal;
 	axis[1] = axis[1] / prod_scal;
@@ -462,8 +463,8 @@ extern MATRIX backbone(char* seq, VECTOR phi, VECTOR psi){
 	return coords;
 }
 
-extern void rama_energy(VECTOR phi, VECTOR psi, type *rama)
-  {  // Costanti di Ramachandran
+extern void rama_energy(VECTOR phi, VECTOR psi, type *rama);
+/*{  // Costanti di Ramachandran
     
     const type alpha_phi = -57.8;
     const type alpha_psi = -47.0;
@@ -488,32 +489,33 @@ extern void rama_energy(VECTOR phi, VECTOR psi, type *rama)
         }
     }
 	*rama = energy;
-  }
+  }*/
 
 
-extern void coordsca(MATRIX coords, MATRIX cacoords){
+extern void coordsca(MATRIX coords, MATRIX cacoords);
+/*{
     const int n = 256;
 	for (int i = 0; i < n; i++) {
         cacoords[i * 3] = coords[i * 9 + 3]; //X
         cacoords[i* 3 + 1] = coords[i * 9 + 4]; //Y
         cacoords[i * 3 + 2] = coords[i * 9 + 5]; //Z
-		//printf("coordsca in C: %f\n", coords[i * 9 + 5]);
+		
     }
-}
+}*/
 
 
-extern void distanza1 (MATRIX coordinateCa, int i, int j, type* dist)
-{
+extern void distanza1 (MATRIX coordinateCa, int i, int j, type* dist);
+/*{
 // type distanza (MATRIX coordinateCa, int i, int j){
 		type x_df = coordinateCa[3*i] - coordinateCa[3*j];
 		type y_df = coordinateCa[3*i+1] - coordinateCa[3*j+1];
 		type z_df = coordinateCa[3*i+2] - coordinateCa[3*j+2];
 		*dist = sqrt(x_df * x_df + y_df * y_df + z_df * z_df);
 		//if(*dist<10) printf("dist in C: %f\n", *dist);
-}
+}*/
 
-extern void hydrofobic_energy (char* sequenza, MATRIX cacoords, type *hydro)
-{
+extern void hydrofobic_energy (char* sequenza, MATRIX cacoords, type *hydro);
+/*{
 	// for(int i = 0 ; i < size; i++){
 	// 	printf("Posizione %d: %d\n", i, (int)sequenza);
 	// }
@@ -535,10 +537,10 @@ extern void hydrofobic_energy (char* sequenza, MATRIX cacoords, type *hydro)
 	*hydro = energy;
 	//printf("energy hhydro: %f\n", energy);
 	return ;
-}
+}*/
 
-extern void electrostatic_energy(char* s, MATRIX cacoords, type *elec)
-{
+extern void electrostatic_energy(char* s, MATRIX cacoords, type *elec);
+/*{
 	type energy= 0.0;
 	for(int i=0; i < size; i++){
 		for(int j= i+1; j < size; j++){
@@ -558,10 +560,10 @@ extern void electrostatic_energy(char* s, MATRIX cacoords, type *elec)
 	*elec = energy;
 	// printf("energy elec %f\n", energy);
 	return ; 
-}
+}*/
 
-extern void packing_energy(char*s, MATRIX cacoords, type *pack)
-{
+extern void packing_energy(char*s, MATRIX cacoords, type *pack);
+/*{
     type energy = 0.0;
     for (int i = 0; i < size; i++) {
 		type  density = 0.0;
@@ -587,20 +589,19 @@ extern void packing_energy(char*s, MATRIX cacoords, type *pack)
 	//printf("energy pack %f\n", energy);
 	*pack = energy;
 	return ;
-}
+}*/
 
 
 
 extern type energy(char* seq, VECTOR phi, VECTOR psi){
 	MATRIX coords= backbone(seq, phi, psi);
-	//for(int i=0; i<25; i++) printf("coords[%d]: %f\n", i, coords[i]);
+
 	MATRIX cacoords = alloc_matrix(size, 3);
 	coordsca(coords, cacoords);
 	type rama= 0.0;
 	rama_energy(phi, psi, &rama);
 	type hydro = 0.0;
-	// for (int i = 0; i< size;i++)
-	//printf("Posizione %d: %d\n", 1, intArray[1]);
+
 	hydrofobic_energy(seq, cacoords, &hydro);
 	
 	type elec = 0.0;
@@ -614,12 +615,6 @@ extern type energy(char* seq, VECTOR phi, VECTOR psi){
 
 	type tot= (w_rama*rama) + (w_elec*elec) + (w_hydro*hydro) + (w_pack*pack);
 
-	//printf("pack: %f\n", pack);
-	//printf("elec: %f, hydro: %f, pack: %f, rama: %f, tot: %f\n", elec, hydro, pack, rama, tot);
-
-	//for(int i=0; i<25; i++) printf("it %d: energia %f:\n", i, tot);
-
-	//dealloc_matrix(coords);
 
 	return tot;
 }
@@ -673,6 +668,7 @@ void pst(params* input){
 		//printf("it: %d pos: %d\n", j, i);
 		j++;
 	}
+	input->e=E;
 }
 	
 
@@ -842,10 +838,14 @@ int main(int argc, char** argv) {
 
 
 
-	if(!input->silent)
+	if(!input->silent){
 		printf("PST time = %.3f secs\n", time);
-	else
+		printf("Energy = %f\n", input->e);
+	}
+	else{
 		printf("%.3f\n", time);
+		printf("%f\n", input->e);
+	}
 
 	//
 	// Salva il risultato
