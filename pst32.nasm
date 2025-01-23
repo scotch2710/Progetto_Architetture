@@ -223,14 +223,10 @@ distanza1:
 	addss   xmm0, xmm4                  ; xmm0 += z_df^2    
 	; Radice quadrata    
 	sqrtss  xmm0, xmm0                  ; xmm0 = sqrt(x_df^2 + y_df^2 + z_df^2)    
-	;mov 	eax, [ebp+20]				;[ebp+20] contiene l'indirizzo della variabile dist passata come parametro (&dist)
+										;[ebp+20] contiene l'indirizzo della variabile dist passata come parametro (&dist)
 	movss 	[ecx], xmm0					;[eax] inserisce[size]ell'indirizzo passato in eax il valore risultante in xmm0
 
-	; movss [tmpStamp], xmm0
-	; comiss xmm0, [dieci]
-	; jae no_stampp
-	; printss tmpStamp
-	; no_stampp:
+
 	pop eax
 	pop ecx
 	pop edi
@@ -266,17 +262,7 @@ coordsca:
  
 	mov ebx, [ebp+8]    ;coords
 	mov eax, [ebp+12]	;cacoords
- 
-		 
-		; ;Stampa del valore intero size convertito in valore float
-		; mov edx, [size]    ; Carica il valore di 'size' in eax
-		; cvtsi2ss xmm1, edx ; Converte 'size' (in eax) in float in xmm0
-		; movss [tmpStamp], xmm0
-		; printss tmpStamp
-		; xor edx, edx
- 
- 
-		 
+  		 
 	xor esi, esi 		;ESI: i=0
  
 	
@@ -298,7 +284,7 @@ coordsca:
 		cvtsi2ss xmm0, esi    ; Converti intero ESI in float e salva in XMM0
 		subss xmm7, xmm0      ; Sottrai il valore convertito da XMM7
  
-		;sub xmm7, esi
+
  
 		comiss xmm7, [uno]
 		ja fineCacoords
@@ -308,11 +294,7 @@ coordsca:
 		movups [eax + edx*dim], xmm0
 
  
-		; inc edx
-		; movss xmm0, [ebx + ecx*dim + 5*dim] ; mette in xmm0 coords[i*9+5] salvando z
-		; movss [eax + edx*dim], xmm0
-		; movss [tmpStamp], xmm0
-		; printss tmpStamp
+
 		add esi, 2
 		jmp forCacoords
 		;--------fine ciclo for--------
@@ -491,7 +473,7 @@ prodottoScalare:
 	mulss xmm2, xmm2
 	addss xmm0, xmm2
 
-	;sqrtss xmm0, xmm0
+
  
 	; xmm0 ha il prodotto scalare
  
@@ -505,10 +487,7 @@ prodottoScalare:
  
 	movss [eax], xmm0
 
-	;movss [eax], xmm1 ;[size]ew axis[0]
-	;movss [eax+dim], xmm2  ;[size]ew axis[1]
-	;movss [eax+2*dim], xmm3  ;[size]ew axis[2]
- 
+
 	pop edi
 	pop	esi
 	pop edx
@@ -521,7 +500,7 @@ prodottoScalare:
 ; Funzione approx_sin
 ; ------------------------------------------------------------
 approx_sin:
-    ; (type theta, type *a);
+
 	push	ebp			; salva il Base Pointer
 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
 	push	ebx			; salva i registri da preservare
@@ -578,18 +557,11 @@ hydrofobic_energy:
  
 	mov ebx, [ebp+8]    	;sequenza
 	mov ecx, [ebp+12]		;cacoords
-	;mov edx, [ebp+16]		;res
+
  
 	xor esi, esi 			;esi: i=0
 	xorps xmm6, xmm6        ;init energy = 0.0
  
- 
- 
- 
- 
-	;CVTSI2SS xmm6, edi
-	;movss [tmp], xmm6
-	;printss tmp
  
 	externalLoop:
 		cmp esi, 256
@@ -597,24 +569,17 @@ hydrofobic_energy:
  
 		xor edi, edi 			;edi: j=0
  
-		;CVTSI2SS xmm6, edi
-		;movss [tmp], xmm6
-		;printss tmp
+
 		mov edi, esi			; edi = j = i
 		inc edi
 		internaloop:
-			; CVTSI2SS xmm6, edi
-			; movss [tmp], xmm6
-			; printss tmp
+
  
 			cmp edi, 256
 			jge fine_internal_loop
  
 			;--------calcolo distanza--------
-			; CVTSI2SS xmm6, ecx
-			; movss [tmp], xmm6
-			; printss tmp
- 
+
 			;uso xmm4 per salvare dist
 			mov edx, dist
  
@@ -627,14 +592,9 @@ hydrofobic_energy:
  
 			add esp, 16
  
-			;CVTSI2SS xmm6, [ecx]
+
+ 			movss xmm1, [dist] ;sposto distanza in xmm1
  
- 
-			movss xmm1, [dist] ;sposto distanza in xmm1
- 
- 
- 
-			;movss xmm4, [ebp+20] ; xmm4 = dist
  
 			comiss xmm1,  [dieci]
 			ja distanza_maggiore
@@ -650,17 +610,6 @@ hydrofobic_energy:
 			sub eax, 65				  ; sequenza[i] - 65
 			movss xmm5, [hydrophobicity1 + eax*dim] ; hydrophobicity[sequenza[j]-65]
  
-			; CVTSI2SS xmm6, eax
-			; movss [tmp], xmm6
-			; printss tmp
- 
- 
- 
- 
- 
-			; movss [tmp], xmm0
-			; printss tmp
- 
 			mulss xmm0, xmm5
 			divss xmm0, xmm1
 			addss xmm6, xmm0
@@ -673,25 +622,12 @@ hydrofobic_energy:
 			inc esi
 			jmp externalLoop
 	fineHydrofobicEnergy:
-	;xor eax, eax 
-	;movss xmm6, [distanza] 
-	;CVTSI2SS xmm6, eax
-	;movss [tmp], xmm2
-	;printss tmp
- 
- 
- 
+
  
 	mov eax, [ebp+16]
  
 	movss [eax], xmm6
-	;movss xmm2, [tmp]
-	;movss [eax], xmm2
- 
- 
- 
-	;CVTSI2SS da intero a float
-	;CVTTSS2SI da float a intero
+
  
 	pop edi
 	pop	esi
@@ -706,7 +642,7 @@ hydrofobic_energy:
 ; ------------------------------------------------------------
 
 electrostatic_energy:
-	; distanza usa xmm0 -> per il resultto, xmm1, xmm2,xmm4
+	; distanza usa xmm0 -> per il risultato, xmm1, xmm2,xmm4
 
 	push	ebp			; salva il Base Pointer
 	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
@@ -720,9 +656,6 @@ electrostatic_energy:
 	mov ebx, [ebp + 8] ;ebx = s
 	mov ecx, [ebp + 12] ;ecx = cacoords
 
-	; cvtsi2ss xmm7, ebx 
-	; movups [tmpStamp], xmm7
-	; printss tmpStamp
 
 	xor esi, esi 	; esi = i = 0
 	pxor xmm3, xmm3 ;energy = 0
@@ -753,10 +686,6 @@ electrostatic_energy:
 			;pxor xmm0, xmm0
 			movss xmm0, [dist] ;xmm0 = dist
 			
-		; cvtsi2ss xmm7, edi ; Converte 'size' (in eax) in float in xmm0
-			
-			
-		
 			;if (dist <10.0)
 			comiss xmm0, [dieci]
 			jae incrementoj

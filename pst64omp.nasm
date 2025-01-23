@@ -116,8 +116,8 @@ section .data			; Sezione contenente dati inizializzati
 ; ------------------------------------------------------------
 
 global distanza1
-global coordsca
-global rama_energy
+;global coordsca
+;global rama_energy
 global approx_cos
 global prodotto_scal
 global approx_sin
@@ -131,20 +131,6 @@ global packing_energy
 
 ; ORDINE INPUT: RDI - RSI - RDX - RCX - R8 - R9
 
-;char* seq;		// sequenza di amminoacidi
-;	int N;			// lunghezza sequenza
-;	unsigned int sd; 	// seed per la generazione casuale
-;	type to;		// temperatura INIZIALE
-;	type alpha;		// tasso di raffredamento
-;	type k;		// costante
-;	VECTOR hydrophobicity; // hydrophobicity
-;	VECTOR volume;		// volume
-;	VECTOR charge;		// charge
-;	VECTOR phi;		// vettore angoli phi
-;	VECTOR psi;		// vettore angoli psi
-;	type e;		// energy
-;	int display;
-;	int silent;
 
 
 ; ------------------------------------------------------------
@@ -170,7 +156,6 @@ distanza1:
 
     push	rbp			; salva il Base Pointer
 	mov		rbp, rsp	; il Base Pointer punta al Record di Attivazione corrente
-
 
 	mov     rax, rsi                ; rax = i
     lea     rax, [rax * 3]          ; rax = 3*i
@@ -209,7 +194,6 @@ distanza1:
     ; Salva il risultato
     movsd   qword [rcx], xmm0             ; salva il risultato in dist
 
-
 	mov	rsp, rbp	; ripristina lo Stack Pointer 
  	pop rbp
 	
@@ -228,72 +212,49 @@ distanza1:
 ;         cacoords[i * 3 + 2] = coords[i * 9 + 5]; //Z
 ;     }
 ; }
-
 coordsca:
-
 	push	rbp			; salva il Base Pointer
-
 	mov		rbp, rsp	; il Base Pointer punta al Record di Attivazione corrente
-
+ 
 
 	;coords RDI
-
 	;cacoords RSI  
-  
- 
-	xor rbx, rbx 		;ESI: i=0
- 
-	forCacoords:
-
-		mov r12, [size]
-
+	; rcx= ecx  rbx= esi   
+	xor rbx, rbx 	;E: i=0
+	
+	
+    forCacoords:
+		
 		cmp rbx, [size]
-
 		jge fineCacoords
-
 		mov rcx, rbx ;ecx contatore di coords
-
 		imul rcx, 9
+		
 
 		mov rdx, rbx ; rdx contatore di cacords
-
 		shl rdx, 1
+		add rdx, rbx 
+		
+		movsd xmm0, qword[rdi + rcx*dim + 3*dim] ; mette in xmm0 coords[i*9+3] salvando x
+		movsd [rsi + rdx*dim], xmm0
 
-		add rdx, rbx
- 
-		vmovupd ymm0, [rdi + rcx*dim + 3*dim]
+        inc rdx
+		movsd xmm0, qword[rdi + rcx*dim + 4*dim] ; mette in xmm0 coords[i*9+4] salvando y
+		movsd [rsi + rdx*dim], xmm0
 
-		vmovupd [rsi + rdx*dim], ymm0
-
-		sub r12, rbx 	
-
-		cmp r12, 1
-
-		je fineCacoords
-
-
-		add rdx, 3
-
-		vmovupd ymm0, [rdi + rcx*dim + 12*dim]
-
-		vmovupd [rsi + rdx*dim], ymm0
-
- 
-		add rbx, 2
-
+		inc rdx
+		movsd xmm0, qword[rdi + rcx*dim + 5*dim] ; mette in xmm0 coords[i*9+5] salvando z
+		movsd [rsi + rdx*dim], xmm0
+		inc rbx
 		jmp forCacoords
-
 		;--------fine ciclo for--------
- 
+
 	fineCacoords:
-
+	;--- fine logica ---
+	
 	mov	rsp, rbp	; ripristina lo Stack Pointer 
-
-	pop rbp
-
+ 	pop rbp
 	ret
- 
-
 
 ; ; ------------------------------------------------------------
 ; ; Funzione rama_energy
@@ -301,13 +262,13 @@ coordsca:
 rama_energy: 
 	push	rbp			; salva il Base Pointer
 	mov		rbp, rsp	; il Base Pointer punta al Record di Attivazione corrente
-	 
 
-  	;phi  RDI
+
+	;phi  RDI
 	;psi  RSI
-	; output     RDX
+	; output  RDX
 	
-	xor rcx, rcx 			; i=0
+	xor rcx, rcx 			;esi: i=0
 	xorps xmm0, xmm0        ;init energy = 0.0
 	
     forRamaEnergy:
@@ -371,7 +332,7 @@ rama_energy:
  	pop rbp
 	ret
 
-
+	ret
 
 ; ; ------------------------------------------------------------
 ; ; Funzione approx_cos
@@ -379,7 +340,7 @@ rama_energy:
 approx_cos:    
 	push	rbp			; salva il Base Pointer
 	mov		rbp, rsp	; il Base Pointer punta al Record di Attivazione corrente
-  
+
 	
 	; theta   XMM0
 	; Recupero parametro theta    
@@ -407,11 +368,10 @@ approx_cos:
 	addsd xmm6, xmm4    ; xmm6 = 1 - (x2 / 2.0) + (x2 * x2 / 24.0)    
 	subsd xmm6, xmm5    ; xmm6 = 1 - (x2 / 2.0) + (x2 * x2 / 24.0) - (x2 * x2 * x2 / 720.0)    
 	
-
+	; Salva il risultato in [ebp+12] (result) 
 	; result 
 	movsd qword[rdi], xmm6    
 	    
-
 	mov	rsp, rbp	; ripristina lo Stack Pointer 
  	pop rbp
 	   
