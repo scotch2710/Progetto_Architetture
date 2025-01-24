@@ -525,7 +525,7 @@ extern void hydrofobic_energy (char* sequenza, MATRIX coordinateCa, type* hydro)
 		}
 	}
 	
-	//printf("energy hhydro: %f\n", energy);
+	
 	return energy;
 }*/
 
@@ -543,13 +543,13 @@ extern void electrostatic_energy(char* s, MATRIX coordinateCa, type* elec);
 				//printf("dist %f\n", dist);
 				if(dist < 10.0 && charge[(int)s[i]-65] !=0 && charge[(int)s[j]-65] != 0 ){
 					energy += (charge[(int)s[i]-65]*charge[(int)s[j]-65])/(dist*4.0);
-					//printf("energy: %f\n", energy);
+					
 				}
 			}
 		}
 	}
 	
-	//printf("energy elec %f\n", energy);
+	
 	return energy; 
 }*/
 
@@ -597,7 +597,7 @@ extern void packing_energy(char*s, MATRIX coordinateCa,type *pack);
 		energy = energy + pow((volume[(int)s[i]-65] - density), 2);
     }
 	
-	//printf("energy pack %f\n", energy);
+	
 	return energy;
 }*/
 
